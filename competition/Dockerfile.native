@@ -1,0 +1,53 @@
+# Native-SIMD counterpart to the official profiler image, for ONE measurement only.
+#
+# The official image (vendor/adtc-profiler/Dockerfile) compiles llama.cpp with every
+# vector extension disabled for portability:
+#     -DGGML_NATIVE=OFF -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_FMA=OFF -DGGML_F16C=OFF
+# That makes throughput measured in it a floor rather than a representative number
+# (COMPETITION.md section 6a, open item O-06).
+#
+# This image is IDENTICAL except that AVX2/FMA/F16C are enabled. Same llama.cpp ref, same
+# base, same build type. Diffing llama-bench across the two isolates the SIMD penalty and
+# nothing else.
+#
+# THIS IMAGE IS NEVER A SOURCE OF SUBMITTED NUMBERS. Throughput, RAM, and thermal figures
+# in the report come from the official image only (O-06 protocol). This exists to quantify
+# a build-flag effect as an engineering finding, and to sanity-check that the internal
+# lm-eval proxy ranks candidates the same way on both builds.
+
+FROM debian:bookworm-slim AS llama-build
+
+# Pinned to the same ref the official image uses. Changing this invalidates the comparison.
+ARG LLAMACPP_REF=b10175
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential cmake git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch "${LLAMACPP_REF}" \
+      https://github.com/ggerganov/llama.cpp.git /src/llama.cpp \
+    && cd /src/llama.cpp \
+    && cmake -B build \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DGGML_NATIVE=OFF \
+        -DGGML_AVX=ON \
+        -DGGML_AVX2=ON \
+        -DGGML_FMA=ON \
+        -DGGML_F16C=ON \
+        -DGGML_AVX512=OFF \
+        -DGGML_BLAS=OFF \
+        -DGGML_CUDA=OFF \
+        -DGGML_METAL=OFF \
+    && cmake --build build --config Release --target llama-bench llama-cli llama-server -j4
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      curl ca-certificates libgomp1 python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=llama-build /src/llama.cpp/build/bin/llama-bench  /usr/local/bin/
+COPY --from=llama-build /src/llama.cpp/build/bin/llama-cli    /usr/local/bin/
+COPY --from=llama-build /src/llama.cpp/build/bin/llama-server /usr/local/bin/
+
+WORKDIR /work
+ENTRYPOINT ["llama-bench"]

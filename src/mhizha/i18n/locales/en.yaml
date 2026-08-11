@@ -1,0 +1,57 @@
+# English is the reference locale. A key present in sn.yaml or nd.yaml but absent here
+# is an error, not a feature. Run `mhizha i18n check`.
+
+answer:
+  sources_heading: "Based on"
+  confidence_heading: "Confidence"
+  no_sources: "This answer has no sources, so it will not be shown."
+
+confidence:
+  high: "High. Several sources in the corpus agree on this."
+  medium: "Medium. Check with your local extension officer before acting."
+  low: "Low. Not enough validated information to answer."
+
+abstain:
+  no_context: >-
+    I do not have validated information on that in my corpus, so I will not guess.
+  low_confidence: >-
+    I found some related material but not enough to answer this safely.
+  clarify_prefix: "To help me answer, could you tell me:"
+  clarify_region: "which province or district you are farming in"
+  clarify_crop: "which crop you are asking about"
+  clarify_season: "which season, and whether the crop is already planted"
+  referral: >-
+    Your local AGRITEX extension officer will have current advice for your area.
+
+safety:
+  agrochemical_notice: >-
+    Chemical products are dangerous if used wrongly. Always read the product label,
+    follow the stated rate exactly, wear protective clothing, and observe the
+    pre-harvest interval.
+  dosage_withheld: >-
+    I will not give a chemical rate or dosage that is not written in a validated source
+    I can show you. Read the product label, and ask your AGRITEX extension officer.
+  extension_referral: >-
+    Confirm with your local AGRITEX extension officer before applying anything.
+  injection_dropped: >-
+    A source passage contained instruction-like text and was excluded from this answer.
+
+placeholder:
+  warning: >-
+    PLACEHOLDER CORPUS. This answer came from sample documents that contain no real
+    agronomic information. It must not be used for farming decisions.
+
+error:
+  no_index: >-
+    No search index is installed. The index is built on a developer machine and shipped
+    with the app. This device does not build its own index.
+  no_corpus: >-
+    The corpus is empty. There is nothing to search.
+  no_model: >-
+    No language model is installed for this device.
+  embedder_mismatch: >-
+    The installed index does not match the installed embedding model. The app needs a
+    matching pair to answer safely.
+
+fallback:
+  notice: "Shown in English because a translation is not available yet."

@@ -1,0 +1,41 @@
+{
+  "team_id": "TODO_TEAM_ID",
+  "domain": "agriculture",
+  "language_scope": [
+    "en",
+    "sn",
+    "nd"
+  ],
+  "african_alpha_claim": true,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "TODO_SUBMITTER_NAME",
+    "email": "TODO_SUBMITTER_EMAIL",
+    "github_handle": "TODO_GITHUB_HANDLE"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "agriculture",
+    "load_bearing": true,
+    "description": "Mhizha is an offline agronomy co-pilot for Zimbabwean smallholder farmers. The agronomy is load-bearing, not decorative: a validated-source dosage gate refuses any agrochemical rate not verbatim in a human-signed-off passage, a named-region filter blocks one province's planting calendar being served to another, and a quantity-intent gate refuses dose questions before generation rather than after."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "tp_001",
+      "prompt": "I farm two hectares in Matabeleland South and the rains have started late this season. Should I still plant maize, or is there a better crop for the time I have left?"
+    },
+    {
+      "prompt_id": "tp_002",
+      "prompt": "There is fall armyworm in my maize. How much insecticide should I mix in a 20 litre knapsack sprayer?"
+    }
+  ],
+  "model": {
+    "name": "Mhizha-Qwen3.5-0.8B-Q4_K_M",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "0.8B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/mhizha-Qwen3.5-0.8B-Q4_K_M.gguf"
+  }
+}

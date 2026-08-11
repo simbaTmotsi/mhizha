@@ -1,0 +1,28 @@
+# Mhizha dependencies.
+#
+# RUNTIME     : must be able to run on the device, offline. Keep this list short.
+# BUILD TIME  : developer machine only. Never ships in the APK.
+#
+# Nothing here may open a network connection at runtime. See CLAUDE.md rule 1.
+
+# ---- RUNTIME ----
+numpy>=1.24                 # RUNTIME  vector maths, brute-force fallback
+PyYAML>=6.0                 # RUNTIME  config and locale loading
+sqlite-vec>=0.1.9           # RUNTIME  single-file vector index (preferred backend)
+
+# ---- RUNTIME, dev harness only ----
+typer>=0.9                  # dev CLI. The Android app does not ship this.
+rich>=13.0                  # dev CLI output. The Android app does not ship this.
+
+# ---- BUILD TIME ----
+sentence-transformers>=2.2  # BUILD TIME  embedding at index build
+pypdf>=4.0                  # BUILD TIME  PDF ingestion adapter
+python-docx>=1.1            # BUILD TIME  DOCX ingestion adapter
+
+# ---- TEST ----
+pytest>=7.0
+
+# ---- OPTIONAL, dev harness generation backend ----
+# Install to run a real GGUF locally instead of the stub backend:
+#   pip install llama-cpp-python
+# llama-cpp-python>=0.2.70

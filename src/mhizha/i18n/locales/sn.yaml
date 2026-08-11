@@ -1,0 +1,50 @@
+# Shona (chiShona).
+#
+# Every value is TODO_TRANSLATE. These strings have deliberately NOT been machine
+# translated. Agronomic and safety vocabulary in Shona is specialised: pest names, crop
+# stages, and soil terms have established local usage that a general translator misses,
+# and a safety warning rendered badly is not a safety warning.
+#
+# PRIORITY FOR HUMAN TRANSLATION (safety-critical, translate these first):
+#   safety.agrochemical_notice, safety.dosage_withheld, safety.extension_referral,
+#   abstain.no_context, abstain.low_confidence, placeholder.warning
+#
+# Sourcing this is tracked as gap G-10 in data/SOURCES.md.
+# Until then `mhizha ask --lang sn` serves English and records the fallback.
+
+answer:
+  sources_heading: TODO_TRANSLATE
+  confidence_heading: TODO_TRANSLATE
+  no_sources: TODO_TRANSLATE
+
+confidence:
+  high: TODO_TRANSLATE
+  medium: TODO_TRANSLATE
+  low: TODO_TRANSLATE
+
+abstain:
+  no_context: TODO_TRANSLATE
+  low_confidence: TODO_TRANSLATE
+  clarify_prefix: TODO_TRANSLATE
+  clarify_region: TODO_TRANSLATE
+  clarify_crop: TODO_TRANSLATE
+  clarify_season: TODO_TRANSLATE
+  referral: TODO_TRANSLATE
+
+safety:
+  agrochemical_notice: TODO_TRANSLATE
+  dosage_withheld: TODO_TRANSLATE
+  extension_referral: TODO_TRANSLATE
+  injection_dropped: TODO_TRANSLATE
+
+placeholder:
+  warning: TODO_TRANSLATE
+
+error:
+  no_index: TODO_TRANSLATE
+  no_corpus: TODO_TRANSLATE
+  no_model: TODO_TRANSLATE
+  embedder_mismatch: TODO_TRANSLATE
+
+fallback:
+  notice: TODO_TRANSLATE

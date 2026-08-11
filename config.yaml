@@ -1,0 +1,175 @@
+# Mhizha configuration. Single source of truth for every threshold, budget, and model
+# choice. Nothing in src/ may hardcode a value that belongs here.
+
+# dev        : placeholder corpus may be served, unvalidated chunks may be served
+# production : neither is permitted, enforced in config.py
+profile: dev
+
+device:
+  active_profile: low_4gb
+  profiles:
+    low_4gb:
+      label: "4 GB RAM Android phone (primary target)"
+      total_ram_mb: 4096
+      # Realistic headroom before the Android low-memory killer takes the app.
+      app_budget_mb: 1400
+      kv_cache_mb: 220
+      runtime_overhead_mb: 180
+    mid_6gb:
+      label: "6 GB RAM Android phone (secondary)"
+      total_ram_mb: 6144
+      app_budget_mb: 2600
+      kv_cache_mb: 300
+      runtime_overhead_mb: 200
+    high_8gb:
+      label: "8 GB RAM Android phone (comfortable)"
+      total_ram_mb: 8192
+      app_budget_mb: 3800
+      kv_cache_mb: 380
+      runtime_overhead_mb: 220
+
+    # ADTC 2026 competition profile. NOT a product target: no farmer runs this.
+    # Every number is taken from the official profiler rather than chosen by us:
+    #   app_budget_mb 7168  = RAM_LIMIT_GB 7.0, the point where S_eff hits zero
+    #   threads 4           = the judged profile is 4 vCPU
+    #   n_gpu_layers 0      = llama-bench is pinned -ngl 0 (throughput.py)
+    #   mlock true          = keep weights resident; the audit box has no swap headroom
+    # See COMPETITION.md section 4 and 6.
+    laptop_8gb:
+      label: "ADTC 2026 judged laptop (8 GB RAM, 4 vCPU, CPU-only)"
+      total_ram_mb: 8192
+      app_budget_mb: 7168
+      kv_cache_mb: 320
+      runtime_overhead_mb: 400
+      runtime:
+        backend: llamacpp
+        threads: 4
+        mlock: true
+        n_gpu_layers: 0
+
+embedder:
+  id: all-MiniLM-L6-v2
+  path: models/embedder/all-MiniLM-L6-v2
+  dim: 384
+  normalize: true
+  # false means this embedder cannot match a Shona or Ndebele query to an English
+  # passage. See docs/model-shortlist.md for the multilingual swap and its size cost.
+  multilingual: false
+  est_size_mb: 90
+  # Deterministic hash embedder, used only when weights are absent. Tests rely on it so
+  # the suite never depends on a download. Never acceptable in production.
+  allow_hash_fallback: true
+
+llm:
+  backend: stub          # stub | llamacpp
+  model_id: null         # resolved from llm/registry.py against the device profile
+  model_dir: models/llm
+  context_tokens: 2048
+  max_output_tokens: 400
+  temperature: 0.0
+  seed: 1729
+
+retrieval:
+  top_k: 5
+  # Below this composite confidence, Mhizha does not call the model at all.
+  abstain_below: 0.45
+  # Top-1 must beat the mean of the rest by this much or the retrieved set is
+  # considered undifferentiated.
+  min_margin: 0.02
+  validated_only: false    # production must be true
+  allow_placeholder: true  # production must be false
+  bands:
+    high: 0.75
+    medium: 0.55
+
+corpus:
+  dir: data/corpus
+  raw_dir: data/raw
+  review_ledger: data/review_ledger.jsonl
+  chunk:
+    target_chars: 700
+    max_chars: 1100
+    overlap_chars: 120
+    respect_tables: true
+
+index:
+  path: data/index/mhizha.db
+  schema_version: 1
+
+i18n:
+  default_lang: en
+  languages: [en, sn, nd]
+  locales_dir: src/mhizha/i18n/locales
+
+safety:
+  require_citations: true
+  agrochemical_guard: true
+  # A quantity appearing within this many characters of a trigger term is treated as a
+  # dosage claim and must be verbatim in a retrieved validated passage.
+  quantity_proximity_chars: 120
+  # Trigger terms. This list makes the system MORE conservative, never less, so erring
+  # long is safe. NEEDS EXPERT REVIEW AND EXPANSION: see data/SOURCES.md gap G-08.
+  trigger_terms:
+    - pesticide
+    - insecticide
+    - herbicide
+    - fungicide
+    - nematicide
+    - spray
+    - dosage
+    - dose
+    - rate
+    - mix
+    - mixing
+    - dilute
+    - dilution
+    - active ingredient
+    - fertiliser
+    - fertilizer
+    - basal
+    - top dressing
+    - topdressing
+    - ammonium nitrate
+    - compound d
+    - urea
+    - glyphosate
+    - atrazine
+    - carbaryl
+    - lambda-cyhalothrin
+    - imidacloprid
+    - mancozeb
+    - metalaxyl
+    - pre-harvest interval
+    - withholding period
+    - re-entry
+  quantity_units:
+    - ml
+    - l
+    - litre
+    - liter
+    - g
+    - kg
+    - mg
+    - ha
+    - hectare
+    - acre
+    - cap
+    - caps
+    - capful
+    - teaspoon
+    - tablespoon
+    - scoop
+    - bag
+    - bags
+    - "%"
+    - ppm
+    - gram
+    - kilogram
+    - millilitre
+    - milliliter
+    - sachet
+    - knapsack
+    - tin
+    - cup
+    - matchbox
+    - handful

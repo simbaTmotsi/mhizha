@@ -1,0 +1,163 @@
+# ADTC 2026 bake-off candidate manifest.
+#
+# Every file_mb below is RETRIEVED: an HTTP HEAD Content-Length against the resolved
+# URL on 11 Aug 2026, not an estimate. Every repo/file pair was confirmed to exist by
+# querying the Hugging Face model API on the same date (COMPETITION.md O-03).
+#
+# Downloads happen at BUILD TIME only, on a developer machine. Nothing here is fetched
+# at inference time, in either the product path or the competition path.
+#
+# sha256 is recorded by scripts/fetch_candidates.sh after download, into
+# competition/candidate_hashes.txt, so a bake-off result can name the exact bytes it ran
+# against.
+
+reference:
+  # Both retrieved from vendor/adtc-profiler/README.md. These are FIXED constants, not
+  # relative to other entrants: throughput above tps_reference earns nothing more.
+  tps_reference: 15.0
+  ram_limit_gb: 7.0
+  thermal_penalty_c: 85.0
+
+candidates:
+  - id: llama-3.2-1b-instruct-q4_k_m
+    label: "Llama 3.2 1B Instruct"
+    repo: bartowski/Llama-3.2-1B-Instruct-GGUF
+    file: Llama-3.2-1B-Instruct-Q4_K_M.gguf
+    params_estimate: "1.24B"
+    quant: Q4_K_M
+    file_mb: 770
+    licence: "Llama 3.2 Community License"
+    licence_source: "meta-llama/Llama-3.2-1B-Instruct card (retrieved 12 Aug 2026); base repo is gated=manual"
+    redistribution:
+      permits_rehosting: true
+      # All four verbatim from the Llama 3.2 Community License text, section 1.b.
+      obligations:
+        - "provide a copy of the Agreement with any redistributed Llama Materials"
+        - "prominently display 'Built with Llama' on a related website, UI, blogpost, about page, or product documentation"
+        - "any derivative AI model NAME must BEGIN with 'Llama'"
+        - "retain a Notice file: 'Llama 3.2 is licensed under the Llama 3.2 Community License, Copyright (c) Meta Platforms, Inc. All Rights Reserved.'"
+        - "comply with the Llama Acceptable Use Policy"
+      naming_conflict: >-
+        A re-hosted baked artifact CANNOT be called mhizha-llama-3.2-1b. The name must
+        begin with "Llama", so it would have to be e.g. Llama-3.2-1B-Mhizha-Q4_K_M.
+        This obligation applies only if we re-host a derivative; shipping the stock
+        upstream GGUF avoids it entirely.
+      verdict: "heaviest obligations of the six. Fine if we ship stock, awkward if we bake."
+    baseline: true
+    note: "Baseline. Already the product shortlist winner for the 4 GB phone profile."
+
+  - id: qwen3.5-0.8b-q4_k_m
+    label: "Qwen3.5 0.8B"
+    repo: unsloth/Qwen3.5-0.8B-GGUF
+    file: Qwen3.5-0.8B-Q4_K_M.gguf
+    params_estimate: "0.8B"
+    quant: Q4_K_M
+    file_mb: 508
+    licence: "Apache-2.0"
+    licence_source: "Qwen/Qwen3.5-0.8B and unsloth GGUF cards both declare apache-2.0 (retrieved 12 Aug 2026)"
+    redistribution:
+      permits_rehosting: true
+      obligations:
+        - "include the Apache-2.0 licence text"
+        - "include any NOTICE file from the original"
+        - "state that changes were made (we change tokenizer.chat_template)"
+      naming_conflict: null
+      verdict: "clean. No naming restriction, no trademark grant needed to re-host a derivative."
+    note: "Smallest candidate. Maximises S_eff; the question is whether accuracy holds."
+
+  - id: qwen3.5-2b-q4_k_m
+    label: "Qwen3.5 2B"
+    repo: unsloth/Qwen3.5-2B-GGUF
+    file: Qwen3.5-2B-Q4_K_M.gguf
+    params_estimate: "2B"
+    quant: Q4_K_M
+    file_mb: 1222
+    licence: "Apache-2.0"
+    licence_source: "Qwen/Qwen3.5-2B and unsloth GGUF cards both declare apache-2.0 (retrieved 12 Aug 2026)"
+    redistribution:
+      permits_rehosting: true
+      obligations:
+        - "include the Apache-2.0 licence text"
+        - "include any NOTICE file from the original"
+        - "state that changes were made"
+      naming_conflict: null
+      verdict: "clean."
+    note: "Hypothesised sweet spot: large enough to help accuracy, likely still >15 tok/s."
+
+  - id: qwen3.5-4b-q4_k_m
+    label: "Qwen3.5 4B"
+    repo: unsloth/Qwen3.5-4B-GGUF
+    file: Qwen3.5-4B-Q4_K_M.gguf
+    params_estimate: "4B"
+    quant: Q4_K_M
+    file_mb: 2614
+    licence: "Apache-2.0"
+    licence_source: "Qwen/Qwen3.5-4B and unsloth GGUF cards both declare apache-2.0 (retrieved 12 Aug 2026)"
+    redistribution:
+      permits_rehosting: true
+      obligations:
+        - "include the Apache-2.0 licence text"
+        - "include any NOTICE file from the original"
+        - "state that changes were made"
+      naming_conflict: null
+      verdict: "clean."
+    note: "Tests the accuracy-versus-efficiency trade directly. ~2.6 GB costs ~37 S_eff points."
+
+  - id: gemma-4-e2b-it-q4_k_m
+    label: "Gemma 4 E2B it"
+    repo: unsloth/gemma-4-E2B-it-GGUF
+    file: gemma-4-E2B-it-Q4_K_M.gguf
+    params_estimate: "2B"
+    quant: Q4_K_M
+    file_mb: 2963   # measured on disk after download, 11 Aug 2026
+    licence: "Apache-2.0"
+    licence_source: >-
+      google/gemma-4-E2B-it declares apache-2.0 (retrieved 12 Aug 2026). NOTE: this is a
+      change from Gemma 2 and 3, which shipped under the Gemma Terms of Use. An earlier
+      note in this file assumed Gemma Terms and was WRONG; corrected against the card.
+    redistribution:
+      permits_rehosting: true
+      obligations:
+        - "include the Apache-2.0 licence text"
+        - "include any NOTICE file from the original"
+        - "state that changes were made"
+      naming_conflict: null
+      verdict: >-
+        clean on licence, but verify on the model card again before submitting: the
+        unsloth GGUF repo also declares apache-2.0, and a repacker's label does not
+        override a base model's terms if the two ever disagree.
+    note: >-
+      E2B is the efficiency-oriented variant, but at 2963 MB it is the LARGEST file in
+      this bake-off, bigger than Qwen3.5-4B. The "E" naming does not mean a small
+      footprint here, and on the S_eff term that is a penalty before a token is
+      generated. (An earlier revision of this note also called the licence more
+      restrictive than Apache-2.0. That was wrong: Gemma 4 ships under Apache-2.0.)
+
+  - id: phi-4-mini-instruct-q4_k_m
+    label: "Phi-4-mini Instruct"
+    repo: unsloth/Phi-4-mini-instruct-GGUF
+    file: Phi-4-mini-instruct-Q4_K_M.gguf
+    params_estimate: "3.8B"
+    quant: Q4_K_M
+    file_mb: 2376
+    licence: "MIT"
+    licence_source: "microsoft/Phi-4-mini-instruct card declares mit (retrieved 12 Aug 2026)"
+    redistribution:
+      permits_rehosting: true
+      obligations:
+        - "include the MIT licence text and copyright notice"
+      naming_conflict: null
+      verdict: "most permissive of the six."
+    note: "Strong reasoning per parameter historically. MIT is the friendliest licence here."
+
+# Smoke-test model. Tiny, fast to download, used only to prove `make profile` runs the
+# official profiler end to end. Never a submission candidate.
+smoke:
+  id: smollm2-135m-instruct-q4_k_m
+  label: "SmolLM2 135M Instruct (smoke test only)"
+  repo: bartowski/SmolLM2-135M-Instruct-GGUF
+  file: SmolLM2-135M-Instruct-Q4_K_M.gguf
+  params_estimate: "135M"
+  quant: Q4_K_M
+  file_mb: 80
+  licence: "Apache-2.0"

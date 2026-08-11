@@ -1,0 +1,10 @@
+# sha256 of every downloaded bake-off candidate.
+# Regenerate with scripts/fetch_candidates.sh. Referenced by docs/BAKEOFF.md.
+# recorded: 2026-08-11T21:28:02Z
+740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8  gemma-4-e2b-it-q4_k_m.gguf  3106738272 bytes
+6f85a640a97cf2bf5b8e764087b1e83da0fdb51d7c9fab7d0fece9385611df83  llama-3.2-1b-instruct-q4_k_m.gguf  807694464 bytes
+88c00229914083cd112853aab84ed51b87bdf6b9ce42f532d8c85c7c63b1730a  phi-4-mini-instruct-q4_k_m.gguf  2491874272 bytes
+bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517  qwen3.5-0.8b-q4_k_m.gguf  532517120 bytes
+aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223  qwen3.5-2b-q4_k_m.gguf  1280835840 bytes
+00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4  qwen3.5-4b-q4_k_m.gguf  2740937888 bytes
+2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d  smollm2-135m-instruct-q4_k_m.gguf  105454432 bytes

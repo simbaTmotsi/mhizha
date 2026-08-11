@@ -1,0 +1,42 @@
+[
+  {
+    "chunk_id": "placeholder-pest-identification-md-ab7ca4ae#0000",
+    "doc_id": "placeholder-pest-identification-md-ab7ca4ae",
+    "text": "# Pest identification and management (PLACEHOLDER)\n\nTHIS DOCUMENT IS A PLACEHOLDER. It names no pest, states no threshold, recommends no\nproduct, and gives no rate. It exists to exercise the pipeline.\n\n## Why this file is empty of specifics\n\nPest management content is the highest-risk category in this corpus. A wrong\nidentification sends a farmer to the wrong intervention. A wrong product sends them to a\nchemical that may be banned, ineffective, or harmful. A wrong rate can damage the crop,\nthe soil, or the person applying it. None of that is worth guessing at, so nothing is\nguessed at here.\n\n## Structure to be filled from a validated source\n\nThe real document will hold, per pest: the local names in English, Shona, and Ndebele,\nthe crop stages at risk, the visible symptoms a farmer can check in the field without\nequipment, the distinguishing features against pests that look similar, the economic\nthreshold at which intervention is justified, non-chemical options first, and only then\nregistered chemical options with their exact label rates.",
+    "ordinal": 0,
+    "char_start": 0,
+    "char_end": 1055,
+    "anchor": "Pest identification and management (PLACEHOLDER)",
+    "source": "PLACEHOLDER: Pest identification and management structure",
+    "publisher": "Mhizha project (placeholder, not an agronomic authority)",
+    "refresh_date": "2026-08-11",
+    "lang": "en",
+    "crop": "maize",
+    "region": "national",
+    "season": "summer",
+    "topic": "pest-management",
+    "placeholder": true,
+    "validated": false,
+    "text_sha256": "51b6e5bad9a1bb3ddee986d4d92d1b710cf16a8f9fb3f715117a101b3da15153"
+  },
+  {
+    "chunk_id": "placeholder-pest-identification-md-ab7ca4ae#0001",
+    "doc_id": "placeholder-pest-identification-md-ab7ca4ae",
+    "text": "ention is justified, non-chemical options first, and only then\nregistered chemical options with their exact label rates.\n\n## Chemical control\n\nNo chemical control information is recorded in this placeholder. Product names, active\ningredients, application rates, mixing instructions, pre-harvest intervals, and re-entry\nperiods must come from the current registered product label and from Plant Protection\nResearch Institute guidance. Mhizha will not state any of these figures unless they are\npresent verbatim in a validated passage it can show the farmer.\n\n## Correct behaviour today\n\nIf a farmer asks for a spray rate or a product name, Mhizha must refuse, explain that it\nhas no validated source for that, and refer them to the product label and their local\nAGRITEX extension officer. The gap is registered as G-03 in data/SOURCES.md.",
+    "ordinal": 1,
+    "char_start": 1056,
+    "char_end": 1772,
+    "anchor": "Chemical control",
+    "source": "PLACEHOLDER: Pest identification and management structure",
+    "publisher": "Mhizha project (placeholder, not an agronomic authority)",
+    "refresh_date": "2026-08-11",
+    "lang": "en",
+    "crop": "maize",
+    "region": "national",
+    "season": "summer",
+    "topic": "pest-management",
+    "placeholder": true,
+    "validated": false,
+    "text_sha256": "7245613715cd27f243a75a8431d9b444daa2d293607794ec73f1eee9dd57ebe8"
+  }
+]

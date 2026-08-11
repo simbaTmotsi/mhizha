@@ -1,0 +1,37 @@
+# Derived artefacts. Rebuildable from data/corpus/ and config.yaml.
+data/index/
+data/raw/
+!data/raw/.gitkeep
+
+# Model weights. Never commit these.
+models/
+*.gguf
+*.onnx
+*.safetensors
+*.bin
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+
+# Eval output
+eval/reports/
+
+# ---- ADTC 2026 competition ----
+# Submission model: the evaluator downloads it fresh via download_model.sh.
+# Required by the template rules: "No model weights in git."
+model/
+!model/.gitkeep
+
+# Bake-off candidates (several GB) and archived profiler runs.
+models/bakeoff/
+runs/
+
+# Profiler output at the repo root, if run manually rather than through make profile.
+submission.json
+audit.json
+verdict.json
