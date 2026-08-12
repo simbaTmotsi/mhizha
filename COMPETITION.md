@@ -1281,6 +1281,57 @@ labels telemetry after it, so the clause cannot be invoked early or forgotten la
 
 ---
 
+## 9h. The report figure rule
+
+**Numeric figures enter `REPORT.md` only via `scripts/report_figures.py`, never typed by
+hand.** Enforced in the doc-regression suite alongside the superseded-rules registry.
+
+A hand-typed number arrives without its caveat. The value gets copied, the "single
+unscreened run" or "shared host, not quotable" does not, and six sections later nobody can
+tell which run produced it or whether it still holds. That is not hypothetical here: this
+project has already retracted a 2.11x SIMD figure and a conservative-figure rule, and both
+survived in prose after the evidence had moved.
+
+### Three categories, and nothing else
+
+| Category | Requirement | Declared in |
+|---|---|---|
+| **measured** | present in `report_figures.py --manifest`, traceable to a run id under `runs/` | generated, never hand-edited |
+| **retrieved** | an official constant, with the file it was read from | `competition/report_constants.yaml` |
+| **derived** | an arithmetic implication, with its formula and inputs | `competition/report_constants.yaml` |
+
+Anything else fails the build. The test extracts every number in a measurement context
+(`tok/s`, `MB`, `GB`, `%`, `x`, minutes, seconds) from `REPORT.md` and requires each to
+appear in one of the three.
+
+### It caught something immediately
+
+The rule's first run flagged `4.50 tok/s`, quoted in section 4.2. The figure was real, but
+its profiler run had been written to a scratch directory during the bake-at-download
+validation and **never archived**. So the report was quoting a number no run record backed.
+The run is now archived under
+`runs/20260811T235500Z_profiler_bake-at-download-validation` with `host_class: shared` and
+an explicit note that one unscreened repetition on a shared VPS is not submittable
+telemetry.
+
+That is exactly the failure mode the rule exists for: not a wrong number, but a number
+whose provenance had evaporated.
+
+### Implied latency
+
+If the section 9g fallback fires, latency may appear **only as an arithmetic implication
+of the FALLBACK throughput**, declared under `derived_latency` with its formula and
+labelled **estimate** in the prose. Measured-latency language is reserved for physical
+runs. A test fails the build if `REPORT.md` uses phrases like "measured latency" while no
+run is stamped `latency_quotable`.
+
+The asymmetry is deliberate. A throughput fallback is defensible because the audit measures
+throughput the same way we do, only on different hardware. There is no equivalent argument
+for latency: a judge's experience depends on the topology they run on, and an implication
+derived from our throughput is an estimate however carefully it is computed.
+
+---
+
 ## 10. Fine-tuning stance
 
 **Not started, and not started this session.** Gate 1 ships a stock or template-baked

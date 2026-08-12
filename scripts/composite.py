@@ -79,11 +79,20 @@ def accuracy_band(tasks: dict) -> tuple[float, float, float]:
     return mean * 100, max(0.0, (mean - 1.96 * se)) * 100, min(1.0, (mean + 1.96 * se)) * 100
 
 
-def perf_band(bench_summary: dict) -> tuple[float, float, float]:
-    """(median, low, high) S_perf from measured throughput min/max."""
+OFFICIAL_IMAGE = "adtc-profiler:latest"
+
+
+def perf_band(bench_summary: dict) -> tuple[float, float, float] | None:
+    """(median, low, high) S_perf from measured throughput min/max, or None if unmeasured.
+
+    Returns None rather than zero for a candidate with no throughput data. An earlier
+    version returned 0.0, which silently charged five candidates the full 30% weight for
+    never having been benchmarked and produced a finalist set of one that was an artefact
+    of missing data, not a measurement.
+    """
     median = bench_summary.get("median_generation_tok_s")
     if median is None:
-        return 0.0, 0.0, 0.0
+        return None
     lo = bench_summary.get("min", median)
     hi = bench_summary.get("max", median)
     to_score = lambda tps: min(tps / TPS_REFERENCE, 1.0) * 100
@@ -102,6 +111,10 @@ def main() -> int:
     ap.add_argument("--bench", type=Path)
     ap.add_argument("--auto", action="store_true")
     ap.add_argument("--rss", type=Path, help="optional JSON of {candidate: peak_rss_mb}")
+    ap.add_argument("--allow-non-official", action="store_true",
+                    help="permit a bench file from a non-official image. Only for a "
+                         "labelled comparison, never for a ranking that informs the "
+                         "submission.")
     ap.add_argument("--latency-from", type=Path,
                     help="optional chat.json to annotate rows with judge-real latency. "
                          "REFUSED unless the run is stamped latency_quotable.")
@@ -119,6 +132,19 @@ def main() -> int:
 
     lmeval = json.loads(lmeval_path.read_text(encoding="utf-8"))
     bench = json.loads(bench_path.read_text(encoding="utf-8"))
+
+    # Provenance guard. --auto takes the newest bench file, which once selected the
+    # never-submitted native AVX2 build. A ranking built on a build we have promised not
+    # to submit is not a ranking of the thing we are submitting.
+    bench_image = bench.get("image")
+    if bench_image != OFFICIAL_IMAGE and not args.allow_non_official:
+        print(f"error: {bench_path} was produced by {bench_image!r}, not "
+              f"{OFFICIAL_IMAGE!r}.\n"
+              f"  Throughput for ranking must come from the official image "
+              f"(COMPETITION.md section 11).\n"
+              f"  Pass --allow-non-official only for an explicitly labelled comparison.",
+              file=sys.stderr)
+        return 2
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     sizes = {c["id"]: c.get("file_mb") for c in manifest["candidates"]}
     rss_override = json.loads(args.rss.read_text()) if args.rss else {}
@@ -141,7 +167,15 @@ def main() -> int:
             rows.append({"id": candidate, "error": acc_row["error"]})
             continue
         acc, acc_lo, acc_hi = accuracy_band(acc_row.get("tasks", {}))
-        perf, perf_lo, perf_hi = perf_band((bench.get("summary") or {}).get(candidate, {}))
+        band = perf_band((bench.get("summary") or {}).get(candidate, {}))
+        if band is None:
+            rows.append({
+                "id": candidate,
+                "accuracy_proxy": round(acc, 2),
+                "incomplete": "no throughput measurement; not ranked",
+            })
+            continue
+        perf, perf_lo, perf_hi = band
 
         # Without a measured RSS, approximate from file size: weights dominate resident
         # set for a mmap'd GGUF. Flagged as an estimate in the output.
@@ -165,9 +199,21 @@ def main() -> int:
         })
 
     scored = [r for r in rows if "composite" in r]
+    incomplete = [r for r in rows if "incomplete" in r]
     if not scored:
         print("error: no candidate produced a composite", file=sys.stderr)
+        if incomplete:
+            print(f"  {len(incomplete)} candidate(s) lack throughput data: "
+                  f"{', '.join(r['id'] for r in incomplete)}", file=sys.stderr)
+            print("  Run: make bench CANDIDATE=all REPS=3", file=sys.stderr)
         return 1
+    if incomplete:
+        print(f"WARNING: {len(incomplete)} of {len(rows)} candidates are NOT RANKED for "
+              f"want of throughput data:", file=sys.stderr)
+        for row in incomplete:
+            print(f"  {row['id']}", file=sys.stderr)
+        print("  The tie cluster below is drawn from the ranked subset only and is "
+              "provisional until they are measured.\n", file=sys.stderr)
     scored.sort(key=lambda r: r["composite"], reverse=True)
 
     # Tie rule: overlap with the leader's band. Not "within X points", which would be an
@@ -186,6 +232,9 @@ def main() -> int:
         "constants": {"tps_reference": TPS_REFERENCE, "ram_limit_gb": RAM_LIMIT_GB},
         "rows": scored,
         "errors": [r for r in rows if "error" in r],
+        "not_ranked_missing_throughput": [r["id"] for r in incomplete],
+        "ranking_complete": not incomplete,
+        "bench_image": bench_image,
         "finalists": [r["id"] for r in finalists],
         "tie_rule": "composite band overlaps the leader's band",
         "latency": ("omitted: no quotable run" if latency is None

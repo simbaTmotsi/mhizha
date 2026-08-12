@@ -1,0 +1,113 @@
+# Numbers REPORT.md may state that are NOT measurements.
+#
+# THE FIGURE RULE (COMPETITION.md section 9h)
+# -------------------------------------------
+# Every measurement-context number in REPORT.md must fall into exactly one of:
+#
+#   measured   present in `report_figures.py --manifest`, traceable to a run id.
+#              Never typed by hand.
+#   retrieved  a constant from an official source, declared HERE with that source.
+#   derived    an arithmetic implication of measured or retrieved values, declared HERE
+#              with its formula and inputs, and labelled `estimate` in the prose.
+#
+# Anything else fails the doc-regression suite. The point is not bureaucracy: it is that a
+# number typed by hand arrives without its caveat, and six sections later nobody can tell
+# which run produced it or whether it still holds.
+
+retrieved:
+  - value: "15.0"
+    means: "TPS_REFERENCE"
+    source: "vendor/adtc-profiler/README.md scoring table"
+  - value: "7.0"
+    means: "RAM_LIMIT_GB"
+    source: "vendor/adtc-profiler/README.md scoring table"
+  - value: "85"
+    means: "thermal penalty threshold, degrees C"
+    source: "vendor/adtc-profiler/src/adtc_profiler/thermal.py"
+  - value: "8"
+    means: "Standard Laptop profile RAM, GB"
+    source: "vendor/adtc-2026-submission-template/README.md"
+  - value: "4"
+    means: "Standard Laptop profile vCPU count"
+    source: "vendor/adtc-2026-submission-template/README.md"
+  - value: "50"
+    means: "accuracy weight (%), and separately the Gate 2 hard-fail bound (%)"
+    source: "vendor/adtc-profiler/README.md; comparator.py FAIL_PCT"
+  - value: "30"
+    means: "throughput weight (%)"
+    source: "vendor/adtc-profiler/README.md"
+  - value: "20"
+    means: "efficiency weight (%)"
+    source: "vendor/adtc-profiler/README.md"
+  - value: "25"
+    means: "Gate 2 throughput tolerance (%)"
+    source: "vendor/adtc-profiler/src/adtc_profiler/comparator.py TOLERANCES"
+  - value: "15"
+    means: "Gate 2 memory tolerance (%)"
+    source: "vendor/adtc-profiler/src/adtc_profiler/comparator.py TOLERANCES"
+  - value: "2048"
+    means: "profiler accuracy context length"
+    source: "vendor/adtc-profiler/src/adtc_profiler/accuracy.py _N_CTX"
+
+derived:
+  - value: "0.667"
+    formula: "1 / 1.5"
+    means: "lower edge of the Gate 2 pass band, as a fraction of the audit value"
+    inputs: "FAIL_PCT 50 (retrieved)"
+  - value: "1.5"
+    formula: "1 / 0.667"
+    means: "the error multiple at which underclaiming fails"
+    inputs: "FAIL_PCT 50 (retrieved)"
+  - value: "2"
+    formula: "1 / 0.5"
+    means: "the error multiple at which overclaiming fails"
+    inputs: "FAIL_PCT 50 (retrieved)"
+  - value: "1.30"
+    formula: "native median / official median = 5.59 / 4.29"
+    means: "SIMD penalty, ratio of screened medians"
+    inputs: "bench medians (measured)"
+    label_required: "measured ratio of measured medians"
+  - value: "1.3"
+    formula: "same as 1.30, rounded in prose"
+    means: "SIMD penalty"
+    inputs: "bench medians (measured)"
+  - value: "40"
+    formula: "6.01 / 15.0 * 100"
+    means: "best observed throughput as a percentage of the reference"
+    inputs: "6.01 (measured), 15.0 (retrieved)"
+  - value: "35"
+    formula: "(4.91 - 3.42) / 4.29 * 100"
+    means: "pooled spread across five official-image samples"
+    inputs: "bench samples (measured)"
+  - value: "27"
+    formula: "27.8 rounded in prose"
+    means: "within-tool spread"
+    inputs: "27.8 (measured)"
+  - value: "2.47"
+    formula: "4.50 / 1.82"
+    means: "generation ratio between the two original outlier runs"
+    inputs: "both measured, both single unscreened runs"
+  - value: "2.5"
+    formula: "2.47 rounded in prose"
+    means: "the original apparent gap"
+    inputs: "2.47 (derived)"
+  - value: "0.00"
+    formula: "observed steal, reported as measured zero"
+    means: "CPU steal during screened repetitions"
+    inputs: "bench host.steal_pct (measured)"
+
+# Latency implied arithmetically from throughput. Permitted ONLY as an estimate, and only
+# when no measured latency exists. See COMPETITION.md section 9g: if the fallback fires,
+# latency may appear solely as an implication of the FALLBACK throughput, labelled
+# `estimate`. Measured-latency language is reserved for physical runs.
+derived_latency:
+  - value: "1.2"
+    formula: "300 tokens / 4.29 tok/s / 60"
+    means: "minutes for a 300-token answer at the pooled median throughput"
+    inputs: "4.29 tok/s (measured)"
+    label_required: "estimate"
+  - value: "14"
+    formula: "300 / (4.29 / 5) / 60, scaling by parameter ratio"
+    means: "minutes for a 300-token answer on a 4B, ESTIMATE"
+    inputs: "4.29 tok/s (measured), parameter ratio (estimate)"
+    label_required: "estimate"

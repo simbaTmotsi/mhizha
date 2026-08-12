@@ -152,10 +152,74 @@ def gather(today: date | None = None) -> dict:
     }
 
 
+def numeric_manifest(today: date | None = None) -> dict:
+    """Every numeric value REPORT.md is permitted to state, with its provenance.
+
+    THE RULE (COMPETITION.md section 9h): a measured figure enters REPORT.md only if it
+    appears here. Typing a number by hand is how a value arrives without its caveat, and
+    how nobody can tell six sections later which run produced it.
+
+    Values are keyed as STRINGS exactly as they should appear in prose, because the check
+    is a textual one against the document.
+    """
+    report = gather(today)
+    manifest: dict[str, str] = {}
+
+    def add(value, provenance: str, places: tuple[int, ...] = (0, 1, 2)) -> None:
+        if value is None:
+            return
+        for digits in places:
+            manifest[f"{float(value):.{digits}f}".rstrip("0").rstrip(".")
+                      if digits else f"{float(value):.0f}"] = provenance
+            manifest[f"{float(value):.{digits}f}"] = provenance
+
+    # Accuracy proxy, per candidate.
+    accuracy = report["figures"].get("accuracy_proxy", {})
+    for candidate, mean in (accuracy.get("results") or {}).items():
+        if mean is not None:
+            add(mean * 100, f"accuracy_proxy/{candidate}/{accuracy.get('source')}")
+            add(mean, f"accuracy_proxy/{candidate}/{accuracy.get('source')}")
+
+    # Throughput, from every archived screened bench run.
+    for bench_path in sorted(RUNS.glob("*_bench*/bench.json")):
+        data = _load(bench_path) or {}
+        origin = f"bench/{bench_path.parent.name}"
+        for candidate, summary in (data.get("summary") or {}).items():
+            for key in ("median_generation_tok_s", "min", "max", "spread_pct_of_median"):
+                add(summary.get(key), f"{origin}/{candidate}/{key}")
+
+    # Profiler telemetry from archived runs.
+    for run_path in sorted(RUNS.glob("*/run.json")):
+        data = _load(run_path) or {}
+        score = data.get("score") or {}
+        origin = f"profiler/{run_path.parent.name}"
+        for key in ("tokens_per_second", "peak_rss_mb", "peak_rss_gb", "s_perf", "s_eff"):
+            add(score.get(key), f"{origin}/{key}")
+
+    # SIMD comparison.
+    for simd_path in sorted(RUNS.glob("*_simd_*/simd_summary.json")):
+        data = _load(simd_path) or {}
+        origin = f"simd/{simd_path.parent.name}"
+        for section in ("official_image", "native_avx2_image"):
+            for key, value in (data.get(section) or {}).items():
+                add(value, f"{origin}/{section}/{key}")
+        for key in ("speedup_generation", "speedup_prompt"):
+            add(data.get(key), f"{origin}/{key}")
+
+    return {"manifest": manifest, "report": report}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--manifest", action="store_true",
+                    help="emit every number REPORT.md may state, with provenance")
     args = ap.parse_args()
+
+    if args.manifest:
+        data = numeric_manifest()
+        print(json.dumps(data["manifest"], indent=2, sort_keys=True))
+        return 0
 
     report = gather()
     if args.json:

@@ -3,9 +3,13 @@
 **ADTC 2026 Laptop LLM track. Domain: agriculture.**
 
 > **STATUS: SKELETON.** Numbers marked `[PENDING …]` land as measurements complete.
-> Every figure in the finished document carries a label:
-> **measured** (with a run id under `runs/`), **retrieved** (with a source), or
-> **estimate** (and flagged as such). Nothing ships without one.
+>
+> **Figure rule (enforced by the test suite, COMPETITION.md section 9h):** every numeric
+> figure here is **measured** (emitted by `scripts/report_figures.py` from a run under
+> `runs/`), **retrieved** (an official constant, declared with its source), or **derived**
+> (an arithmetic implication, declared with its formula and labelled *estimate*). Nothing
+> is typed by hand. `python3 scripts/report_figures.py` lists what is currently available
+> and what is blocked, with reasons.
 
 ---
 
@@ -153,6 +157,13 @@ session, which is a 50%-weight consequence arriving through a term nothing measu
 ### 4.1 Headline
 
 `[PENDING: final telemetry from the O-12 physical machine]`
+
+If no physical machine is available by **18 August 2026**, these fall back to VPS screened
+medians under the central-estimate rule, labelled `FALLBACK`, with the measured spread
+stated beside each figure (COMPETITION.md section 9g). **Latency does not fall back.**
+Under the fallback this report carries no latency figure except an arithmetic implication
+of the fallback throughput, explicitly labelled *estimate*; measured-latency language is
+reserved for runs on physical hardware.
 
 | Metric | Value | Source |
 |---|---|---|

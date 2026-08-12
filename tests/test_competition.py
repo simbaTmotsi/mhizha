@@ -1475,3 +1475,121 @@ def test_chain_is_serial_and_orders_composite_before_o13() -> None:
     # The qualitative pass must not be chained: it needs the physical machine.
     assert "judge_chat.py" not in body
     assert "ab_template.py" not in body
+
+
+# ---------------------------------------------------------------- report figure rule
+#
+# COMPETITION.md section 9h: a measured figure enters REPORT.md only via
+# report_figures.py. A hand-typed number arrives without its caveat, and six sections
+# later nobody can tell which run produced it or whether it still holds.
+
+
+def _report_numbers() -> dict[str, set[str]]:
+    """Numbers appearing in a measurement context in REPORT.md."""
+    import re
+
+    doc = (REPO / "REPORT.md").read_text(encoding="utf-8")
+    # Strip inline code and fenced blocks: those quote commands and schema, not claims.
+    doc = re.sub(r"```.*?```", "", doc, flags=re.DOTALL)
+    doc = re.sub(r"`[^`]*`", "", doc)
+    pattern = re.compile(
+        r"\*?\*?(\d+(?:\.\d+)?)\*?\*?\s*"
+        r"(tok/s|MB|GB|%|x\b|minutes|min\b|seconds|degrees C)"
+    )
+    found: dict[str, set[str]] = {}
+    for match in pattern.finditer(doc):
+        found.setdefault(match.group(1), set()).add(match.group(2))
+    return found
+
+
+@pytest.fixture(scope="module")
+def figure_sources():
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    constants = yaml.safe_load(
+        (REPO / "competition" / "report_constants.yaml").read_text(encoding="utf-8"))
+    manifest = module.numeric_manifest()["manifest"]
+    declared = {}
+    for group in ("retrieved", "derived", "derived_latency"):
+        for entry in constants.get(group) or []:
+            declared[str(entry["value"])] = (group, entry)
+    return {"manifest": manifest, "declared": declared, "constants": constants}
+
+
+def test_every_report_figure_has_a_declared_source(figure_sources) -> None:
+    """No number is typed by hand without provenance.
+
+    Each must be measured (in the manifest, traceable to a run), retrieved (an official
+    constant, declared with its source), or derived (an arithmetic implication, declared
+    with its formula).
+    """
+    manifest, declared = figure_sources["manifest"], figure_sources["declared"]
+    undeclared = []
+    for value, units in sorted(_report_numbers().items()):
+        if value in manifest or value in declared:
+            continue
+        undeclared.append((value, sorted(units)))
+    assert not undeclared, (
+        "REPORT.md states figures with no declared source: "
+        + ", ".join(f"{v} ({'/'.join(u)})" for v, u in undeclared)
+        + ".\n  Either it is MEASURED (add the run to runs/ so report_figures.py emits "
+        "it), RETRIEVED (declare it in competition/report_constants.yaml with its "
+        "source), or DERIVED (declare it with its formula). "
+        "COMPETITION.md section 9h."
+    )
+
+
+def test_derived_constants_declare_a_formula(figure_sources) -> None:
+    for group in ("derived", "derived_latency"):
+        for entry in figure_sources["constants"].get(group) or []:
+            assert entry.get("formula"), f"{entry['value']} is derived but states no formula"
+            assert entry.get("inputs"), f"{entry['value']} is derived but names no inputs"
+
+
+def test_retrieved_constants_cite_a_source(figure_sources) -> None:
+    for entry in figure_sources["constants"]["retrieved"]:
+        assert entry.get("source"), f"{entry['value']} is retrieved but cites no source"
+        assert entry.get("means"), f"{entry['value']} does not say what it is"
+
+
+def test_implied_latency_is_labelled_estimate(figure_sources) -> None:
+    """Directive: if the fallback fires, latency may appear only as an arithmetic
+    implication of the FALLBACK throughput, labelled estimate. Measured-latency language
+    is reserved for physical runs."""
+    for entry in figure_sources["constants"]["derived_latency"]:
+        assert entry.get("label_required") == "estimate", (
+            f"{entry['value']} is an implied latency and must be labelled estimate"
+        )
+
+
+def test_report_reserves_measured_language_for_physical_runs() -> None:
+    """No sentence may call a latency figure 'measured' while none is quotable."""
+    import re
+
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    quotable = module.gather()["figures"].get("judge_latency")
+
+    doc = (REPO / "REPORT.md").read_text(encoding="utf-8")
+    flat = re.sub(r"\s+", " ", doc)
+    claims = re.findall(r"measured latency|latency we measured|measured per-turn", flat,
+                        re.IGNORECASE)
+    if not quotable:
+        assert not claims, (
+            f"REPORT.md uses measured-latency language {claims} while no run is stamped "
+            "latency_quotable. Implied latency must be labelled estimate instead "
+            "(COMPETITION.md section 9g)."
+        )
+
+
+def test_figure_rule_is_in_the_doc_regression_suite() -> None:
+    """The rule itself must be documented, not only enforced."""
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "report_figures.py" in flat
+    assert "never typed by hand" in flat
