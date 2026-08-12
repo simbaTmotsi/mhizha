@@ -1,0 +1,28 @@
+{
+  "derived_from": {
+    "throughput.py": "04d240a2afe4b199e7ae4faca0dbfeeda88603cbe2faa08e32fcfbd82fb17aa5",
+    "accuracy.py": "ff5fd5cbda88146495f89afd87de0bcf9251099e9d44360ef00f2803b4b335d1"
+  },
+  "llama_bench": {
+    "always_passed": [
+      "--output",
+      "-m",
+      "-n",
+      "-ngl",
+      "-p"
+    ],
+    "conditionally_passed": [
+      "-t"
+    ],
+    "entry_point_supplies_conditional": false,
+    "effective_allowed": [
+      "--output",
+      "-m",
+      "-n",
+      "-ngl",
+      "-p"
+    ]
+  },
+  "accuracy_n_ctx": 2048,
+  "note": "ALLOWED = effective_allowed. Anything else is a fidelity violation on any run feeding a submitted number. Derived from source, not hand-listed, so a flag nobody anticipated is still caught."
+}

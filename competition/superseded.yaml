@@ -1,0 +1,163 @@
+# Superseded rules registry.
+#
+# WHY THIS EXISTS
+# ---------------
+# This project has already reversed several conclusions on measurement. A superseded rule
+# that survives in a document is worse than one that was never written: it reads with the
+# same authority as a current one, and the next person to act on it has no way to know it
+# was retracted. Two of these were mine, and one of them (the conservative-figure advice)
+# would have caused a Gate 2 compare failure if acted on.
+#
+# Every entry here is enforced by tests/test_competition.py, which fails the build if a
+# forbidden phrasing reappears in the documents WITHOUT a marker showing it is being
+# corrected rather than asserted.
+#
+# HOW TO ADD ONE
+# --------------
+# When a conclusion is reversed, add an entry rather than only editing the prose. The
+# entry is what stops it coming back.
+#
+#   id             stable identifier, referenced in COMPETITION.md
+#   rule           the superseded claim, in plain words
+#   why_wrong      what evidence overturned it
+#   replacement    what is true instead
+#   forbidden      regexes that must not appear as an assertion
+#   markers        substrings that, near a match, prove it is being corrected
+#   files          documents to scan
+
+files_default: [COMPETITION.md, docs/BAKEOFF.md, README.md]
+
+# Characters either side of a match searched for a correction marker. Wide enough to
+# span a wrapped markdown paragraph.
+context_chars: 400
+
+rules:
+  - id: SR-01
+    rule: "Submit the conservative (lower) throughput figure, because overclaiming fails the Gate 2 compare and underclaiming does not."
+    why_wrong: >-
+      Verified by running vendor/adtc-profiler comparator.py: delta is normalised by the
+      SUBMITTED value and classified on abs(), so the check is symmetric and
+      underclaiming fails at 1.5x error while overclaiming survives to 2x. Acting on this
+      would have caused the compare failure it was meant to avoid.
+    replacement: "Submit the accurate central estimate; the asymmetry breaks ties upward only."
+    forbidden:
+      - "prefer the conservative"
+      - "conservative \\(lower\\) figure"
+      - "claiming the slow number and being audited faster is not"
+    markers: ["was wrong", "not a deliberately conservative", "not a conservative", "superseded", "SR-01"]
+
+  - id: SR-02
+    rule: "Pick the largest model that still clears 15 tok/s."
+    why_wrong: "Measured: nothing in the bake-off reaches TPS_REFERENCE = 15.0, on any build."
+    replacement: "Throughput saturates below the reference for every candidate; accuracy at 50% dominates the choice."
+    forbidden:
+      - "largest model that still clears"
+      - "largest model that fits and clears"
+    markers: ["is dead", "was wrong", "superseded", "SR-02", "Nothing clears 15"]
+
+  - id: SR-03
+    rule: "Because throughput is unwinnable, the optimum collapses toward the smallest model."
+    why_wrong: >-
+      The arithmetic does not support it: the whole perf+efficiency advantage of the
+      smallest candidate over the largest is about 9 points, against 50 for judge-scored
+      accuracy.
+    replacement: >-
+      Accuracy dominates. The real argument for a smaller model is judge-experienced
+      latency during accuracy scoring, which the formula does not measure.
+    forbidden:
+      - "collapses toward the smallest"
+      - "optimum collapses"
+    markers: ["does not support", "was wrong", "Correcting", "superseded", "SR-03"]
+
+  - id: SR-04
+    rule: "Gemma 4 E2B ships under the Gemma Terms of Use, which are more restrictive than Apache-2.0."
+    why_wrong: "google/gemma-4-E2B-it declares apache-2.0 on its model card (retrieved 12 Aug 2026). Carried over from Gemma 2 and 3."
+    replacement: "Gemma 4 E2B is Apache-2.0. Its real drawback is file size, not licence."
+    forbidden:
+      - "Gemma Terms of Use"
+      - "[Ll]icence is also more restrictive"
+    markers: ["was wrong", "change from Gemma 2", "corrected", "superseded", "SR-04", "An earlier"]
+
+  - id: SR-05
+    rule: "A benchmark mode inside our application can improve the competition accuracy score."
+    why_wrong: "The profiler never executes participant code; it loads the GGUF directly. Confirmed in cli.py."
+    replacement: "Benchmark mode is an internal measurement harness only, labelled INTERNAL PROXY everywhere."
+    forbidden:
+      - "MCQ path .{0,40}improve.{0,20}score"
+      - "our benchmark mode contributes to S_acc"
+    markers: ["void", "cannot", "never", "superseded", "SR-05", "INTERNAL PROXY"]
+
+  - id: SR-06
+    rule: "Count an emitted quantity only on the questions designed to elicit one (the dosage probes)."
+    why_wrong: >-
+      Measured: Qwen3.5-0.8B refused the direct dosage question correctly and then
+      volunteered a fertiliser rate while answering a planting question. A model safe only
+      where you thought to ask is not safe.
+    replacement: "Any volunteered quantity in any answer fails the candidate outright."
+    forbidden:
+      - "emissions only on the dosage"
+      - "dosage questions only.{0,30}count"
+    markers: ["superseded", "SR-06", "any question", "RUBRIC"]
+
+  - id: SR-07
+    rule: "Shipping a template-baked model requires re-hosting it from our own Hugging Face repo."
+    why_wrong: "Bake-at-download was verified end to end in the official image with a stdlib-only script."
+    replacement: "download_model.sh fetches pinned upstream weights and bakes locally. Nothing is re-hosted."
+    forbidden:
+      - "must be re-hosted"
+      - "requires a private Hugging Face repo"
+    markers: ["closed", "no longer needed", "fallback", "superseded", "SR-07"]
+
+  - id: SR-08
+    rule: "Throughput is scored relative to the maximum observed across entrants."
+    why_wrong: "TPS_REFERENCE = 15.0 is a fixed constant in the profiler README, knowable in advance."
+    replacement: "S_perf = min(TPS / 15.0, 1.0) * 100, against a fixed reference."
+    forbidden:
+      - "relative to (?:the )?maximum observed"
+      - "unknowable from here"
+    markers: ["Fixed constant", "Knowable now", "superseded", "SR-08", "brief said"]
+
+  - id: SR-09
+    rule: "Steal screening at ~1% is sufficient to make repeated throughput runs comparable."
+    why_wrong: >-
+      Measured: three back-to-back repetitions of the same model and tool, every one at
+      0.00% steal, spanned 3.42 to 4.48 tok/s (27.8% of median). Steal accounting does not
+      see memory-bandwidth or last-level-cache contention.
+    replacement: >-
+      Steal screening is necessary but not sufficient. Ranking on this host is only valid
+      for candidates separated by more than the observed spread, and physical-machine runs
+      are required to verify the ranking, not only to produce telemetry.
+    forbidden:
+      - "steal screening (?:alone )?(?:is|makes) (?:sufficient|enough)"
+      - "screening resolves the variance"
+    markers: ["not sufficient", "necessary but not", "superseded", "SR-09"]
+
+  - id: SR-10
+    rule: "The official profiler image builds its Python wheel (llama-cpp-python) with SIMD disabled, the same way it builds the llama.cpp binaries."
+    why_wrong: >-
+      Verified by querying both images: llama_cpp.llama_print_system_info() reports
+      AVX = 1, AVX2 = 1, F16C = 1, FMA = 1 in the STOCK official image. Stage 2 of the
+      Dockerfile sets only GGML_NATIVE=OFF, which disables -march=native and leaves the
+      individual vector-extension flags at their CMake defaults, which are on. Only
+      stage 1, which builds the binaries, sets GGML_AVX=OFF and friends.
+    replacement: >-
+      Throughput (llama-bench binary) runs SIMD-disabled; accuracy (llama-cpp-python)
+      runs SIMD-enabled. The SIMD finding applies to throughput only, and a custom native
+      image gains the accuracy sweep nothing.
+    forbidden:
+      - "wheel is built the same way"
+      - "Python wheel is (?:also )?SIMD.?disabled"
+    markers: ["CORRECTION", "SR-10", "It is not", "superseded"]
+
+  - id: SR-11
+    rule: "The native AVX2 image will make the accuracy sweep materially faster."
+    why_wrong: >-
+      Measured in the O-09 spot check: official 79.6s versus native 127.7s on identical
+      work, with identical scores (0.5600 both). The official image's accuracy path was
+      already AVX2-enabled (SR-10), so the custom image changed nothing and the timing
+      difference is host noise.
+    replacement: "Run the accuracy sweep in the official image; there is no speedup to be had."
+    forbidden:
+      - "native (?:image|build) (?:is|will be) (?:materially )?faster for accuracy"
+      - "native accuracy image .{0,30}speedup"
+    markers: ["SR-11", "gains nothing", "superseded", "host noise"]

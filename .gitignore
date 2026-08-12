@@ -35,3 +35,6 @@ runs/
 submission.json
 audit.json
 verdict.json
+
+# lm-eval dataset cache (build time, several hundred MB)
+.cache/

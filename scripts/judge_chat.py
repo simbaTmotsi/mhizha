@@ -15,6 +15,11 @@ Every one of those choices is deliberate:
   - --memory=7.5g --cpus=4, matching the audit sandbox
   - no system message, because a judge typing into a chat box does not send one, which is
     exactly what makes the GGUF's embedded template the only channel we control
+  - NO -t FLAG. This previously passed `-t 4`, which was a fidelity violation: the judges'
+    harness has no reason to pass it, so llama-server spawns threads from the host CPU
+    count under a 4-CPU quota exactly as llama-bench does. "Correcting" the
+    oversubscription would produce latency a judge will never experience, which is the
+    opposite of what this harness exists for (COMPETITION.md section 9e-bis).
 
 Results from this harness are an INTERNAL PROXY. They are not the judges' score and must
 never be presented as one.
@@ -49,7 +54,7 @@ def _server_script(model_in_container: str, payload_path: str, mode: str) -> str
     return f"""
 set -u
 llama-server -m {shlex.quote(model_in_container)} -c {CTX} \
-    --host 127.0.0.1 --port {PORT} -ngl 0 -t {AUDIT_CPUS} > /tmp/server.log 2>&1 &
+    --host 127.0.0.1 --port {PORT} -ngl 0 > /tmp/server.log 2>&1 &
 SRV=$!
 for i in $(seq 1 120); do
   curl -sf http://127.0.0.1:{PORT}/health > /dev/null 2>&1 && break
@@ -150,7 +155,8 @@ PYEOF
 """
 
 
-def run(model: Path, questions: list[dict], mode: str, tag: str) -> dict:
+def run(model: Path, questions: list[dict], mode: str, tag: str,
+        host_class: str = "shared") -> dict:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     suffix = f"_{tag}" if tag else ""
     run_dir = RUNS / f"{stamp}_chat_{model.stem}{suffix}"
@@ -186,6 +192,9 @@ def run(model: Path, questions: list[dict], mode: str, tag: str) -> dict:
         raise SystemExit(f"no JSON in container output. See {run_dir}/stderr.log")
 
     result = json.loads(line)
+    # Record the fidelity state in the artefact itself, so a run measured under a
+    # non-faithful invocation is self-identifying rather than relying on someone
+    # remembering which week it was produced.
     result["_meta"] = {
         "run_dir": str(run_dir),
         "model": model.name,
@@ -193,6 +202,24 @@ def run(model: Path, questions: list[dict], mode: str, tag: str) -> dict:
         "constraints": {"memory": AUDIT_MEMORY, "cpus": AUDIT_CPUS, "ctx": CTX},
         "recorded_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "label": "INTERNAL PROXY. Not the judges' score.",
+        "host_class": host_class,
+        "latency_quotable": host_class == "physical",
+        "fidelity": {
+            "llama_server_flags": ["-m", "-c", "--host", "--port", "-ngl"],
+            "thread_flag_passed": False,
+            "audit_faithful": True,
+            "host_note": (
+                "Latency is quotable ONLY from host_class=physical. On a shared VPS the "
+                "core topology, cache and memory bandwidth are not the judges', and this "
+                "host demonstrated 27.8% run-to-run spread on a fixed workload "
+                "(COMPETITION.md section 9e)."
+            ),
+            "note": (
+                "No -t: llama-server spawns threads from the host CPU count under the "
+                "cgroup quota exactly as the judges' harness would. Latency here is "
+                "quotable. Runs stamped FIDELITY_STALE.txt predate this and are not."
+            ),
+        },
     }
     (run_dir / "chat.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result
@@ -207,6 +234,10 @@ def main() -> int:
     ap.add_argument("--tag", default="")
     ap.add_argument("--only", default="",
                     help="comma-separated probe ids, for a focused subset")
+    ap.add_argument("--host-class", choices=("shared", "physical"), default="shared",
+                    help="physical: a machine near the Standard Laptop spec, whose "
+                         "latency is quotable. shared: a VPS, where latency is NOT "
+                         "quotable because topology and neighbours are not the judges'.")
     args = ap.parse_args()
 
     if not args.model.exists():
@@ -228,7 +259,7 @@ def main() -> int:
                 print(f"error: unknown probe id(s): {sorted(missing)}", file=sys.stderr)
                 return 2
 
-    result = run(args.model, questions, mode, args.tag)
+    result = run(args.model, questions, mode, args.tag, args.host_class)
 
     print(f"model: {args.model.name}")
     print(f"run:   {result['_meta']['run_dir']}")
@@ -251,8 +282,15 @@ def main() -> int:
 
     times = [t["seconds"] for t in result["turns"] if t.get("seconds")]
     if times:
-        print(f"\nmedian turn latency: {sorted(times)[len(times) // 2]}s "
-              f"(as a judge would experience it)")
+        median = sorted(times)[len(times) // 2]
+        if args.host_class == "physical":
+            print(f"\nmedian turn latency: {median}s (as a judge would experience it)")
+        else:
+            print(f"\nmedian turn latency: {median}s  **NOT QUOTABLE**")
+            print("  host_class=shared. This VPS is not the judges' topology and shows "
+                  "27.8% spread on a fixed workload.")
+            print("  Re-run with --host-class physical on the O-12 machine before any "
+                  "latency figure is used.")
     return 0
 
 

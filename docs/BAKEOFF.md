@@ -42,8 +42,18 @@ that task. The mix costs more runtime per candidate and that cost was accepted (
   lm-eval wall-clock, gated on a spot check that accuracy agrees across builds.
 - **Ranking throughput** uses `scripts/bench_screened.py`: CPU steal read from
   `/proc/stat` either side of every repetition, repetitions above ~1% steal **discarded**
-  rather than averaged, candidates **interleaved** so a slow period hits all of them, and
-  the **median** with spread reported per candidate.
+  rather than averaged, candidates **interleaved** so a slow period hits all of them,
+  optional `--warmup N` to drop lead-in repetitions, and the **median** with spread
+  reported per candidate.
+- **Steal screening is necessary but not sufficient.** Measured: three repetitions at
+  0.00% steal still spanned 27.8%. The VPS pass narrows the field; **the ranking must be
+  verified on physical hardware before it locks** (O-12, promoted).
+- **Every repetition logs llama-bench's thread count and the host run-queue** alongside
+  steal, so warm-up, bandwidth contention and thread oversubscription leave distinguishable
+  traces in the archive rather than three identical-looking rows (O-13).
+- **Audit fidelity binds every run feeding a submitted number** (`COMPETITION.md` section
+  9e-bis): no flag the profiler does not pass. `llama-bench` runs 12 threads under a 4-CPU
+  quota and we do not correct it, because the audit will not either.
 - **Submitted telemetry is a different measurement.** It comes only from a physical
   machine near the Standard Laptop spec (4 cores, 8 GB, no GPU) running the official image
   with the same caps. A VPS figure has no defensible relationship to what the audit box
@@ -105,7 +115,34 @@ before a single token is generated.
 
 ### Composite ranking
 
-**Not yet run.** Table lands here, one row per candidate, every cell carrying its run id.
+**In progress.** `scripts/composite.py` builds it from the lm-eval mix and the screened
+throughput medians, with **uncertainty propagated** (`COMPETITION.md` section 9f):
+
+- accuracy band from binomial sampling error over the mix
+- throughput band from measured min/max across screened repetitions
+- **gaps narrower than host noise are ties**, and the tie cluster is the finalist set for
+  the three-arm qualitative pass
+
+Run `make composite` once `make lmeval CANDIDATE=all` completes.
+
+**The cluster rule is pre-registered** (`COMPETITION.md` section 9f-pre), recorded while
+candidate 1 of 6 was still running and no scores existed:
+
+| Tie cluster size | Action |
+|---|---|
+| **<= 3** | Straight to the three-arm qualitative pass |
+| **> 3** | Re-run the **tied candidates only** at limit 150-200 in the **official image**, then re-form the cluster |
+
+A cluster larger than three means the mix at limit 50 did not discriminate: with ~200
+documents the binomial sampling error alone is a couple of accuracy points, which at the
+0.50 weight is enough to make candidates overlap on noise rather than parity. Raising the
+limit narrows the band roughly as `1/sqrt(n)`.
+
+**Accuracy mix:** `arc_easy`, `arc_challenge`, `mmlu_high_school_biology`,
+`mmlu_nutrition`. Two ARC difficulties for general reasoning, two MMLU subsets as the
+closest available proxy for the domain. None is agronomy, and no public benchmark we found
+is. Scored through `adtc_profiler.accuracy._make_lm`, the audit's own adapter, so the
+ranking uses the same scoring path rather than a lookalike.
 
 ### Throughput and efficiency (official image)
 
@@ -115,11 +152,37 @@ before a single token is generated.
 | Qwen3.5-0.8B (baked) | **4.50** | 30.0 | 715.35 MB | 90.0 | bake-at-download validation **measured** |
 | Qwen3.5-0.8B (stock) | **1.82** | 12.1 | n/a | n/a | `20260811T220127Z_simd_...` **measured** |
 
-> **Do not quote either Qwen3.5-0.8B throughput row.** The two disagree by 2.5x on the
-> same model, benchmark and image (`COMPETITION.md` section 9e, O-11), and both are single
-> unscreened runs. They are retained only to document the variance that motivated the
-> screened protocol. Replacement figures come from `make bench`, and the submitted number
-> from a physical machine (O-12).
+> **Do not quote either single-run Qwen3.5-0.8B row.** Both are single unscreened runs,
+> retained only to document the variance that motivated the screened protocol.
+
+### Repeatability (`COMPETITION.md` section 9e)
+
+Three back-to-back repetitions, same model, same tool, official image, **every one at
+0.00% CPU steal**:
+
+| Rep | tok/s | Steal |
+|---|---|---|
+| 1 | 3.42 | 0.00% |
+| 2 | 3.80 | 0.00% |
+| 3 | 4.48 | 0.00% |
+
+Median **3.80**, spread **27.8% of median**. Run
+`20260811T231040Z_bench_official-screened`.
+
+Two conclusions, and one non-conclusion:
+
+- **Not a methodology difference.** The profiler and our harness issue a byte-identical
+  `llama-bench` command and read the same `avg_ts` field. The earlier 1.82 falls below
+  this whole range and the profiler's 4.50 sits at its top, so both tools land in the same
+  band and 1.82 was simply an outlier.
+- **The variance is real and matters for ranking.** 27.8% within one tool means candidates
+  separated by less than that cannot be ordered on this host.
+- **The cause is not settled.** Every repetition read 0.00% steal, so steal accounting
+  cannot see it. The values rise monotonically, which favours warm-up (page cache, mmap
+  faulting, frequency ramp) over contention; discarding rep 1 drops the spread to 16.4%.
+  But the earlier pair moved generation 2.47x while moving prompt processing only 1.30x,
+  which favours memory-bandwidth contention, since generation is bandwidth-bound and
+  prompt processing is compute-bound. Three points cannot separate the two (O-13).
 
 The smoke row is retained because it sets the ceiling: **the smallest GGUF in the repo
 reaches only 41% of the throughput reference.** Every real candidate is larger. See the
@@ -140,11 +203,22 @@ The official image compiles llama.cpp with every vector extension off
 | Native (AVX2/FMA/F16C on) | **3.83 tok/s** | 57.99 tok/s |
 | Penalty | **2.11x** | **2.63x** |
 
-**PROVISIONAL, and being re-measured.** Each figure above is a single unscreened run,
-taken before the 2.5x host variance was discovered. A 2.11x ratio measured on a host that
-varies 2.5x on its own is not yet a build-flag finding, and the "nothing clears 15 tok/s"
-conclusion rests on the same weak footing. Both builds are being re-run under the screened
-protocol; **the composite ranking must not lock until that lands.**
+**RE-MEASURED under the screened protocol (12 Aug). The 2.11x above is wrong; do not
+quote it.**
+
+| Build | Samples (tok/s) | Median | Spread |
+|---|---|---|---|
+| Official (SIMD off), pooled 5 samples | 3.42, 3.80, 4.29, 4.48, 4.91 | **4.29** | 35% |
+| Native (AVX2 on) x3 | 4.53, 5.59, 6.01 | **5.59** | 26.5% |
+
+**Ratio of medians: 1.30x**, and the distributions **overlap** (native min 4.53 < official
+max 4.91). At 26-28% within-build spread this host cannot cleanly resolve a 1.3x effect.
+`REPORT.md` should say a SIMD-disabled build measured roughly 1.3x slower with overlapping
+distributions, not claim a clean 2x penalty.
+
+**Robust regardless:** the best figure observed on any build, tool or repetition is
+**6.01 tok/s, 40% of the 15.0 reference**. That gap is far wider than the noise, so
+"nothing clears the reference" stands.
 
 The native figure is an **engineering finding only and is never submitted** (O-06
 protocol). Only the official-image number goes in `REPORT.md` as our throughput.

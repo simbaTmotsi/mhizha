@@ -1,0 +1,33 @@
+# Native-SIMD accuracy image: the official profiler stack, with llama-cpp-python
+# recompiled for AVX2/FMA/F16C.
+#
+# WHY THIS IS A SEPARATE IMAGE
+# ----------------------------
+# The accuracy stage does NOT go through llama-bench. It runs lm-eval in-process via
+# llama-cpp-python (vendor/adtc-profiler/src/adtc_profiler/accuracy.py), so
+# competition/Dockerfile.native, which only ships the llama.cpp binaries, cannot run it.
+#
+# The official image builds that wheel with CMAKE_ARGS="-DGGML_NATIVE=OFF" for
+# portability across audit VMs. Accuracy is loglikelihood arithmetic over logits, so it
+# SHOULD be build-invariant while running considerably faster here. "Should be" is not
+# evidence, which is why O-09 requires a one-candidate spot check comparing this image's
+# scores against the official image's before any ranking run uses it.
+#
+# THIS IMAGE NEVER PRODUCES SUBMITTED TELEMETRY. Throughput, RAM and thermal figures come
+# from the official image only (COMPETITION.md section 11). It exists to make a
+# multi-hour ranking sweep affordable.
+
+FROM adtc-profiler:latest
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential cmake git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Same llama-cpp-python version the official image resolved, rebuilt with vector
+# extensions on. -march=native is deliberately NOT used: this must still run on any
+# machine we might move the sweep to.
+ENV CMAKE_ARGS="-DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON"
+RUN pip install --no-cache-dir --force-reinstall --no-binary llama-cpp-python \
+      "llama-cpp-python==0.3.34"
+
+ENTRYPOINT ["adtc-profiler"]

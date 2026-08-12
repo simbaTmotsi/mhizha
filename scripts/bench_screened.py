@@ -58,6 +58,53 @@ AUDIT_MEMORY = "7.5g"
 AUDIT_CPUS = "4"
 
 
+def read_thread_count() -> int:
+    """System-wide thread count from /proc/loadavg's running/total field.
+
+    O-13 ATTRIBUTION, BY ELIMINATION
+    --------------------------------
+    llama-bench's own thread count is PINNED at the host CPU count within a fixed
+    configuration, so it does not vary across repetitions and cannot correlate with
+    anything. An earlier version of this docstring listed "values move with thread count"
+    as the oversubscription signature; that was wrong, because within one config there is
+    no variation to move with.
+
+    What the archive can actually separate:
+
+      warm-up               the FIRST repetitions rise monotonically, then plateau.
+                            Discard with --warmup and the effect disappears for good.
+      steal                 steal_pct > 0. Theft is directly observed, not inferred.
+      neighbour contention  residual scatter on WARM, ZERO-STEAL repetitions.
+                            Reached BY ELIMINATION: warm-up excluded by the discard,
+                            theft excluded by the steal reading, so what remains is
+                            contention for a resource the kernel does not account to us,
+                            i.e. memory bandwidth or last-level cache.
+
+    Oversubscription is not a source of run-to-run VARIANCE here; it is a constant OFFSET
+    on every run in this configuration. Measuring it needs a paired default-versus-`-t 4`
+    diagnostic, which deliberately violates audit fidelity and is therefore stamped
+    RANKING ONLY and never submitted (COMPETITION.md section 9e-bis).
+
+    Thread and run-queue counts are still logged: they are what CONFIRMS the config was
+    fixed, which is the premise the elimination argument rests on.
+    """
+    try:
+        with open("/proc/loadavg", encoding="utf-8") as fh:
+            running_total = fh.read().split()[3]     # e.g. "3/1421"
+        return int(running_total.split("/")[1])
+    except (OSError, IndexError, ValueError):
+        return -1
+
+
+def read_runnable() -> int:
+    """Currently-runnable tasks. Rises when CPUs are oversubscribed."""
+    try:
+        with open("/proc/loadavg", encoding="utf-8") as fh:
+            return int(fh.read().split()[3].split("/")[0])
+    except (OSError, IndexError, ValueError):
+        return -1
+
+
 def read_cpu_times() -> tuple[int, int]:
     """(total_jiffies, steal_jiffies) from /proc/stat's aggregate cpu line."""
     with open("/proc/stat", encoding="utf-8") as fh:
@@ -97,6 +144,8 @@ def bench_once(candidate: str, image: str = IMAGE) -> dict:
         return {"error": f"{model} not found"}
 
     before = read_cpu_times()
+    threads_before = read_thread_count()
+    runnable_before = read_runnable()
     started = time.time()
     proc = subprocess.run([
         "docker", "run", "--rm",
@@ -109,15 +158,25 @@ def bench_once(candidate: str, image: str = IMAGE) -> dict:
     ], capture_output=True, text=True)
     elapsed = time.time() - started
     after = read_cpu_times()
+    threads_after = read_thread_count()
+    runnable_after = read_runnable()
     steal = steal_percent(before, after)
+    host = {
+        "threads_before": threads_before,
+        "threads_after": threads_after,
+        "threads_delta": (threads_after - threads_before
+                          if threads_before > 0 and threads_after > 0 else None),
+        "runnable_before": runnable_before,
+        "runnable_after": runnable_after,
+    }
 
     if proc.returncode != 0:
         return {"error": f"llama-bench exit {proc.returncode}", "steal_pct": steal,
-                "stderr": proc.stderr[-400:]}
+                "host": host, "stderr": proc.stderr[-400:]}
     try:
         rows = json.loads(proc.stdout)
     except json.JSONDecodeError as exc:
-        return {"error": f"unparseable output: {exc}", "steal_pct": steal}
+        return {"error": f"unparseable output: {exc}", "steal_pct": steal, "host": host}
 
     tg = next((r for r in rows if r.get("n_gen", 0) > 0), None)
     pp = next((r for r in rows if r.get("n_gen", 0) == 0 and r.get("n_prompt", 0) > 0), None)
@@ -126,7 +185,21 @@ def bench_once(candidate: str, image: str = IMAGE) -> dict:
         "prompt_tok_s": float(pp["avg_ts"]) if pp else None,
         "steal_pct": round(steal, 3),
         "wall_seconds": round(elapsed, 1),
+        "host": host,
+        # llama-bench spawns threads from the HOST cpu count, not the cgroup quota, so a
+        # --cpus=4 container runs oversubscribed. We do not correct this: the profiler
+        # does not either (COMPETITION.md section 9e-bis).
+        "bench_threads_reported": bench_threads(rows),
     }
+
+
+def bench_threads(rows: list[dict]) -> int | None:
+    """Thread count llama-bench actually used, straight from its own JSON."""
+    for row in rows:
+        for key in ("n_threads", "threads"):
+            if isinstance(row.get(key), int):
+                return row[key]
+    return None
 
 
 def summarise(reps: list[dict], max_steal: float) -> dict:
@@ -148,6 +221,12 @@ def summarise(reps: list[dict], max_steal: float) -> dict:
         "max": round(max(values), 3),
         "spread_pct_of_median": round(spread, 1) if spread is not None else None,
         "max_steal_seen": round(max((r.get("steal_pct", 0) for r in reps), default=0), 3),
+        "bench_threads": sorted({r.get("bench_threads_reported") for r in reps
+                                 if r.get("bench_threads_reported")}),
+        "host_runnable_range": [
+            min((r.get("host", {}).get("runnable_after", -1) for r in reps), default=-1),
+            max((r.get("host", {}).get("runnable_after", -1) for r in reps), default=-1),
+        ],
     }
 
 
@@ -155,6 +234,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidates", required=True, help="comma-separated ids, or 'all'")
     ap.add_argument("--reps", type=int, default=3)
+    ap.add_argument("--warmup", type=int, default=0,
+                    help="discard the first N repetitions per candidate. The first "
+                         "screened run showed a MONOTONIC rise (3.42, 3.80, 4.48 tok/s) "
+                         "across back-to-back reps at 0%% steal, which is the signature "
+                         "of warm-up (page cache, mmap faulting, CPU frequency ramp) "
+                         "rather than random contention.")
     ap.add_argument("--max-steal", type=float, default=1.0,
                     help="discard any repetition whose CPU steal exceeds this percent")
     ap.add_argument("--tag", default="")
@@ -173,7 +258,8 @@ def main() -> int:
     time.sleep(1)
     idle_steal = steal_percent(baseline, read_cpu_times())
     print(f"candidates: {', '.join(candidates)}")
-    print(f"reps:       {args.reps} (interleaved)")
+    print(f"reps:       {args.reps} (interleaved)"
+          + (f", first {args.warmup} discarded as warm-up" if args.warmup else ""))
     print(f"screening:  discard repetitions above {args.max_steal}% CPU steal")
     print(f"image:      {args.image}")
     print(f"idle steal: {idle_steal:.3f}%")
@@ -192,16 +278,28 @@ def main() -> int:
                 print(f"ERROR {row['error']}")
             else:
                 verdict = "keep" if row["steal_pct"] <= args.max_steal else "DISCARD"
+                host = row.get("host", {})
                 print(f"{row['generation_tok_s']:.2f} tok/s  "
-                      f"steal {row['steal_pct']:.2f}%  [{verdict}]")
+                      f"steal {row['steal_pct']:.2f}%  "
+                      f"thr {row.get('bench_threads_reported')}  "
+                      f"runq {host.get('runnable_after')}  [{verdict}]")
 
-    summary = {c: summarise(rows, args.max_steal) for c, rows in results.items()}
+    # Warm-up repetitions are dropped before summarising, not screened out afterwards:
+    # they are a known-systematic effect, not noise to be filtered statistically.
+    scored = {
+        c: [r for r in rows if r["rep"] > args.warmup]
+        for c, rows in results.items()
+    }
+    summary = {c: summarise(rows, args.max_steal) for c, rows in scored.items()}
+    for c in summary:
+        summary[c]["warmup_discarded"] = args.warmup
     record = {
         "recorded_at": stamp,
         "purpose": "RANKING ONLY. Not submittable telemetry.",
         "image": args.image,
         "constraints": {"memory": AUDIT_MEMORY, "cpus": AUDIT_CPUS},
         "reps": args.reps,
+        "warmup_discarded": args.warmup,
         "max_steal_pct": args.max_steal,
         "idle_steal_pct": round(idle_steal, 3),
         "host_note": "shared virtualised host; --cpus is a quota, not pinned cores",

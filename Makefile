@@ -1,6 +1,7 @@
 .PHONY: help setup ingest embed index build ask eval test doctor models clean \
         profile profile-image profile-smoke candidates chunk \
-        bake bake-minimal chat-probe apply-template upstream simd-compare native-image bench
+        bake bake-minimal chat-probe apply-template upstream simd-compare native-image bench \
+        native-acc-image spot-check lmeval composite
 
 PY ?= python3
 MHIZHA = PYTHONPATH=src $(PY) -m mhizha
@@ -34,6 +35,9 @@ help:
 	@echo "  make chat-probe MODEL=<gguf> TAG=x qualitative pass (internal proxy)"
 	@echo "  make simd-compare CANDIDATE=<id>   in-image vs native AVX2 (O-06)"
 	@echo "  make bench CANDIDATE=all REPS=3     steal-screened medians (RANKING only)"
+	@echo "  make spot-check CANDIDATE=<id>      O-09 gate: native vs in-image accuracy"
+	@echo "  make lmeval CANDIDATE=all           lm-eval mix (INTERNAL PROXY)"
+	@echo "  make composite                      ranking table with uncertainty bands"
 	@echo "  make upstream                   diff upstream repos vs pinned commits"
 
 setup:
@@ -118,6 +122,26 @@ REPS ?= 3
 MAX_STEAL ?= 1.0
 bench:
 	$(PY) scripts/bench_screened.py --candidates $(CANDIDATE) --reps $(REPS) --max-steal $(MAX_STEAL) $(BENCH_ARGS)
+
+# lm-eval mix. INTERNAL PROXY only: S_acc is judge-scored.
+TASKS ?= arc_easy,arc_challenge,mmlu_high_school_biology,mmlu_nutrition
+LIMIT ?= 50
+ACC_IMAGE ?= adtc-profiler:latest
+
+native-acc-image:
+	docker build -f competition/Dockerfile.native-acc -t adtc-native-acc:latest competition/
+
+# O-09 gate: do the two builds agree on accuracy? Must pass before the native image is
+# used for any ranking run.
+spot-check:
+	$(PY) scripts/lmeval_mix.py --spot-check --candidate $(CANDIDATE) --tasks arc_easy --limit 25
+
+lmeval:
+	$(PY) scripts/lmeval_mix.py --candidates $(CANDIDATE) --tasks $(TASKS) --limit $(LIMIT) --image $(ACC_IMAGE)
+
+# Composite ranking with propagated uncertainty. Ties are the finalist set.
+composite:
+	$(PY) scripts/composite.py --auto
 
 # Run before submitting, around 22 Aug.
 upstream:

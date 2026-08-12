@@ -179,11 +179,16 @@ Two properties of the formula matter more than anything else:
    scores `(7-0.9)/7 = 87`. At 2.5 GB it scores 64. That 23-point gap is worth
    `0.2 * 23 = 4.6` points of final score.
 
-So the target is **the largest model that still clears roughly 15 tok/s on 4 CPU
-threads**, since accuracy carries 50% and is the only component that keeps improving with
-size. Speed beyond the cap is wasted headroom that should be spent on parameters. The
-bake-off (Phase 4) resolves where that line actually falls; the above is the hypothesis it
-tests, not a result.
+> **SUPERSEDED (SR-02, SR-03).** The paragraph that stood here concluded that the target
+> was "the largest model that still clears roughly 15 tok/s". **Nothing clears 15 tok/s**,
+> on any build or candidate measured (section 6a), so the rule selects nothing. It is kept
+> struck through rather than deleted because it explains why the bake-off was designed the
+> way it was.
+>
+> What replaced it: throughput saturates *below* the reference for every candidate, so
+> `S_perf` is a small size-ordered penalty rather than a prize. Accuracy at 50% dominates,
+> and the real argument for a smaller model is judge-experienced latency during accuracy
+> scoring, which the formula does not measure at all. See section 6a.
 
 A caution: `peak_rss_mb` is sampled **around `llama-bench` only** (`cli.py:120-126`), and
 the accuracy stage runs afterwards, outside the sampler. Peak RSS is therefore
@@ -248,9 +253,24 @@ one. The 85 C hard-fail is implemented and will fire correctly on a host that ha
 -DGGML_AVX512=OFF -DGGML_FMA=OFF -DGGML_F16C=OFF -DGGML_BLAS=OFF
 ```
 
-Every vector extension is off, and the Python wheel is built the same way
-(`ENV CMAKE_ARGS="-DGGML_NATIVE=OFF"`). The stated reason is portability: "the wheel must
-run on any audit VM."
+Every vector extension is off **for the binaries**. The stated reason is portability:
+"the wheel must run on any audit VM."
+
+> **CORRECTION (SR-10), 12 Aug.** An earlier revision of this section claimed the Python
+> wheel "is built the same way". **It is not.** Stage 2 sets only
+> `ENV CMAKE_ARGS="-DGGML_NATIVE=OFF"`, which disables `-march=native` but leaves
+> `GGML_AVX`, `GGML_AVX2`, `GGML_FMA` and `GGML_F16C` at their CMake defaults, which are
+> **on**. Verified by asking both images directly: `llama_cpp.llama_print_system_info()`
+> reports `AVX = 1 AVX2 = 1 F16C = 1 FMA = 1` in the stock official image.
+>
+> **So the official harness measures throughput on a SIMD-disabled binary and evaluates
+> accuracy on a SIMD-enabled library.** That asymmetry is worth reporting to the
+> organisers: a submission's benchmarked speed is slower than the speed at which its
+> accuracy is actually computed.
+>
+> Two practical consequences. The accuracy sweep gains nothing from a custom native image,
+> so it runs in the official image and one variable disappears. And the SIMD finding in
+> this section applies to **throughput only**; it never applied to accuracy.
 
 This is not a detail. Scalar GGML is far slower than an AVX2 build on the same hardware,
 so **throughput measured in this image is a floor, not a representative number**, and
@@ -293,7 +313,34 @@ measurement hygiene for the bake-off.
 `TPS_REFERENCE` of 15. Memory is a non-issue at this size (`S_eff` 97), but throughput is
 already less than half-marks at the smallest model that exists in this bake-off.
 
-### O-06 (PROVISIONAL): the SIMD penalty measured 2.1x on a single run each
+### O-06 RE-MEASURED: the SIMD penalty is ~1.3x, not 2.1x, and the ranges overlap
+
+**Measured 12 Aug under the screened protocol**, three repetitions per build,
+`qwen3.5-0.8b-q4_k_m`, every repetition at 0.00% steal:
+
+| Build | Samples (tok/s) | Median | Spread |
+|---|---|---|---|
+| Official (SIMD off), direct llama-bench x3 | 3.42, 3.80, 4.48 | 3.80 | 27.8% |
+| Official (SIMD off), full profiler x2 | 4.29, 4.91 | 4.60 | 13.5% |
+| Official, all 5 samples pooled | 3.42, 3.80, 4.29, 4.48, 4.91 | **4.29** | 35% |
+| Native (AVX2/FMA/F16C on) x3 | 4.53, 5.59, 6.01 | **5.59** | 26.5% |
+
+**Ratio of medians: 1.30x.** The provisional single-run figure was **2.11x**, and that
+number must not be used. Worse, **the distributions overlap**: the native minimum (4.53)
+sits below the official maximum (4.91). With 26 to 28% within-build spread, a 1.3x effect
+is at the edge of what this host can resolve at all.
+
+So the honest statement for `REPORT.md` is not "disabling SIMD costs 2.1x". It is that a
+SIMD-disabled build measured slower by roughly 1.3x, with overlapping distributions on a
+host whose repeatability is 27%, and that separating the effect properly needs the
+physical machine in O-12.
+
+**What survives unchanged:** nothing anywhere near `TPS_REFERENCE = 15.0`. The best figure
+observed on any build, any tool, any repetition is **6.01 tok/s, 40% of the reference**.
+That conclusion is robust to every measurement problem found so far, because the gap is
+2.5x wider than the noise.
+
+### Superseded reading (kept for the record)
 
 **Measured**, run `20260811T220127Z_simd_qwen3.5-0.8b-q4_k_m`, same model and the same
 `llama-bench -p 512 -n 128 -ngl 0` in both images at `--memory=7.5g --cpus=4`:
@@ -881,6 +928,93 @@ tighter still at +/-15%.
    lands on all candidates instead of penalising whichever ran during it.
 5. **Re-measure the finalist immediately before submitting.**
 
+### Repeatability test: it is not a methodology difference
+
+**Measured 12 Aug.** Two questions were asked of the 2.5x gap: is it a stable difference
+between the tools (methodology), or spread within a single tool (contention)?
+
+**The invocations are identical.** Read side by side, `throughput.py` and our harnesses
+both run
+
+```
+llama-bench -m <model> -p 512 -n 128 -ngl 0 --output json
+```
+
+with no `-t`, in the same image, and both read `avg_ts` from the row where `n_gen > 0`.
+There is no methodological difference to record: same binary, same flags, same field, same
+definition. (The profiler additionally runs two sampler threads inside the same CPU quota,
+which would make it *slower*, not faster, so it does not explain the gap either.)
+
+**No stable cross-tool gap either.** The profiler run twice back to back gave 4.29 and
+4.91 (median 4.60, spread 13.5%), against the direct harness's 3.42, 3.80, 4.48 (median
+3.80). The profiler's samples skew higher, but with n=2 and n=3 against a within-tool
+spread of 27.8%, that difference is not separable from noise. Pooled, the five
+official-image samples run 3.42 to 4.91 around a median of 4.29, and **the original 1.82
+lies below every one of them.**
+
+**Within one tool, at 0.00% steal, the spread is 27.8%.** Three back-to-back repetitions,
+same model, same tool:
+
+| Rep | tok/s | Steal |
+|---|---|---|
+| 1 | 3.42 | 0.00% |
+| 2 | 3.80 | 0.00% |
+| 3 | 4.48 | 0.00% |
+
+Median 3.80, spread 27.8% of median. The earlier 1.82 falls **below this entire range**
+and the profiler's 4.50 sits at its **top**, so the cross-tool "gap" largely dissolves:
+both tools land in the same band and the 1.82 was an outlier.
+
+### Two hypotheses, and the one the data actually favours
+
+**The variance alarm is NOT retired.** A 27.8% spread within one tool matters directly:
+`S_perf` differences between adjacent candidates will often be smaller than that, so the
+composite ranking cannot resolve candidates that close together on this host.
+
+**Every repetition read 0.00% steal**, so whatever this is, steal accounting cannot see
+it.
+
+**Attribution is by elimination, not by correlation.** llama-bench's thread count is
+pinned at the host CPU count within a fixed configuration, so it does not vary across
+repetitions and nothing can correlate with it. Oversubscription is therefore a constant
+**offset** on every run here, not a source of run-to-run **variance**, and it cannot be
+recovered from this data at all. (An earlier revision of this section suggested watching
+for values that "move with thread count"; within one config there is no movement to
+watch.) Measuring the offset needs a deliberate paired `default` versus `-t 4` diagnostic,
+which breaks audit fidelity on purpose and is stamped RANKING ONLY: **O-14**.
+
+That leaves two explanations separable in the archive:
+
+1. **Memory-bandwidth or last-level-cache contention** from a co-tenant. Invisible to
+   steal, which counts only stolen CPU *time*. Supported by the metric asymmetry: between
+   the two original runs, generation moved 2.47x while prompt processing moved only 1.30x.
+   Generation is bandwidth-bound and prompt processing is compute-bound, so a uniform
+   machine-speed change would have moved both alike, and it did not.
+2. **Warm-up.** The three repetitions rise **monotonically** (3.42, 3.80, 4.48), which is
+   more the signature of page cache, mmap faulting and CPU frequency ramp than of random
+   contention. Discarding the first repetition drops the spread from 27.8% to 16.4%.
+
+Three points cannot separate these, and it would be easy to declare victory on either.
+`scripts/bench_screened.py --warmup N` discards lead-in repetitions so the two can be told
+apart with more runs:
+
+- **warm-up** shows as the first repetitions rising monotonically and then plateauing;
+  after the discard the spread collapses and *stays* collapsed across further runs
+- **neighbour contention** is what is left over: scatter in both directions on warm,
+  zero-steal repetitions. It is never observed directly, only reached once warm-up has
+  been excluded by the discard and theft by the steal reading. Naming it by elimination is
+  the honest description, and the report should say so rather than implying we detected
+  bandwidth contention as such.
+
+**Consequence, per the escalation rule: O-12 is promoted.** Physical-machine runs are no
+longer only for producing submitted telemetry. They are needed to **verify the ranking
+itself**, because a shared host that cannot reproduce its own measurement to better than
+27.8% cannot be trusted to order candidates that sit closer together than that.
+
+**Steal screening is necessary but not sufficient** (SR-09). It correctly catches stolen
+CPU time and correctly discarded nothing here, because nothing was stolen. It does not and
+cannot see the effect that produced this spread.
+
 ### The split: ranking versus telemetry
 
 These are different measurements with different requirements, and conflating them is what
@@ -888,8 +1022,14 @@ produced the 2.5x confusion.
 
 | Use | Where | Why |
 |---|---|---|
-| **Ranking** candidates against each other | VPS is acceptable, with steal screening, interleaving and medians | The comparison stays sound even when absolute values are depressed, because every candidate is depressed alike |
-| **Submitted telemetry** in `submission.json` | **A physical machine near the Standard Laptop spec**, official image, same `--memory=7.5g --cpus=4` caps | The audit runs on real hardware. A shared VPS figure has no defensible relationship to what their box will measure, and the compare is symmetric |
+| **Ranking** candidates against each other | VPS **for a first pass only**, with steal screening, interleaving, warm-up discard and medians. **Verified on physical hardware** before the composite locks | A 27.8% within-tool spread cannot order candidates that sit closer together than that. The VPS narrows the field; it does not decide it |
+| **Submitted telemetry** in `submission.json` | **A physical machine near the Standard Laptop spec**, official image, same `--memory=7.5g --cpus=4` caps | The audit runs on real hardware, and Gate 2's compare is symmetric |
+
+**Definition of the submitted figure:** the **best estimate of what the audit machine's
+profiler will output**. Not our fastest run, not a deliberately safe number: the estimate.
+Where estimates are genuinely tied, the measured asymmetry (underclaiming fails at 1.5x,
+overclaiming survives to 2x) breaks the tie **upward only**, and never licenses inflating a
+figure beyond what the evidence supports.
 
 `scripts/bench_screened.py` prints "FOR RANKING ONLY" on every run and records
 `"purpose": "RANKING ONLY. Not submittable telemetry."` in its output, so a ranking number
@@ -897,6 +1037,247 @@ cannot quietly become a submitted one.
 
 Tracked as **O-11**. No throughput figure enters `REPORT.md` until measured under this
 protocol on the right class of machine.
+
+---
+
+## 9e-bis. The audit-fidelity principle
+
+**Binding on every run that feeds a submitted number.**
+
+> **Reproduce the audit's behaviour, including its defects. No flag the profiler does not
+> pass may touch any run that feeds a submitted number.**
+
+The temptation is constant and always looks like good engineering. `llama-bench` spawns
+threads from the host CPU count rather than the cgroup quota, so inside `--cpus=4` it runs
+**12 threads** against 4 CPUs' worth of scheduling budget. Passing `-t 4` would almost
+certainly produce a tidier, probably faster, and definitely less variable number.
+
+**It would also be a number the audit will never see.** The profiler does not pass `-t`
+(`throughput.py`: `n_threads` defaults to `None` and `measure()` never supplies it), so the
+audit runs oversubscribed. A submission tuned against a corrected configuration is a
+submission whose telemetry cannot be reproduced by the people checking it, and Gate 2's
+compare is symmetric: a figure that is *too good* fails exactly as a figure that is too bad
+does.
+
+The same reasoning covers the SIMD-disabled binaries (SR-10), any thread pinning, any
+`--numa` tuning, and any environment variable that changes kernel selection. If the
+profiler does not set it, we do not set it.
+
+**Where the principle does not apply:** exploratory work that never feeds a submitted
+number may use any configuration, provided the run record says so. The
+`adtc-native:latest` comparison exists precisely to quantify a defect, which requires
+deviating from it deliberately and labelling the result as never-submitted.
+
+### Self-audit against this principle
+
+| Run type | Feeds a submitted number? | Flags beyond the profiler's | Verdict |
+|---|---|---|---|
+| `scripts/bench_screened.py` (llama-bench) | yes, ranking and telemetry | none | faithful |
+| `scripts/adtc_profile.py` (full profiler) | yes | none, it *is* the profiler | faithful |
+| `scripts/simd_compare.sh` native arm | no, labelled never-submitted | different image by design | deliberate deviation, labelled |
+| `scripts/lmeval_mix.py` | no, internal proxy | none | faithful |
+| `scripts/judge_chat.py` (llama-server) | no, internal proxy, **but it is our only latency evidence for what a judge experiences** | **passed `-t 4`** | **VIOLATION, fixed 12 Aug** |
+
+The last row is the principle earning its keep on the day it was written. `judge_chat.py`
+passed `-t 4` to `llama-server`, which the judges' harness has no reason to pass either.
+Every per-turn latency we had recorded was therefore measured under a thread configuration
+a judge would not get, on the **stage-1 SIMD-disabled** `llama-server` binary where
+oversubscription plausibly matters most.
+
+**Handling of the stale figures.** The flag is removed. The nine affected run directories
+carry a `FIDELITY_STALE.txt` marker, and every new chat run writes a `fidelity` block into
+its own `chat.json` recording the flags used and whether the run was audit-faithful, so a
+stale figure is self-identifying rather than dependent on someone remembering which week
+it came from. **No latency measured under the old invocation enters `REPORT.md`, including
+as context or as a before-and-after comparison.** The three-arm pass is re-run under the
+corrected invocation before any latency from it is quoted.
+
+The **behavioural** findings from those runs stand unchanged and are still cited: empty
+content from reasoning models, the volunteered fertiliser rate, correct refusal and
+redirection. Thread count changes how fast a model answers, not what it says.
+
+### The derived oracle
+
+The allowed flag set is **read out of the profiler's own source**, not hand-listed
+(`competition/fidelity_oracle.json`, produced by `scripts/derive_fidelity_oracle.py`). The
+first version of this check carried a list of remembered flags, which covers only the
+violations someone thought of; the next one will be a flag nobody listed.
+
+The oracle records that the profiler always passes `-m -p -n -ngl --output`, that `-t` is
+present in the code but **conditional on an argument its entry point never supplies**, and
+that the accuracy path uses `_N_CTX = 2048`, which is what our chat harness mirrors rather
+than inventing a context length. A premise test re-derives on every run and fails if the
+snapshot and the vendored source disagree, so a profiler upgrade surfaces as a failing
+test rather than as silently stale rules. Verified against tampered samples using
+`--poll`, `--numa`, `--mlock`, `--cache-type-k` and `-t`: all caught, none of them on any
+denylist in this repository.
+
+---
+
+## 9f-pre. Pre-registered cluster rule
+
+**Registered 2026-08-12T00:07:58+00:00, before the sweep completed.** Candidate 1 of 6 was still running and
+no scores existed. This is recorded here rather than decided on sight of the table, because
+a tie rule chosen after seeing the numbers is not a rule, it is a preference.
+
+Once `scripts/composite.py` forms the tie cluster (composite bands overlapping the
+leader's):
+
+| Cluster size | Action |
+|---|---|
+| **<= 3** | Proceed directly to the three-arm qualitative pass on those candidates |
+| **> 3** | The mix at limit 50 has not discriminated. **Re-run the tied candidates only, at limit 150 to 200, in the official image**, then re-form the cluster from the tighter accuracy bands |
+
+Rationale for the branch: with ~200 documents the binomial sampling error alone is a couple
+of accuracy points, which at the 0.50 weight is enough to make four or more candidates
+overlap on sampling noise rather than on genuine parity. Raising the limit narrows the
+accuracy band roughly as `1/sqrt(n)`, so 150 to 200 per task cuts it by about half. That is
+the cheapest available discriminator, and it is cheaper than running a 15-question chat
+probe against six models.
+
+The re-run is **official image only** and covers **tied candidates only**: untied
+candidates are already ordered and re-running them would spend hours to confirm what the
+bands already say.
+
+If the cluster is still greater than 3 after the re-run, the qualitative pass takes the
+larger set rather than an arbitrary cut. A submission judged by conversation is better
+served by chatting with four candidates than by breaking a genuine tie on a proxy of
+unknown fidelity.
+
+---
+
+## 9f. Composite ranking: bands, ties, and the finalist set
+
+**Ships this week regardless of open measurement questions.** The composite is built from
+what is measured, with the uncertainty carried through rather than hidden.
+
+### Every candidate gets a band, not a point
+
+| Component | Band from | Why |
+|---|---|---|
+| Accuracy proxy (0.50) | binomial sampling error over the mix, `sqrt(p(1-p)/n)` combined across tasks | With ~200 documents the sampling error alone is a couple of points. This **understates** the true uncertainty, because fidelity of the proxy to judge-scored `S_acc` is itself unknown |
+| Throughput (0.30) | measured min/max across screened repetitions | The honest statement of what this host can resolve, which is ~27% |
+| Efficiency (0.20) | point estimate | Peak RSS varies far less than throughput. Marked `estimate` when derived from file size rather than measured |
+
+A single number per candidate would imply an ordering the measurements do not support,
+and the first thing anyone would do with it is pick a winner on the third decimal.
+
+### Ties are the output, not a problem
+
+**Throughput gaps narrower than host noise are ties.** Candidates whose composite bands
+overlap the leader's band form the **tie cluster**, and the tie cluster **is** the finalist
+set for the three-arm qualitative pass.
+
+The tie rule is band overlap rather than "within N points", because a fixed threshold
+would be an arbitrary number of ours, whereas overlap is the measurements speaking for
+themselves.
+
+This is not a fallback. For a submission whose accuracy is scored by a judge in
+conversation, a 15-question chat probe with a hard safety rubric discriminates better than
+any of these proxies. The composite's job is to narrow six candidates to a handful worth
+that expense, not to pick a winner.
+
+### O-13 adjusts widths, never blocks the table
+
+Resolving warm-up versus bandwidth contention (O-13) changes how wide the throughput bands
+are. Narrower bands may shrink the tie cluster later, which is a **refinement of the
+finalist set**, not a precondition for having one. The table ships this week and is
+re-issued if the bands narrow.
+
+---
+
+## 9g. Sequencing: what runs where, and in what order
+
+**Set 12 Aug, after the throughput repeatability result.** The ordering is not a
+preference; each step's validity depends on the one before it.
+
+### The order
+
+| # | Step | Where | Gates |
+|---|---|---|---|
+| 1 | lm-eval mix, all six candidates | VPS, official image | nothing downstream can start without it |
+| 2 | **Composite table** with propagated uncertainty | derived, no new measurement | **completes before any qualitative work begins** |
+| 3 | O-13 attribution (6+ reps, `--warmup 1`) | VPS | **runs after the sweep and never delays the composite** |
+| 4 | **One physical sitting**: telemetry + ranking verification + three-arm pass | **O-12 physical machine** | produces the submitted numbers |
+| 5 | Report finalisation, video | anywhere | needs step 4, or the 18 Aug fallback |
+
+Steps 1 to 3 are chained in `scripts/after_sweep.sh` and run unattended: the composite and
+tie cluster exist by morning without anyone waiting up, and the pre-registered cluster
+re-run fires automatically when the cluster exceeds three, because a rule registered in
+advance needs no judgement at 3am. Everything in the chain is serial, since step 3 and
+step 4 both measure or consume run-to-run variance and would corrupt each other.
+
+### Nothing latency-bearing runs on the VPS again
+
+This host showed **27.8% run-to-run spread on a fixed workload at 0.00% steal**. Its core
+topology, cache hierarchy and memory bandwidth are not the judges', and a latency figure
+measured here describes a machine nobody will use.
+
+Enforced rather than remembered: `scripts/judge_chat.py` takes `--host-class`, defaults to
+`shared`, and stamps `"latency_quotable": false` into every run record produced on a
+shared host. The summary line prints **NOT QUOTABLE** with the reason. Only
+`--host-class physical` produces a record whose latency may be cited.
+
+The VPS remains fine for what it is good at: **behaviour** (does the model refuse a
+dosage, does it return empty content, does the baked template apply) does not depend on
+core topology. Steps 1 and 3 stay here.
+
+### Why the three-arm pass merges with the telemetry session
+
+They were separate tasks that need the same scarce resource, and running them apart would
+mean occupying the physical machine twice and reconciling two host states. One sitting on
+the O-12 machine yields three things that must agree with each other anyway:
+
+1. **Submitted telemetry**, from the untouched official profiler, no flags of ours
+   (section 9e-bis). This is the number Gate 2 audits.
+2. **Ranking verification**: the composite's tie cluster re-measured on hardware that can
+   actually resolve it, since the VPS cannot order candidates closer together than its own
+   27.8% spread.
+3. **Judge-real latency** on true topology, which is the only latency that may enter
+   `REPORT.md`, and which bears on `S_acc` through judge patience rather than through
+   `S_perf` (section 6a).
+
+Running them together also means the latency and the telemetry describe **the same machine
+in the same state**, which is exactly the claim the report needs to make.
+
+### What this means for O-12
+
+O-12 is now on the critical path for three deliverables rather than one. Until a physical
+machine is available, the submission has a composite ranking and a finalist set but **no
+submittable telemetry and no quotable latency**.
+
+### Fallback if no physical machine by 18 Aug 2026
+
+A dependency on hardware we do not yet have cannot be allowed to become a missing
+submission. So:
+
+> **If no physical sitting has happened by 18 August 2026, submitted telemetry falls back
+> to the VPS screened medians**, under the central-estimate rule, with the measured spread
+> documented alongside.
+
+18 August is chosen to leave the 20 August package target intact with two days of slack,
+and the 24 August deadline with six.
+
+Under the fallback:
+
+- The figure is the **median of screened, warm, zero-steal repetitions**, not the fastest
+  and not a deliberately low number. The Gate 2 comparator is symmetric and normalises by
+  the submitted value, so underclaiming fails at 1.5x error while overclaiming survives to
+  2x (SR-01). The central estimate is the only defensible choice.
+- The **measured spread is stated in `REPORT.md` next to the figure**, so a judge sees the
+  uncertainty rather than a false precision.
+- `report_figures.py` labels it `FALLBACK` in the assembled figures, records
+  `fallback_invoked: true`, and states plainly that it is a VPS measurement rather than a
+  claim about the audit box.
+- **Latency does not fall back.** There is no honest VPS substitute for judge-experienced
+  latency on the judges' topology, so if the fallback fires, `REPORT.md` carries no
+  latency figure at all and says why. An absent number is recoverable; a wrong one
+  presented as measured is not.
+
+**A physical sitting before 18 August retires this clause entirely**, and the fallback
+text is removed rather than left standing as an alternative. The date is enforced in
+`scripts/report_figures.py::PHYSICAL_DEADLINE`, which refuses telemetry before it and
+labels telemetry after it, so the clause cannot be invoked early or forgotten late.
 
 ---
 
@@ -962,6 +1343,29 @@ runner-up, and update `docs/BAKEOFF.md` and `REPORT.md` before submitting.
 
 ---
 
+## 12a. Superseded rules are enforced, not just edited
+
+`competition/superseded.yaml` is a registry of every conclusion this project has reversed.
+Each entry carries the retracted rule, the evidence that overturned it, the replacement,
+and regexes that must not reappear as an assertion in the documents.
+`tests/test_competition.py` fails the build on any reappearance unless a correction marker
+sits nearby.
+
+This exists because a superseded rule left standing reads with exactly the same authority
+as a current one, and the next reader has no way to know it was retracted. Two of the nine
+entries were my own conclusions, and **SR-01 would have caused the Gate 2 compare failure
+it was written to prevent**.
+
+Installing the mechanism immediately caught a genuine survivor: section 4a still asserted
+SR-02 ("pick the largest model that still clears 15 tok/s") in prose written before the
+measurement that killed it. That passage is now marked superseded rather than silently
+deleted, because it explains why the bake-off was designed as it was.
+
+**When a conclusion is reversed, add a registry entry, not only a prose edit.** The entry
+is what stops it coming back.
+
+---
+
 ## 13. Open items
 
 | ID | Item | State |
@@ -977,7 +1381,9 @@ runner-up, and update `docs/BAKEOFF.md` and `REPORT.md` before submitting.
 | O-09 | Native-versus-in-image lm-eval spot check on one candidate, gating whether accuracy runs may use the faster native build | Open. Now worth doing: the 2.11x measured speedup makes the native build materially cheaper for the lm-eval mix |
 | O-10 | Judge-experienced latency is a 50%-weight risk the formula does not measure (section 6a). Record per-turn latency for every qualitative run and treat an intolerable session as a candidate-disqualifying finding | Opened 12 Aug |
 | O-11 | **Throughput is not reproducible on this host: 1.82 vs 4.50 tok/s** (section 9e). Gate 2 fails symmetrically beyond 50% | **Open, blocks any submitted throughput figure.** Ranking: steal-screened interleaved medians on the VPS. Telemetry: physical machine near Standard Laptop spec. Submit the accurate central estimate, NOT a conservative one |
-| O-12 | Obtain access to a physical machine near the Standard Laptop spec (4 cores, 8 GB, no GPU) for the submitted telemetry run | **Needed from the user.** Blocks the final `submission.json` |
+| O-12 | **PROMOTED again 12 Aug.** A physical machine near the Standard Laptop spec (4 cores, 8 GB, no GPU) now carries **three** deliverables in one sitting: submitted telemetry, ranking verification of the tie cluster, and judge-real latency for the three-arm pass (section 9g) | **Needed from the user. Critical path.** Until it exists there is a composite and a finalist set, but no submittable telemetry and no quotable latency |
+| O-13 | Attribute the 27.8% spread **by elimination**: **warm-up** = first reps rise monotonically then plateau, and vanish under `--warmup`; **steal** = `steal_pct > 0`, directly observed; **neighbour contention** = residual scatter on warm, zero-steal reps, i.e. what remains once the other two are excluded. Thread and run-queue counts are logged to confirm the config was fixed, which is the premise elimination rests on. Run 6+ reps with `--warmup 1` | Open. Cheap, and it decides whether the VPS ranking pass is salvageable |
+| O-14 | **Oversubscription offset** (optional, report colour only): one paired `default` vs `-t 4` diagnostic on a single candidate. It is an OFFSET on every run in a fixed config, not a source of run-to-run variance, so it cannot be recovered by elimination. Deliberately violates audit fidelity, therefore **stamped RANKING ONLY and never submitted** | Open, low priority |
 
 ### Status against the plan
 

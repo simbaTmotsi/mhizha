@@ -967,30 +967,511 @@ def test_ranking_output_is_labelled_as_not_submittable() -> None:
     assert '"purpose": "RANKING ONLY. Not submittable telemetry."' in source
 
 
-def test_comparator_tolerance_direction_is_documented_correctly() -> None:
-    """Guards against the correction being lost.
+def _load_superseded():
+    return yaml.safe_load((REPO / "competition" / "superseded.yaml").read_text(encoding="utf-8"))
 
-    Verified against vendor/adtc-profiler comparator.py: delta is normalised by the
-    SUBMITTED value and classified on abs(), so underclaiming fails at 1.5x error while
-    overclaiming survives to 2x. An earlier revision of COMPETITION.md advised the
-    opposite.
+
+SUPERSEDED = _load_superseded()
+
+
+@pytest.mark.parametrize("rule", SUPERSEDED["rules"], ids=lambda r: r["id"])
+def test_superseded_rule_has_not_reappeared(rule) -> None:
+    """A retracted conclusion must not come back as an assertion.
+
+    This project has reversed several measurement conclusions, two of them mine. A
+    superseded rule left standing in a document reads with exactly the same authority as
+    a current one, and the next reader has no way to know it was retracted. One of these
+    (SR-01, the conservative-figure advice) would have caused the Gate 2 compare failure
+    it was written to avoid.
+
+    A forbidden phrasing is allowed ONLY where a correction marker sits near it, which is
+    what distinguishes "we no longer believe X" from "X".
     """
     import re
 
-    doc = (REPO / "COMPETITION.md").read_text(encoding="utf-8")
-    # Markdown wraps, so compare against a whitespace-normalised copy.
-    flat = re.sub(r"\s+", " ", doc)
+    window = SUPERSEDED.get("context_chars", 400)
+    for rel in rule.get("files") or SUPERSEDED["files_default"]:
+        path = REPO / rel
+        if not path.exists():
+            continue
+        doc = path.read_text(encoding="utf-8")
+        flat = re.sub(r"\s+", " ", doc)
+        for pattern in rule["forbidden"]:
+            for match in re.finditer(pattern, flat, re.IGNORECASE):
+                lo = max(0, match.start() - window)
+                hi = min(len(flat), match.end() + window)
+                context = flat[lo:hi]
+                if any(m.lower() in context.lower() for m in rule["markers"]):
+                    continue
+                raise AssertionError(
+                    f"{rule['id']} has reappeared in {rel} as an assertion:\n"
+                    f"  matched: {match.group(0)!r}\n"
+                    f"  context: ...{context[window - 120:window + 160].strip()}...\n"
+                    f"  superseded rule: {rule['rule']}\n"
+                    f"  why it was wrong: {rule['why_wrong'].strip()}\n"
+                    f"  what is true instead: {rule['replacement'].strip()}\n"
+                    f"  If this text is CORRECTING the old rule, include one of these "
+                    f"markers nearby: {rule['markers']}"
+                )
+
+
+def test_superseded_registry_is_well_formed() -> None:
+    """A malformed entry would silently enforce nothing."""
+    seen = set()
+    for rule in SUPERSEDED["rules"]:
+        for field in ("id", "rule", "why_wrong", "replacement", "forbidden", "markers"):
+            assert rule.get(field), f"{rule.get('id', '?')} is missing {field}"
+        assert rule["id"] not in seen, f"duplicate id {rule['id']}"
+        seen.add(rule["id"])
+        assert rule["forbidden"], f"{rule['id']} forbids nothing"
+
+
+def test_superseded_patterns_actually_compile() -> None:
+    import re
+
+    for rule in SUPERSEDED["rules"]:
+        for pattern in rule["forbidden"]:
+            re.compile(pattern)
+
+
+def test_the_mechanism_catches_a_reintroduced_rule(tmp_path) -> None:
+    """Guard the guard: if the matcher were broken, every rule would pass vacuously."""
+    import re
+
+    rule = next(r for r in SUPERSEDED["rules"] if r["id"] == "SR-01")
+    offending = "We should prefer the conservative figure when reporting throughput."
+    flat = re.sub(r"\s+", " ", offending)
+    hits = [m for p in rule["forbidden"] for m in re.finditer(p, flat, re.IGNORECASE)]
+    assert hits, "the SR-01 pattern no longer matches the rule it was written to catch"
+    assert not any(m.lower() in offending.lower() for m in rule["markers"]), (
+        "the offending sample accidentally contains a correction marker"
+    )
+
+
+def test_comparator_tolerance_direction_is_documented_correctly() -> None:
+    """The replacement for SR-01 must be present, not merely the old text absent."""
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
     assert "0.667" in flat, "the asymmetric fail band must stay documented"
     assert "Pessimism is the more dangerous bias" in flat
-    # The phrase may appear only where it is being corrected or negated, never as advice.
-    for line in doc.splitlines():
-        if "conservative" not in line.lower():
+
+
+# ---------------------------------------------------------------- audit fidelity
+#
+# COMPETITION.md section 9e-bis: reproduce the audit's behaviour including its defects.
+# No flag the profiler does not pass may touch a run that feeds a submitted number.
+#
+# This caught a real violation on the day it was written: judge_chat.py passed `-t 4` to
+# llama-server, so every latency figure we had was measured under a thread configuration
+# a judge would never get.
+
+ORACLE = json.loads((REPO / "competition" / "fidelity_oracle.json").read_text())
+
+# Scripts whose llama invocations must stay inside the oracle's allowed set. Structural
+# flags a server needs and the profiler has no equivalent for are listed per script, with
+# a reason: they are deviations we are choosing, so they must be named rather than
+# silently tolerated.
+FIDELITY_BOUND = {
+    "bench_screened.py": set(),
+    "adtc_profile.py": set(),
+    "simd_compare.sh": set(),
+    # llama-server has no counterpart in the profiler at all: it is never invoked there.
+    # --host/--port are required to reach it; -c mirrors the profiler's own _N_CTX
+    # rather than being a number of ours.
+    "judge_chat.py": {"--host", "--port", "-c"},
+}
+
+
+def _llama_flags_in(source: str, is_shell: bool = False) -> set[str]:
+    """Flags passed TO a llama binary, not flags of the command that launches it.
+
+    Scans forward from each llama binary token rather than across whole lines: docker's
+    own `--entrypoint`, `--memory` and `--cpus` precede the binary and are ours by
+    necessity, while everything after it is an argument the llama process actually sees.
+    The window stops at the end of the invocation so unrelated later code is not swept in.
+    """
+    import re
+
+    import ast
+
+    def _flags_from_shell(text: str) -> set[str]:
+        """From a llama binary token, the line plus shell-continued lines after it."""
+        out: set[str] = set()
+        for match in re.finditer(r"llama-(?:bench|server)", text):
+            lines = text[match.end():].splitlines()
+            window: list[str] = []
+            for line in lines[:12]:
+                window.append(line)
+                if not line.rstrip().endswith("\\"):
+                    break
+            for line in window:
+                if line.strip().startswith("#"):
+                    continue
+                for redirect in (" > ", " 2> ", " 2>&1", " >> "):
+                    cut = line.find(redirect)
+                    if cut != -1:
+                        line = line[:cut]
+                out.update(re.findall(r"(?<![\w-])(--?[a-zA-Z][\w-]*)", line))
+        return out
+
+    if is_shell:
+        return _flags_from_shell(source)
+
+    # A python file. An argv list mixes docker's flags with llama's, so take only the
+    # elements AFTER the binary: everything before it belongs to the command that
+    # launches the container, which is ours by necessity.
+    found: set[str] = set()
+    tree = ast.parse(source)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.List):
+            constants = [c.value if isinstance(c, ast.Constant) and isinstance(c.value, str)
+                         else None for c in node.elts]
+            binary_at = next((i for i, c in enumerate(constants)
+                              if c in ("llama-bench", "llama-server")), None)
+            if binary_at is None:
+                continue
+            for value in constants[binary_at + 1:]:
+                if value and re.fullmatch(r"--?[a-zA-Z][\w-]*", value):
+                    found.add(value)
+        elif isinstance(node, ast.JoinedStr):
+            literal = "".join(p.value for p in node.values
+                              if isinstance(p, ast.Constant) and isinstance(p.value, str))
+            if "llama-bench" in literal or "llama-server" in literal:
+                found.update(_flags_from_shell(literal))
+    return found
+
+
+@pytest.mark.parametrize("script", sorted(FIDELITY_BOUND))
+def test_llama_invocations_stay_inside_the_derived_oracle(script: str) -> None:
+    """Class coverage, not a list of remembered flags.
+
+    The allowed set is READ OUT OF the profiler's own invocation
+    (competition/fidelity_oracle.json, derived by scripts/derive_fidelity_oracle.py), so a
+    flag nobody anticipated is caught the same as one that was.
+
+    This is what caught judge_chat.py passing `-t 4` to llama-server, which made every
+    recorded latency figure a measurement of a configuration no judge will run.
+    """
+    path = REPO / "scripts" / script
+    allowed = set(ORACLE["llama_bench"]["effective_allowed"]) | FIDELITY_BOUND[script]
+    used = _llama_flags_in(path.read_text(encoding="utf-8"),
+                           is_shell=path.suffix == ".sh")
+    extra = used - allowed
+    assert not extra, (
+        f"{script} passes {sorted(extra)}, which the profiler does not.\n"
+        f"  oracle allows: {sorted(allowed)}\n"
+        f"  A run using flags the audit will not use produces telemetry the audit "
+        f"cannot reproduce, and Gate 2's compare fails symmetrically "
+        f"(COMPETITION.md section 9e-bis).\n"
+        f"  If this flag is structurally unavoidable, add it to FIDELITY_BOUND with a "
+        f"reason rather than widening the oracle."
+    )
+
+
+def test_oracle_snapshot_matches_the_vendored_source() -> None:
+    """Premise test: the rules are only as current as the source they were read from.
+
+    A profiler upgrade that changes the invocation must surface here, not silently leave
+    the fidelity rules describing a version we no longer face.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "derive_oracle", REPO / "scripts" / "derive_fidelity_oracle.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    fresh = module.derive()
+    assert fresh == ORACLE, (
+        "the fidelity oracle no longer matches vendor/adtc-profiler.\n"
+        "The profiler's llama invocation or its source hash changed. Re-derive with\n"
+        "  python3 scripts/derive_fidelity_oracle.py --write\n"
+        "and re-check every fidelity-bound script against the new allowed set."
+    )
+
+
+def test_oracle_excludes_conditionally_passed_flags_the_entry_point_never_supplies() -> None:
+    """`-t` is in the profiler's code but never reached from measure(). The oracle must
+    reflect what is actually passed, not what is merely present."""
+    assert "-t" in ORACLE["llama_bench"]["conditionally_passed"]
+    assert ORACLE["llama_bench"]["entry_point_supplies_conditional"] is False
+    assert "-t" not in ORACLE["llama_bench"]["effective_allowed"]
+
+
+def test_chat_context_mirrors_the_profilers_own(bench_tool) -> None:
+    """-c is a deviation we allow; it must track the profiler's _N_CTX, not a number of ours."""
+    source = (REPO / "scripts" / "judge_chat.py").read_text(encoding="utf-8")
+    assert f"CTX = {ORACLE['accuracy_n_ctx']}" in source, (
+        f"judge_chat.py's context must mirror the profiler's _N_CTX "
+        f"({ORACLE['accuracy_n_ctx']})"
+    )
+
+
+def test_audit_fidelity_principle_is_documented() -> None:
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "audit-fidelity principle" in flat.lower()
+    assert "including its defects" in flat
+
+
+# ---------------------------------------------------------------- pre-registration
+
+
+def test_cluster_rule_is_pre_registered_with_both_branches() -> None:
+    """A tie rule chosen after seeing the table is a preference, not a rule."""
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "Pre-registered cluster rule" in flat
+    assert "before the sweep completed" in flat
+    assert "150" in flat and "200" in flat, "the re-run limit range must be recorded"
+    assert re.search(r"<=\s*3", flat), "the proceed branch must be recorded"
+
+
+def test_bench_logs_threads_alongside_steal(bench_tool) -> None:
+    """O-13: warm-up, bandwidth contention and oversubscription thrash all look identical
+    in a table of tok/s at 0.00% steal. Thread and run-queue counts separate them."""
+    assert hasattr(bench_tool, "read_thread_count")
+    assert hasattr(bench_tool, "read_runnable")
+    assert bench_tool.bench_threads([{"n_threads": 12, "n_gen": 128}]) == 12
+    assert bench_tool.bench_threads([{"n_gen": 128}]) is None
+    source = (REPO / "scripts" / "bench_screened.py").read_text(encoding="utf-8")
+    assert '"bench_threads_reported"' in source
+    assert '"runnable_after"' in source
+
+
+def test_report_states_the_path_to_build_mapping() -> None:
+    """All three paths must be named, or a reader cannot tell which build produced what."""
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "REPORT.md").read_text(encoding="utf-8"))
+    for path in ("llama-bench", "llama-server", "llama-cpp-python"):
+        assert path in flat, f"{path} is not mapped to a build stage"
+    assert "stage 1" in flat and "stage 2" in flat
+    assert "Disclosure timing" in flat
+    assert "check_upstream" in flat, "the drift guard must be named"
+
+
+def test_the_oracle_catches_flags_nobody_anticipated() -> None:
+    """Guard the guard, across all three invocation forms.
+
+    The point of deriving the allowed set is that the NEXT violation will be a flag
+    nobody listed. These tampered samples use flags that appear on no denylist anywhere
+    in this repository.
+    """
+    allowed = set(ORACLE["llama_bench"]["effective_allowed"])
+
+    bench = (REPO / "scripts" / "bench_screened.py").read_text(encoding="utf-8")
+    tampered = bench.replace('"-m", f"/m/{candidate}.gguf",',
+                             '"--poll", "0", "--numa", "distribute", "-m", f"/m/{candidate}.gguf",')
+    assert {"--poll", "--numa"} <= _llama_flags_in(tampered) - allowed
+
+    chat = (REPO / "scripts" / "judge_chat.py").read_text(encoding="utf-8")
+    tampered = chat.replace("-ngl 0 >", "-ngl 0 --mlock --cache-type-k q8_0 >")
+    assert {"--mlock", "--cache-type-k"} <= _llama_flags_in(tampered) - allowed
+
+    shell = (REPO / "scripts" / "simd_compare.sh").read_text(encoding="utf-8")
+    tampered = shell.replace("-ngl 0 --output json", "-ngl 0 -t 4 --output json")
+    assert "-t" in _llama_flags_in(tampered, is_shell=True) - allowed
+
+
+def test_docker_flags_are_not_mistaken_for_llama_flags() -> None:
+    """--entrypoint, --rm and -v belong to the container command, not the model.
+
+    An earlier revision flagged these and would have forced us to whitelist container
+    plumbing, diluting the oracle until it meant nothing.
+    """
+    detected = _llama_flags_in(
+        (REPO / "scripts" / "bench_screened.py").read_text(encoding="utf-8"))
+    for docker_flag in ("--entrypoint", "--rm", "-v", "--memory", "--cpus"):
+        assert docker_flag not in detected
+
+
+def test_chat_runs_record_their_fidelity_state() -> None:
+    """A latency figure must carry whether it was measured faithfully.
+
+    Relying on someone remembering which runs predate the `-t 4` removal is exactly how a
+    stale number ends up in a report as "context".
+    """
+    source = (REPO / "scripts" / "judge_chat.py").read_text(encoding="utf-8")
+    assert '"fidelity"' in source
+    assert '"thread_flag_passed": False' in source
+    assert '"audit_faithful": True' in source
+
+
+def test_stale_latency_runs_are_stamped() -> None:
+    """Every chat/AB run archived before the fix carries a do-not-quote marker."""
+    runs = REPO / "runs"
+    if not runs.exists():
+        pytest.skip("no runs archived in this checkout")
+    stale = [d for d in runs.iterdir()
+             if d.is_dir() and ("_chat_" in d.name or "_ab_" in d.name)]
+    unstamped = [d.name for d in stale if not (d / "FIDELITY_STALE.txt").exists()]
+    # Runs created after the fix will legitimately lack the stamp; assert only that the
+    # known-stale set is covered, by checking any run whose chat.json lacks a fidelity block.
+    for directory in stale:
+        chat = directory / "chat.json"
+        if not chat.exists():
             continue
-        corrected = any(
-            marker in line.lower()
-            for marker in ("was wrong", "not a deliberately conservative", "not a conservative")
-        )
-        assert corrected, (
-            f"a line still recommends a conservative figure without marking it "
-            f"superseded: {line.strip()[:120]}"
-        )
+        data = json.loads(chat.read_text())
+        faithful = (data.get("_meta") or {}).get("fidelity", {}).get("audit_faithful")
+        if faithful is not True:
+            assert (directory / "FIDELITY_STALE.txt").exists(), (
+                f"{directory.name} has no fidelity block and no stale stamp: its latency "
+                "figures could be quoted by mistake"
+            )
+
+
+# ---------------------------------------------------------------- sequencing
+
+
+def test_latency_is_not_quotable_from_a_shared_host() -> None:
+    """Enforced, not remembered.
+
+    This host showed 27.8% spread on a fixed workload at 0.00% steal. Its topology is not
+    the judges', so a latency figure measured here describes a machine nobody will use.
+    """
+    source = (REPO / "scripts" / "judge_chat.py").read_text(encoding="utf-8")
+    assert '"--host-class"' in source
+    assert 'default="shared"' in source, (
+        "the safe default must be shared: an unmarked run must not be quotable"
+    )
+    assert '"latency_quotable": host_class == "physical"' in source
+    assert "NOT QUOTABLE" in source, "the summary must say so on screen, not only in JSON"
+
+
+def test_behavioural_findings_remain_valid_on_a_shared_host() -> None:
+    """The VPS is still fine for what does not depend on topology.
+
+    Over-restricting would be its own error: whether a model refuses a dosage, returns
+    empty content, or applies a baked template does not depend on core layout.
+    """
+    source = (REPO / "scripts" / "judge_chat.py").read_text(encoding="utf-8")
+    assert "host_class" in source
+    # The gate must apply to latency only, not suppress the run itself.
+    assert "sys.exit" not in source.split("--host-class")[1][:800], (
+        "a shared host must still be allowed to run behavioural probes"
+    )
+
+
+def test_sequencing_is_documented_with_the_merged_physical_session() -> None:
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "Sequencing: what runs where" in flat
+    assert "completes before any qualitative work" in flat
+    assert "never delays the composite" in flat
+    for deliverable in ("Submitted telemetry", "Ranking verification", "Judge-real latency"):
+        assert deliverable in flat, f"the merged session must name {deliverable}"
+
+
+def test_lmeval_logs_host_state_for_future_attribution() -> None:
+    """The first sweep could not attribute its own schedule miss, having logged none."""
+    source = (REPO / "scripts" / "lmeval_mix.py").read_text(encoding="utf-8")
+    assert '"steal_pct"' in source
+    assert '"runnable_before"' in source
+
+
+# ---------------------------------------------------------------- consumer guards
+
+
+@pytest.fixture(scope="module")
+def guards():
+    spec = importlib.util.spec_from_file_location(
+        "run_guards", REPO / "scripts" / "run_guards.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_absent_stamp_is_treated_as_not_quotable(guards) -> None:
+    """Every run predating the stamp was measured under `-t 4`, so a permissive default
+    would admit exactly the figures the stamp exists to exclude."""
+    assert guards.latency_quotable({}) is False
+    assert guards.latency_quotable({"_meta": {}}) is False
+    assert guards.latency_quotable({"_meta": {"latency_quotable": False}}) is False
+    assert guards.latency_quotable({"_meta": {"latency_quotable": "yes"}}) is False
+    assert guards.latency_quotable({"_meta": {"latency_quotable": True}}) is True
+
+
+def test_consumer_refuses_an_unquotable_figure(guards) -> None:
+    with pytest.raises(guards.UnquotableFigure, match="refusing a latency figure"):
+        guards.assert_latency_quotable({"_meta": {"host_class": "shared"}}, "somewhere")
+
+
+def test_composite_refuses_an_unquotable_latency_source() -> None:
+    """Same pattern as FIDELITY_STALE, enforced where the figure would be used."""
+    source = (REPO / "scripts" / "composite.py").read_text(encoding="utf-8")
+    assert "assert_latency_quotable" in source
+    assert "--latency-from" in source
+
+
+def test_report_builder_refuses_and_reports_blocked_figures() -> None:
+    source = (REPO / "scripts" / "report_figures.py").read_text(encoding="utf-8")
+    assert "audit_archive" in source
+    assert '"blocked"' in source, "an absent figure must be visible, not silent"
+
+
+def test_report_builder_currently_blocks_latency_and_telemetry() -> None:
+    """The archive holds no quotable latency, so the builder must say so rather than
+    reaching for a stale or shared-host run."""
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    from datetime import date
+
+    report = module.gather(today=date(2026, 8, 12))
+    blocked = {b["figure"] for b in report["blocked"]}
+    assert "judge_latency" in blocked
+    assert "judge_latency" not in report["figures"]
+
+
+def test_fallback_opens_only_after_the_deadline() -> None:
+    from datetime import date
+
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.PHYSICAL_DEADLINE == date(2026, 8, 18)
+
+    before = module.gather(today=date(2026, 8, 17))
+    assert "telemetry" not in before["figures"], "the fallback must not open early"
+
+    after = module.gather(today=date(2026, 8, 19))
+    telemetry = after["figures"].get("telemetry")
+    if telemetry:   # requires an archived bench run
+        assert telemetry["fallback_invoked"] is True
+        assert "FALLBACK" in telemetry["label"]
+
+
+def test_latency_never_falls_back(guards) -> None:
+    """There is no honest VPS substitute for judge-experienced latency."""
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "Latency does not fall back" in flat
+    source = (REPO / "scripts" / "report_figures.py").read_text(encoding="utf-8")
+    # The fallback branch must apply to telemetry only.
+    fallback_block = source[source.index("fallback_invoked"):]
+    assert "judge_latency" not in fallback_block[:900]
+
+
+def test_chain_is_serial_and_orders_composite_before_o13() -> None:
+    """O-13 measures run-to-run variance; anything beside it corrupts what it measures."""
+    lines = [ln for ln in (REPO / "scripts" / "after_sweep.sh")
+             .read_text(encoding="utf-8").splitlines()
+             if ln.strip() and not ln.strip().startswith("#")]
+    body = "\n".join(lines)
+    composite_at = body.index("scripts/composite.py")
+    o13_at = body.index("--tag o13")
+    assert composite_at < o13_at, (
+        "O-13 measures run-to-run variance; it must run after the composite so nothing "
+        "else is competing with it, and so it can never delay the table"
+    )
+    # The qualitative pass must not be chained: it needs the physical machine.
+    assert "judge_chat.py" not in body
+    assert "ab_template.py" not in body

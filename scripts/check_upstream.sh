@@ -83,10 +83,23 @@ for repo in "${!PINNED[@]}"; do
   fi
 
   # Surface the SIMD flags explicitly, changed or not: this is the line that matters most.
+  #
+  # The two stages are reported separately because they DIFFER, and the difference is a
+  # finding in REPORT.md section 4.3.1: stage 1 (llama-bench, llama-server) disables every
+  # vector extension, while stage 2 (the llama-cpp-python wheel used for accuracy) sets
+  # only GGML_NATIVE=OFF and leaves them on. If a future revision aligns the two, our
+  # throughput numbers and the SIMD finding both need re-measuring.
   if [[ -f "$WORK/$repo/Dockerfile" ]]; then
-    echo "  --- current upstream SIMD flags ---"
-    grep -E "GGML_(NATIVE|AVX|AVX2|AVX512|FMA|F16C)" "$WORK/$repo/Dockerfile" \
-      | sed 's/^/    /' || echo "    (none found)"
+    echo "  --- stage 1 (binaries: llama-bench, llama-cli, llama-server) ---"
+    sed -n '/AS llama-build/,/AS py-build/p' "$WORK/$repo/Dockerfile" \
+      | grep -E "GGML_(NATIVE|AVX|AVX2|AVX512|FMA|F16C)" | sed 's/^/    /' \
+      || echo "    (no GGML flags found: layout changed, read the Dockerfile)"
+    echo "  --- stage 2 (llama-cpp-python wheel, used for accuracy) ---"
+    sed -n '/AS py-build/,/AS runtime/p' "$WORK/$repo/Dockerfile" \
+      | grep -E "CMAKE_ARGS|GGML_" | sed 's/^/    /' \
+      || echo "    (no CMAKE_ARGS found: layout changed, read the Dockerfile)"
+    echo "  Expected as of our pin: stage 1 all OFF, stage 2 only GGML_NATIVE=OFF."
+    echo "  If stage 2 gained explicit AVX flags, or stage 1 lost them, RE-MEASURE."
   fi
 done
 
