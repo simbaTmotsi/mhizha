@@ -116,6 +116,24 @@ Third pass, same day:
   template asks for a one-to-three-page report and ours is far longer, and `metadata.json`
   still names the artefact candidate rather than a chosen one.
 
+Fifth pass, two report fixes before freeze:
+
+- **Removed a duplicated rubric paragraph** in `REPORT.md` section 4.6, left behind when
+  the section was expanded.
+- **Recomputed every answer-time figure from measured medians.** `REPORT.md` section 3 and
+  the `docs/BAKEOFF.md` structural-points table were both built on one candidate's
+  throughput scaled by parameter count. Measured, a 300-token answer on the 4B is **5.0
+  minutes, not 14**, and a four-prompt session is about 20 minutes rather than close to an
+  hour. **The correction cuts against an argument we liked**: judge patience is still the
+  strongest reason to prefer a small candidate, but roughly a third as strong as we had it,
+  and the old figure would have justified excluding candidates it does not exclude. Both
+  documents keep the retracted numbers visible rather than quietly editing them.
+
+  The old constant was wrong twice: its recorded formula, `300 / (4.29 / 5) / 60`,
+  evaluates to 5.8 and not to the 14 it was filed under, because the divisor actually used
+  was 12. Nothing recomputes `report_constants.yaml`, so derived entries are hand-checked
+  when their inputs move. That is now written at the top of the `derived_latency` block.
+
 Fourth pass, on your rulings:
 
 - **`runs/` ships as records, not bulk.** `.gitignore` now publishes every record (58
@@ -149,44 +167,71 @@ latency are blocked on O-12, and `metadata.json` still holds `TODO_*`.
 
 ## In flight right now
 
-One background job, started 12 Aug 07:26Z (**not** 04:30Z as first written here):
+**The all-candidate throughput sweep completed 12 Aug 20:55Z** and the composite was
+re-formed on complete data. See the caveat section below for what it produced.
+
+One background job, started 12 Aug ~20:56Z, the **pre-registered cluster re-run**:
 
 ```
-python3 scripts/bench_screened.py --candidates all --reps 4 --warmup 1 --tag all-candidates
-  log: /tmp/bench_all.log        # progress
-  out: runs/<stamp>_bench_all-candidates/bench.json
+python3 scripts/lmeval_mix.py --candidates <the 5 tied> --limit 150 \
+    --image adtc-profiler:latest --tag cluster-rerun
+  log: /tmp/cluster_rerun.log
 ```
 
-It supplies the throughput data the composite is missing. Round 1 of 4 took roughly
-70 minutes (all six candidates interleaved), so expect it to land around **12:00 to
-12:30Z**. The 4B candidates dominate the wall clock: qwen3.5-4b measured 0.80 tok/s,
-gemma-4-e2b 1.63, qwen3.5-2b 1.80, llama-3.2-1b 2.27, qwen3.5-0.8b 4.12, all at zero steal
-with threads at 12. When it finishes:
+It fired because the selection set came out at 5, and 9f-pre says a cluster above 3 means
+the mix at limit 50 did not discriminate. Tied candidates only, official image only. The
+limit-50 sweep of six candidates took about 2.5 hours, so expect this to run several hours;
+`arc_easy` and `arc_challenge` dominate. When it finishes:
 
 ```
-python3 scripts/composite.py --auto      # re-forms the ranking and tie cluster
+python3 scripts/composite.py --auto      # re-forms the cluster from tighter accuracy bands
 ```
 
-Check it did not warn about unranked candidates, and check `bench_image` is
-`adtc-profiler:latest`.
+Then check `python3 scripts/report_figures.py` still lists `composite` as AVAILABLE and
+still labels it PROVISIONAL, which it should until a physical run exists.
+
+**Presenting the 150 results: no mixed limits in one table.** The five tied candidates are
+at 150; gemma-4-e2b is not, because 9f-pre re-runs tied candidates only. So every accuracy
+table becomes the five at 150, with **gemma footnoted at 50** and out of the ranked rows.
+Two limits in adjacent rows invite a comparison the sampling errors do not support, and the
+whole reason for the re-run is that the band at 50 is about twice the band at 150. Applies
+to `REPORT.md` section 4.5 and `docs/BAKEOFF.md` alike.
+
+**Expect the cluster to land at three or four, and stop there.** If it does, that is
+9f-pre working: straight to the three-arm pass, on the O-12 machine. **Do not spend more
+VPS accuracy on it.** What collapses a cluster of three or four is the physical bench,
+because the term that cannot separate these candidates is throughput, and no amount of
+additional accuracy sampling substitutes for measuring it on hardware that can resolve it.
+A third accuracy sweep would be effort spent on the axis that is already the sharpest.
+
+The sweep it replaced, for the record: `bench_screened.py --candidates all --reps 4
+--warmup 1`, archived as `runs/20260812T072644Z_bench_all-candidates`, official image, all
+six candidates, ~13.5 hours. Medians and spreads are in `docs/BAKEOFF.md`. Its own output
+warned that three candidates exceeded 25% spread, which is the O-13 result reproducing at
+scale rather than a surprise.
 
 ---
 
-## The single most important caveat
+## Where the selection actually stands
 
-**The current finalist set of 1 (`qwen3.5-0.8b`) is an artefact and must not be used.**
-It came from a composite where five of six candidates had no throughput data and were
-scored `perf 0.00`. The bug is fixed (missing data is now refused, not scored zero), but
-the ranking has not yet been re-formed against complete data.
+**The artefact is gone.** The finalist set of one (`qwen3.5-0.8b`), which came from a
+composite where five of six candidates had no throughput data and were scored `perf 0.00`,
+is superseded by `runs/20260812T205537Z_composite`, built on the complete sweep with
+`ranking_complete: true`. The old record stays in the archive marked incomplete, and
+`report_figures.py` refuses to publish a finalist set from any composite that says so.
 
-This is now enforced rather than remembered. `report_figures.py` refuses to publish a
-finalist set from any composite recording `ranking_complete: false`, and names the
-candidates that were missing when asked why. The warning above stays because the guard
-stops the artefact reaching `REPORT.md`, not a person quoting it from
-`runs/20260812T072624Z_composite/composite.json` directly.
+**What exists now is a partition, not a ranking.** Five of six candidates are in the
+selection set (everything except `gemma-4-e2b-it`), listed alphabetically because the
+throughput term cannot order them: the sweep's own output warned that three candidates
+exceeded 25% spread. The record carries `provisional: true` and `ordering_claimed: false`,
+and will keep carrying them until a physical run exists. **A selection set of five is not a
+result to be pleased with**; it is the accuracy mix at limit 50 failing to discriminate,
+which is exactly the case 9f-pre was written for, and the re-run above is the registered
+response.
 
-**Accuracy proxy is real** (limit 50; arc_easy, arc_challenge, mmlu_high_school_biology,
-mmlu_nutrition), run `20260812T000207Z_lmeval_sweep`:
+**Accuracy proxy at limit 50** (arc_easy, arc_challenge, mmlu_high_school_biology,
+mmlu_nutrition), run `20260812T000207Z_lmeval_sweep`. The in-flight re-run at limit 150 will
+supersede these for the five tied candidates:
 
 | candidate | mean |
 |---|---|

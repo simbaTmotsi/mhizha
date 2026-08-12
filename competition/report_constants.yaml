@@ -100,14 +100,30 @@ derived:
 # when no measured latency exists. See COMPETITION.md section 9g: if the fallback fires,
 # latency may appear solely as an implication of the FALLBACK throughput, labelled
 # `estimate`. Measured-latency language is reserved for physical runs.
+# SUPERSEDED 12 Aug, on the all-candidate sweep. The two entries below replaced a pair
+# derived by scaling one candidate's throughput by parameter ratio, which overstated the
+# time cost of a large candidate by roughly three times. Every candidate now has its own
+# measured median, so nothing needs scaling.
+#
+# The retracted pair is worth naming, because one of them was wrong twice over. It claimed
+# 14 minutes for a 300-token answer on a 4B, and its own recorded formula,
+# "300 / (4.29 / 5) / 60", evaluates to 5.8 rather than 14: the scaling divisor actually
+# used was 12, not the 5 written down. A derived value whose stated formula does not
+# reproduce it is exactly what this file exists to prevent, and it survived here because
+# nothing recomputes these. They are checked by hand when their inputs change.
 derived_latency:
-  - value: "1.2"
-    formula: "300 tokens / 4.29 tok/s / 60"
-    means: "minutes for a 300-token answer at the pooled median throughput"
-    inputs: "4.29 tok/s (measured)"
+  - value: "1.7"
+    formula: "300 tokens / 2.974 tok/s / 60"
+    means: "minutes for a 300-token answer on the smallest candidate, qwen3.5-0.8b"
+    inputs: "2.974 tok/s (measured, 20260812T072644Z_bench_all-candidates)"
     label_required: "estimate"
-  - value: "14"
-    formula: "300 / (4.29 / 5) / 60, scaling by parameter ratio"
-    means: "minutes for a 300-token answer on a 4B, ESTIMATE"
-    inputs: "4.29 tok/s (measured), parameter ratio (estimate)"
+  - value: "5"
+    formula: "300 tokens / 0.994 tok/s / 60, rounded from 5.03"
+    means: "minutes for a 300-token answer on the 4B candidate"
+    inputs: "0.994 tok/s (measured, 20260812T072644Z_bench_all-candidates)"
+    label_required: "estimate"
+  - value: "5.0"
+    formula: "same as 5, one decimal"
+    means: "minutes for a 300-token answer on the 4B candidate"
+    inputs: "0.994 tok/s (measured, 20260812T072644Z_bench_all-candidates)"
     label_required: "estimate"

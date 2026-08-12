@@ -124,14 +124,45 @@ medians, with **uncertainty propagated** (`COMPETITION.md` section 9f):
 - **gaps narrower than host noise are ties**, and the tie cluster is the finalist set for
   the three-arm qualitative pass
 
-> **The composite in `runs/20260812T072624Z_composite` must not be used.** It was formed
-> while five of six candidates had no throughput data, and it names a finalist set of one.
-> That set is an artefact of which candidates happened to be measured, not a result. The
-> record marks itself `ranking_complete: false`, and `scripts/report_figures.py` now
-> refuses to publish a finalist set from any composite that does so, so the artefact cannot
-> reach `REPORT.md` while someone forgets. Re-run `python3 scripts/composite.py --auto`
-> when the all-candidate bench sweep lands, and check it warns about no unranked candidate
-> and that `bench_image` is `adtc-profiler:latest`.
+> **Superseded.** The artefact composite in `runs/20260812T072624Z_composite`, which named
+> a finalist set of one because five of six candidates had no throughput data, has been
+> replaced. It is retained in the archive with `ranking_complete: false` recorded in it,
+> and the report builder refuses to publish a finalist set from any composite that says so.
+
+**Current: `runs/20260812T205537Z_composite`, complete and provisional.** The all-candidate
+sweep landed 12 Aug 20:55Z (`20260812T072644Z_bench_all-candidates`, official image, 4 reps,
+first discarded). All six candidates are ranked, `ranking_complete: true`.
+
+It is **provisional** because the bench source declares no physical host, so
+`ordering_claimed` is `false` and the output is a partition rather than a ranking:
+
+| Group | Candidates (alphabetical; position inside the group is not a claim) |
+|---|---|
+| **Selection set (5)** | `llama-3.2-1b`, `phi-4-mini`, `qwen3.5-0.8b`, `qwen3.5-2b`, `qwen3.5-4b` |
+| Excluded | `gemma-4-e2b-it` |
+
+**Throughput medians, this host, RANKING ONLY** (**measured**,
+`20260812T072644Z_bench_all-candidates`; spread is of the median):
+
+| Candidate | median tok/s | min | max | spread |
+|---|---|---|---|---|
+| llama-3.2-1b | 3.107 | 3.062 | 3.751 | 22.2% |
+| qwen3.5-0.8b | 2.974 | 2.776 | 3.205 | 14.4% |
+| qwen3.5-2b | 2.190 | 1.323 | 2.642 | 60.2% |
+| phi-4-mini | 1.640 | 1.566 | 1.818 | 15.3% |
+| gemma-4-e2b-it | 1.315 | 1.294 | 1.643 | 26.5% |
+| qwen3.5-4b | 0.994 | 0.764 | 1.063 | 30.1% |
+
+The harness warned on its own output: spread above 25% for `qwen3.5-2b`, `qwen3.5-4b` and
+`gemma-4-e2b-it`, so the ranking between candidates that close together is not resolved.
+That is the O-13 result reproducing at scale, and it is why the perf column carries no
+ordering authority (section 9f-bis).
+
+**The pre-registered cluster rule fired.** Five is greater than three, so the mix at limit
+50 did not discriminate, and the tied candidates only are being re-scored at **limit 150 in
+the official image** before the cluster is re-formed. Started 12 Aug ~20:56Z. The rule and
+the branch were registered on 12 Aug at 00:07:58Z, while candidate 1 of 6 was still running
+and no scores existed.
 
 **The cluster rule is pre-registered** (`COMPETITION.md` section 9f-pre), recorded while
 candidate 1 of 6 was still running and no scores existed:
@@ -163,6 +194,14 @@ ranking uses the same scoring path rather than a lookalike.
 | Qwen3.5-2B | 65.0% |
 | Qwen3.5-0.8B | 59.0% |
 | Llama-3.2-1B | 55.0% |
+
+> **When the limit-150 re-run lands, do not mix limits in one table.** The five tied
+> candidates are re-scored at 150; `gemma-4-e2b-it` is not, because 9f-pre re-runs tied
+> candidates only. So the table becomes the five at limit 150, with gemma **footnoted at
+> limit 50** and excluded from the ranked rows. Putting a 50 and a 150 in adjacent rows
+> invites a comparison the sampling errors do not support: the whole point of the re-run is
+> that the band at 50 is roughly twice the band at 150, and a reader cannot see that from
+> two numbers sitting side by side.
 
 **Read this as three pairs, not six places.** At limit 50 the sampling error alone is a
 couple of points per task, so the 76s are a tie with each other and so are the 65s. The two
@@ -259,24 +298,41 @@ protocol). Only the official-image number goes in `REPORT.md` as our throughput.
 
 ### What the throughput result means for model choice
 
-Structural points at stake, from the measured 0.8B rate scaled by parameter count
-(**estimate** for all but the first row):
+**Recomputed 12 Aug from each candidate's own measured median**
+(`20260812T072644Z_bench_all-candidates`, official image, RANKING ONLY, this host). The
+previous version of this table scaled one candidate's throughput by parameter count and
+is retracted below.
 
-| Candidate | tok/s | S_perf x0.3 | S_eff x0.2 | perf+eff | ~time per 300-token answer |
+| Candidate | median tok/s | S_perf x0.3 | S_eff x0.2 | perf+eff | ~time per 300-token answer |
 |---|---|---|---|---|---|
-| Qwen3.5-0.8B (**measured**) | 1.82 | 3.6 | 18.3 | **21.9** | 2.7 min |
-| Qwen3.5-2B (estimate) | 0.73 | 1.5 | 16.1 | 17.6 | 6.9 min |
-| Qwen3.5-4B (estimate) | 0.36 | 0.7 | 12.1 | 12.9 | 13.7 min |
+| Qwen3.5-0.8B | 2.974 | 5.95 | 18.09 | **24.04** | 1.7 min |
+| Llama-3.2-1B | 3.107 | 6.21 | 17.10 | 23.31 | 1.6 min |
+| Qwen3.5-2B | 2.190 | 4.38 | 15.40 | 19.78 | 2.3 min |
+| Phi-4-mini | 1.640 | 3.28 | 11.05 | 14.33 | 3.0 min |
+| Gemma-4-E2B | 1.315 | 2.63 | 8.84 | 11.47 | 3.8 min |
+| Qwen3.5-4B | 0.994 | 1.99 | 10.15 | 12.14 | 5.0 min |
 
-Smallest beats largest by only **~9 points** on perf and efficiency combined, while
-accuracy carries **50**. A larger model needs only a modest judge-assessed edge to pay for
-its size, so this table does **not** justify picking the smallest candidate on efficiency
-grounds.
+The perf-plus-efficiency advantage of the smallest candidate over the largest is about
+**12 points**, against **50** for accuracy. That conclusion is unchanged from the retracted
+version and if anything is firmer: a larger model needs only a modest judge-assessed edge
+to pay for its size, so this table does **not** justify picking the smallest candidate on
+efficiency grounds.
 
-The stronger argument against a large candidate is the last column. The judge who scores
-accuracy also waits through generation. At ~14 minutes an answer, a 4-prompt session runs
-close to an hour, and the risk is a depressed accuracy score or a truncated session, which
-is a 50%-weight consequence arriving through a term the formula does not measure.
+**What did change is the last column, and it moves against an argument we liked.** The
+judge who scores accuracy waits through generation, and we had that costing ~14 minutes an
+answer on a 4B with a four-prompt session running close to an hour. Measured, it is **5.0
+minutes and about 20 minutes**. The judge-patience argument against a large candidate is
+real and remains the strongest reason to prefer a small one, but it is roughly **a third as
+strong as we had it**, and the earlier figure would have justified excluding candidates it
+does not in fact exclude.
+
+> **Retracted, kept for the record.** The previous table read 1.82 / 0.73 / 0.36 tok/s for
+> the 0.8B / 2B / 4B, giving 2.7 / 6.9 / 13.7 minutes per answer and a ~9 point spread. Its
+> first row was a single unscreened run of one candidate and the other two rows were that
+> number divided by parameter ratio. Two independent errors compounded: the anchor was an
+> outlier low, and parameter-count scaling is not how generation throughput behaves across
+> these architectures. The measured spread across all six candidates is roughly 3x from
+> fastest to slowest, not the 5x the scaling implied.
 
 ### RAG ablation (internal proxy)
 
