@@ -126,7 +126,9 @@ rules:
     replacement: >-
       Steal screening is necessary but not sufficient. Ranking on this host is only valid
       for candidates separated by more than the observed spread, and physical-machine runs
-      are required to verify the ranking, not only to produce telemetry.
+      are required to produce the ranking's throughput term at all, not only to produce
+      telemetry. (This replacement originally said "to verify the ranking"; SR-12
+      supersedes that wording.)
     forbidden:
       - "steal screening (?:alone )?(?:is|makes) (?:sufficient|enough)"
       - "screening resolves the variance"
@@ -148,6 +150,26 @@ rules:
       - "wheel is built the same way"
       - "Python wheel is (?:also )?SIMD.?disabled"
     markers: ["CORRECTION", "SR-10", "It is not", "superseded"]
+
+  - id: SR-12
+    rule: "The physical sitting verifies the VPS ranking, which is a real ordering to be confirmed on better hardware."
+    why_wrong: >-
+      Verification presumes an ordering exists. O-13 measured 67.9% run-to-run spread at
+      zero steal on a fixed workload, and no two candidates in the bake-off are separated
+      by more than that, so the VPS perf column never ordered anything. The framing had a
+      cost beyond wording: it invites reading VPS-versus-physical agreement as
+      corroboration and disagreement as a discrepancy to investigate, when the first is
+      worth nothing and the second is expected.
+    replacement: >-
+      The VPS composite is provisional by construction. The physical sitting re-measures
+      throughput and re-forms the table, which is ranking COMPLETION, not verification
+      (section 9f-bis). Enforced: composite.py stamps provisional unless the bench source
+      positively declares host_class physical.
+    forbidden:
+      - "[Rr]anking verification"
+      - "verif(?:y|ies|ication of) the (?:composite )?ranking"
+      - "confirm the (?:VPS )?ordering"
+    markers: ["9f-bis", "SR-12", "superseded", "supersedes", "completion", "not verification"]
 
   - id: SR-11
     rule: "The native AVX2 image will make the accuracy sweep materially faster."

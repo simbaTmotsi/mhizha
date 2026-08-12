@@ -1,0 +1,28 @@
+╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮
+│ The planting window for maize in Mashonaland Central, expressed as a date range tied │
+│ to the onset of effective rains rather than to a fixed calendar date. [P4] The real  │
+│ document will hold, per pest: the local names in English, Shona, and Ndebele, the    │
+│ crop stages at risk, the visible symptoms a farmer can check in the field without    │
+│ equipment, the distinguishing features against pests that look similar, the economic │
+│ threshold at which intervention is justified, non-chemical options first, and only   │
+│ then registered chemical options with their exact label rates. [P5]                  │
+╰──────────────────────────────────────────────────────────────────────────────────────╯
+PLACEHOLDER CORPUS. This answer came from sample documents that contain no real 
+agronomic information. It must not be used for farming decisions.
+Chemical products are dangerous if used wrongly. Always read the product label, follow 
+the stated rate exactly, wear protective clothing, and observe the pre-harvest interval.
+Confirm with your local AGRITEX extension officer before applying anything.
+                                        Based on                                        
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ id ┃ source                                                                  ┃ score ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ P4 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.428 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+│ P5 │ PLACEHOLDER: Pest identification and management structure (Mhizha       │ 0.426 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Pest identification and management (PLACEHOLDER)            │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+Confidence: medium (0.486, top1=0.467, margin=0.030)

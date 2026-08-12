@@ -34,6 +34,11 @@ Confidence: a band (high / medium / low) with the score and its components
 Notices:    placeholder warning, agrochemical safety notice where relevant
 ```
 
+[`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md) shows all four paths as real captures: a cited
+answer, an abstention, the agrochemical refusal, and the device budget. They are generated
+by `python3 scripts/capture_cli.py` against the corpus in this repository, so they can be
+re-run and diffed rather than taken on trust.
+
 Below the abstention threshold the model is not called at all. Mhizha says what it does
 not know, asks the one clarifying question that would unblock it, and refers the farmer to
 their local AGRITEX extension officer.
@@ -154,7 +159,7 @@ against the active device profile. See [`docs/model-shortlist.md`](docs/model-sh
 ## Testing
 
 ```bash
-make test        # 174 tests
+make test        # the full suite
 make eval        # grounding, abstention, red-team, reported per category
 ```
 
@@ -167,6 +172,44 @@ deferral path. Cases marked `requires_generator` are skipped **loudly** against 
 backend, because the stub cannot judge that an on-topic passage fails to answer a
 question, and reporting those as failures would measure the harness rather than the
 system.
+
+## The ADTC 2026 submission
+
+This repository is also our ADTC 2026 Laptop LLM track entry. The competition profiles a
+**bare GGUF**: the official profiler loads the model file directly and never executes any
+code of ours, and the accuracy score comes from judges chatting with the live model. So the
+retrieval and safety work above is the submission's evidence rather than the thing measured,
+and the only channel from it into a judge's session is the chat template we bake into the
+GGUF at download time.
+
+```bash
+bash download_model.sh          # pinned upstream weights, verified, template baked locally
+make profile-image              # build the official profiler image from vendor/
+make profile CANDIDATE=<id>     # run it; output archived under runs/
+python3 scripts/report_figures.py   # what may be quoted, and what is blocked, with reasons
+```
+
+`download_model.sh` re-hosts nothing: it fetches the stock upstream GGUF at a pinned
+revision, checks size and sha256, and applies the template locally with a standard-library
+script. The bytes profiled are upstream's.
+
+| Document | What it is |
+|---|---|
+| [`REPORT.md`](REPORT.md) | the technical writeup, and the only place figures are quoted |
+| [`COMPETITION.md`](COMPETITION.md) | source of truth: every decision, measurement, and open item |
+| [`competition/superseded.yaml`](competition/superseded.yaml) | every conclusion this project reversed, with the evidence, enforced by tests |
+| [`docs/BAKEOFF.md`](docs/BAKEOFF.md) | candidate state |
+| [`SUBMISSION.md`](SUBMISSION.md) | the ordered packaging-day runbook |
+| [`CITATIONS.md`](CITATIONS.md) | attributions and licences |
+| [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md) | generated CLI captures |
+| [`docs/VIDEO.md`](docs/VIDEO.md) | the 2-minute video script |
+
+Two conventions in that work are worth naming because they are enforced by the test suite
+rather than remembered. **No numeric figure is typed into `REPORT.md` by hand**: it is
+measured (emitted by `scripts/report_figures.py` from an archived run), retrieved (an
+official constant with its source), or derived (with its formula). And **no run that feeds a
+submitted number may pass a flag the official profiler does not pass**, with the allowed set
+derived from the vendored profiler source rather than hand-listed.
 
 ## Known limitations
 
@@ -204,4 +247,8 @@ src/mhizha/i18n/       locales and recorded fallback
 data/SOURCES.md        the gap register
 eval/                  grounding, abstention, red-team sets
 docs/                  model shortlist, Android packaging
+competition/           ADTC candidate manifest, superseded rules, constants
+scripts/               ADTC measurement harness: bench, lm-eval, composite, figures
+runs/                  archived run records, one directory per measurement
+CITATIONS.md           attributions and licences
 ```

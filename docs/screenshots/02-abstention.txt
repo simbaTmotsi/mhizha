@@ -1,0 +1,31 @@
+╭───────────────────────────────── Mhizha (abstained) ─────────────────────────────────╮
+│ I found some related material but not enough to answer this safely.                  │
+│                                                                                      │
+│ To help me answer, could you tell me: which province or district you are farming in? │
+│                                                                                      │
+│ Your local AGRITEX extension officer will have current advice for your area.         │
+╰──────────────────────────────────────────────────────────────────────────────────────╯
+                                        Based on                                        
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ id ┃ source                                                                  ┃ score ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ P1 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.109 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │
+│ P2 │ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.098 │
+│    │ (placeholder, not an agronomic authority), refreshed 2026-08-11) Basal  │       │
+│    │ and top dressing structure to be filled [PLACEHOLDER, unvalidated]      │       │
+│ P3 │ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.091 │
+│    │ (placeholder, not an agronomic authority), refreshed 2026-08-11) Soil   │       │
+│    │ fertility and fertiliser (PLACEHOLDER) [PLACEHOLDER, unvalidated]       │       │
+│ P4 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.088 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+│ P5 │ PLACEHOLDER: Post-harvest handling and storage structure (Mhizha        │ 0.080 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Post-harvest handling and storage (PLACEHOLDER)             │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+Confidence: low (0.241, top1=0.109, margin=0.020)
+reason: no passage in the corpus is close to this question

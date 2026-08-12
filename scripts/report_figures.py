@@ -29,26 +29,14 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_guards import audit_archive, latency_quotable  # noqa: E402
+import run_guards  # noqa: E402
+from run_guards import Absent, audit_archive  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
-RUNS = REPO / "runs"
 
 # COMPETITION.md section 9g: the date after which VPS medians may stand in for a physical
 # telemetry run, under the central-estimate rule, with spread documented.
 PHYSICAL_DEADLINE = date(2026, 8, 18)
-
-
-def newest(pattern: str, filename: str):
-    matches = sorted(RUNS.glob(f"{pattern}/{filename}"), key=lambda p: p.stat().st_mtime)
-    return matches[-1] if matches else None
-
-
-def _load(path):
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
 
 
 def gather(today: date | None = None) -> dict:
@@ -57,11 +45,11 @@ def gather(today: date | None = None) -> dict:
     blocked: list[dict] = []
 
     # ---- accuracy (internal proxy, always quotable but always labelled) ----
-    path = newest("*_lmeval*", "lmeval.json")
-    if path:
-        data = _load(path) or {}
+    found = run_guards.newest_record("*_lmeval*", "lmeval.json")
+    if found:
+        run_id, data, _ = found
         figures["accuracy_proxy"] = {
-            "source": str(path.parent.name),
+            "source": run_id,
             "label": "INTERNAL PROXY. S_acc is judge-scored; this never enters as accuracy.",
             "tasks": data.get("tasks"),
             "limit": data.get("limit"),
@@ -72,15 +60,55 @@ def gather(today: date | None = None) -> dict:
         blocked.append({"figure": "accuracy_proxy", "reason": "no lmeval run archived"})
 
     # ---- composite / finalists ----
-    path = newest("*_composite*", "composite.json")
-    if path:
-        data = _load(path) or {}
-        figures["composite"] = {
-            "source": path.parent.name,
-            "finalists": data.get("finalists"),
-            "tie_rule": data.get("tie_rule"),
-            "label": "INTERNAL PROXY ranking. Bands, not points.",
-        }
+    #
+    # A composite formed while some candidate has no throughput data is not a ranking of
+    # six candidates, it is a ranking of the ones that happened to be measured. Its
+    # finalist set reads exactly like a real one, so it is refused here rather than
+    # labelled: the first finalist set this project produced named a single model only
+    # because five candidates were absent from the table.
+    found = run_guards.newest_record("*_composite*", "composite.json")
+    if found:
+        run_id, data, _ = found
+        unranked = data.get("not_ranked_missing_throughput") or []
+        if data.get("ranking_complete") is True and not unranked:
+            # Complete is not the same as final. A table whose throughput came from a
+            # shared host is provisional by construction (COMPETITION.md section 9f-bis),
+            # and the flag travels with the figure so nobody has to remember why.
+            provisional = data.get("provisional", True)
+            partition = data.get("partition") or {}
+            figures["composite"] = {
+                "source": run_id,
+                # A provisional table yields a set, not an order. Sorting by id here is
+                # not cosmetic: an ordered list is read as a ranking by whoever quotes it.
+                "selection_set": sorted(partition.get("selection_set")
+                                        or data.get("finalists") or []),
+                "excluded": sorted(partition.get("excluded") or []),
+                "ordering_claimed": partition.get("ordering_claimed", not provisional),
+                "finalists": data.get("finalists"),
+                "tie_rule": data.get("tie_rule"),
+                "provisional": provisional,
+                "perf_host_class": data.get("perf_host_class", "unstated"),
+                "label": (
+                    "PROVISIONAL cluster, INTERNAL PROXY. Throughput from a "
+                    f"{data.get('perf_host_class', 'unstated')} host orders nothing; the "
+                    "physical sitting re-measures perf and re-forms the table."
+                    if provisional else
+                    "INTERNAL PROXY ranking, complete. Bands, not points."
+                ),
+            }
+        else:
+            blocked.append({
+                "figure": "composite",
+                "reason": (
+                    f"{run_id} is incomplete: "
+                    f"{len(unranked)} candidate(s) have no throughput data "
+                    f"({', '.join(unranked) or 'unlisted'}). A finalist set drawn from a "
+                    "partial table is an artefact of what was measured. Re-run "
+                    "scripts/composite.py --auto once the bench sweep covers every "
+                    "candidate."
+                ),
+                "unranked": unranked,
+            })
     else:
         blocked.append({"figure": "composite", "reason": "composite not yet built"})
 
@@ -88,7 +116,7 @@ def gather(today: date | None = None) -> dict:
     archive = audit_archive()
     if archive["quotable_latency"]:
         name = archive["quotable_latency"][-1]
-        record = _load(RUNS / name / "chat.json") or {}
+        record = run_guards.record_in(name, "chat.json")
         times = [t.get("seconds") for t in record.get("turns", []) if t.get("seconds")]
         figures["judge_latency"] = {
             "source": name,
@@ -108,22 +136,21 @@ def gather(today: date | None = None) -> dict:
         })
 
     # ---- submitted telemetry, with the dated fallback ----
-    path = newest("*_bench*", "bench.json")
+    bench_found = run_guards.newest_record("*_bench*", "bench.json")
     physical = None   # a physical-host telemetry run, when one exists
-    for candidate in sorted(RUNS.glob("*/run.json")):
-        data = _load(candidate) or {}
+    for run_id, data in run_guards.all_records("*", "run.json"):
         if (data.get("host_class") == "physical") and data.get("status") == "ok":
-            physical = candidate
+            physical = run_id
     if physical:
         figures["telemetry"] = {
-            "source": physical.parent.name,
+            "source": physical,
             "basis": "physical machine, official profiler, no flags of ours",
             "fallback_invoked": False,
         }
-    elif today >= PHYSICAL_DEADLINE and path:
-        data = _load(path) or {}
+    elif today >= PHYSICAL_DEADLINE and bench_found:
+        run_id, data, _ = bench_found
         figures["telemetry"] = {
-            "source": path.parent.name,
+            "source": run_id,
             "basis": "VPS screened medians under the section 9g fallback",
             "fallback_invoked": True,
             "summary": data.get("summary"),
@@ -165,46 +192,66 @@ def numeric_manifest(today: date | None = None) -> dict:
     report = gather(today)
     manifest: dict[str, str] = {}
 
-    def add(value, provenance: str, places: tuple[int, ...] = (0, 1, 2)) -> None:
-        if value is None:
+    def add(fig, provenance: str, places: tuple[int, ...] = (0, 1, 2)) -> None:
+        """Enter one measurement into the manifest. An `Absent` enters nothing.
+
+        Absence is skipped here rather than defaulted, so a field a run never recorded
+        simply cannot be quoted. The typed figure makes that the only available
+        behaviour: there is no value to write.
+        """
+        if isinstance(fig, Absent):
             return
+        value = float(fig)
         for digits in places:
-            manifest[f"{float(value):.{digits}f}".rstrip("0").rstrip(".")
-                      if digits else f"{float(value):.0f}"] = provenance
-            manifest[f"{float(value):.{digits}f}"] = provenance
+            manifest[f"{value:.{digits}f}".rstrip("0").rstrip(".")
+                     if digits else f"{value:.0f}"] = provenance
+            manifest[f"{value:.{digits}f}"] = provenance
 
     # Accuracy proxy, per candidate.
     accuracy = report["figures"].get("accuracy_proxy", {})
-    for candidate, mean in (accuracy.get("results") or {}).items():
-        if mean is not None:
-            add(mean * 100, f"accuracy_proxy/{candidate}/{accuracy.get('source')}")
-            add(mean, f"accuracy_proxy/{candidate}/{accuracy.get('source')}")
+    acc_run = accuracy.get("source") or "unarchived"
+    results = accuracy.get("results") or {}
+    for candidate in results:
+        mean = run_guards.figure(results, candidate, run_id=acc_run)
+        if isinstance(mean, Absent):
+            continue
+        provenance = f"accuracy_proxy/{candidate}/{acc_run}"
+        add(run_guards.Measurement(float(mean) * 100, candidate, acc_run), provenance)
+        add(mean, provenance)
 
     # Throughput, from every archived screened bench run.
-    for bench_path in sorted(RUNS.glob("*_bench*/bench.json")):
-        data = _load(bench_path) or {}
-        origin = f"bench/{bench_path.parent.name}"
-        for candidate, summary in (data.get("summary") or {}).items():
+    for run_id, data in run_guards.all_records("*_bench*", "bench.json"):
+        origin = f"bench/{run_id}"
+        for candidate in (data.get("summary") or {}):
             for key in ("median_generation_tok_s", "min", "max", "spread_pct_of_median"):
-                add(summary.get(key), f"{origin}/{candidate}/{key}")
+                add(run_guards.figure(data, "summary", candidate, key, run_id=run_id),
+                    f"{origin}/{candidate}/{key}")
 
     # Profiler telemetry from archived runs.
-    for run_path in sorted(RUNS.glob("*/run.json")):
-        data = _load(run_path) or {}
-        score = data.get("score") or {}
-        origin = f"profiler/{run_path.parent.name}"
+    for run_id, data in run_guards.all_records("*", "run.json"):
+        origin = f"profiler/{run_id}"
         for key in ("tokens_per_second", "peak_rss_mb", "peak_rss_gb", "s_perf", "s_eff"):
-            add(score.get(key), f"{origin}/{key}")
+            add(run_guards.figure(data, "score", key, run_id=run_id), f"{origin}/{key}")
+
+    # O-09 spot check: native versus in-image accuracy, and what each cost in wall clock.
+    for run_id, data in run_guards.all_records("*_spotcheck_*", "spotcheck.json"):
+        origin = f"spotcheck/{run_id}"
+        for section in ("official", "native"):
+            for key in ("wall_seconds", "eval_seconds", "load_seconds", "mean_score"):
+                add(run_guards.figure(data, section, key, run_id=run_id),
+                    f"{origin}/{section}/{key}")
+        add(run_guards.figure(data, "eval_speedup_native", run_id=run_id),
+            f"{origin}/eval_speedup_native")
 
     # SIMD comparison.
-    for simd_path in sorted(RUNS.glob("*_simd_*/simd_summary.json")):
-        data = _load(simd_path) or {}
-        origin = f"simd/{simd_path.parent.name}"
+    for run_id, data in run_guards.all_records("*_simd_*", "simd_summary.json"):
+        origin = f"simd/{run_id}"
         for section in ("official_image", "native_avx2_image"):
-            for key, value in (data.get(section) or {}).items():
-                add(value, f"{origin}/{section}/{key}")
+            for key in (data.get(section) or {}):
+                add(run_guards.figure(data, section, key, run_id=run_id),
+                    f"{origin}/{section}/{key}")
         for key in ("speedup_generation", "speedup_prompt"):
-            add(data.get(key), f"{origin}/{key}")
+            add(run_guards.figure(data, key, run_id=run_id), f"{origin}/{key}")
 
     return {"manifest": manifest, "report": report}
 

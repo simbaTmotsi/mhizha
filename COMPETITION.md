@@ -1007,9 +1007,11 @@ apart with more runs:
   bandwidth contention as such.
 
 **Consequence, per the escalation rule: O-12 is promoted.** Physical-machine runs are no
-longer only for producing submitted telemetry. They are needed to **verify the ranking
-itself**, because a shared host that cannot reproduce its own measurement to better than
-27.8% cannot be trusted to order candidates that sit closer together than that.
+longer only for producing submitted telemetry. They are needed to **produce the ranking's
+throughput term at all**, because a shared host that cannot reproduce its own measurement
+to better than 27.8% cannot order candidates that sit closer together than that. (This
+paragraph originally said the physical runs would *verify the ranking*; section 9f-bis
+supersedes that. There is no VPS ordering to verify, only one to replace.)
 
 **Steal screening is necessary but not sufficient** (SR-09). It correctly catches stolen
 CPU time and correctly discarded nothing here, because nothing was stolen. It does not and
@@ -1186,6 +1188,90 @@ re-issued if the bands narrow.
 
 ---
 
+## 9f-bis. Pre-registered: the VPS composite is provisional by construction
+
+**Registered 2026-08-12T08:55:09+00:00, before the all-candidate throughput sweep landed.**
+At the time of writing the sweep was in round 1 of 4, five of six candidates had no
+throughput data, and no complete table existed. Recorded now for the same reason as 9f-pre:
+a rule about how much authority a table carries, written after seeing the table, is not a
+rule.
+
+### The perf column is a placeholder that happens to be numeric
+
+The accuracy and efficiency terms of the VPS composite are sound. The throughput term is
+not weak evidence, it is **not evidence of ordering at all**: O-13 measured 67.9% run-to-run
+spread on a fixed workload at zero steal, and no two candidates in this bake-off are
+separated by more than that. A number was produced, and it will sit in a column looking
+exactly like the other two.
+
+So the VPS composite is provisional **by construction, not by accident**. Nothing about
+running it more carefully on this host makes it final.
+
+### The physical sitting completes the ranking; it does not verify it
+
+This corrects the framing used in section 9g and in O-12, and the correction changes what
+the sitting is for. **Verification** implies a ranking exists and is being checked. It does
+not exist. The physical sitting **re-measures perf and re-forms the table**, and the result
+is the first complete ranking this project has had.
+
+Two consequences follow, and both are the point of registering this early:
+
+- **Agreement between the VPS ordering and the physical ordering is not corroboration.**
+  The VPS perf column has no ordering authority to be confirmed. If they match, that is a
+  coincidence worth nothing evidentially.
+- **Disagreement is not a problem to investigate.** It is the expected behaviour of a
+  column that was never resolving anything. No time is spent reconciling them, and no
+  paragraph in `REPORT.md` presents the pair as before-and-after.
+
+What the sitting re-measures, in order: perf for every candidate in the provisional
+cluster, plus any candidate whose accuracy band reaches the cluster (perf is the term that
+could not order them, so the boundary is drawn on accuracy, not on the perf it is about to
+replace); measured peak RSS, replacing the file-size estimate; then the table is re-formed
+from scratch with physical perf and the same accuracy proxy.
+
+### Enforced, not remembered
+
+`composite.py` stamps `provisional: true` and `perf_host_class` into every record whose
+bench source does not positively declare `host_class: physical`. Absence is provisional,
+on the same fail-closed principle as `latency_quotable`. `report_figures.py` carries the
+flag through, so a provisional cluster cannot be presented as a final ranking by anyone
+reading the assembled figures.
+
+### Degraded path if no physical machine by 18 August 2026
+
+Distinct from the section 9g telemetry fallback, which decides what number is *submitted*.
+This decides how the *finalist is chosen* when perf can never be measured usefully.
+
+> **If no physical sitting has happened by 18 August 2026, the finalist is chosen on
+> accuracy, efficiency, and the behavioural pass, with throughput entering only as
+> size-class bands.**
+
+- **Size classes, fixed now, before the data lands:** boundaries at **1 GB and 2 GB** of
+  on-disk GGUF. Class A (under 1 GB): Qwen3.5-0.8B, Llama-3.2-1B. Class B (1 to 2 GB):
+  Qwen3.5-2B. Class C (over 2 GB): Phi-4-mini, Qwen3.5-4B, Gemma-4-E2B. One band per class,
+  spanning the screened medians measured for that class on this host.
+- **No ordering is claimed inside a class.** Across classes the ordering rests on weights
+  read per token, which is arithmetic, rather than on this host's timings, which are noise.
+- **The behavioural pass still runs**, on the VPS, for behaviour only: whether a candidate
+  refuses a dosage, whether it returns empty content, whether the baked template applies.
+  None of that depends on core topology (section 9g). **Its latency is not recorded and not
+  quoted**, under the same rule that lets nothing latency-bearing off this host.
+- **Ties inside a class are broken by the behavioural pass and by accuracy, never by perf.**
+
+**The honest weakness, stated rather than corrected.** Efficiency is already derived from
+file size when measured RSS is absent, so under the degraded path size drives both the 0.20
+efficiency term and the 0.30 throughput term: half the composite weight, through two
+columns that look independent and are not. That biases the degraded ranking toward small
+models more strongly than the leaderboard formula intends. We document it rather than
+adjust it, because adjusting it would mean inventing a throughput number to break the
+correlation. `REPORT.md` states the double count next to the degraded table, and the
+decision leans on accuracy and the behavioural pass accordingly.
+
+**A physical sitting before 18 August retires this clause**, exactly as it retires the 9g
+telemetry fallback, and the text is removed rather than left standing as an alternative.
+
+---
+
 ## 9g. Sequencing: what runs where, and in what order
 
 **Set 12 Aug, after the throughput repeatability result.** The ordering is not a
@@ -1198,7 +1284,7 @@ preference; each step's validity depends on the one before it.
 | 1 | lm-eval mix, all six candidates | VPS, official image | nothing downstream can start without it |
 | 2 | **Composite table** with propagated uncertainty | derived, no new measurement | **completes before any qualitative work begins** |
 | 3 | O-13 attribution (6+ reps, `--warmup 1`) | VPS | **runs after the sweep and never delays the composite** |
-| 4 | **One physical sitting**: telemetry + ranking verification + three-arm pass | **O-12 physical machine** | produces the submitted numbers |
+| 4 | **One physical sitting**: telemetry + ranking **completion** + three-arm pass | **O-12 physical machine** | produces the submitted numbers |
 | 5 | Report finalisation, video | anywhere | needs step 4, or the 18 Aug fallback |
 
 Steps 1 to 3 are chained in `scripts/after_sweep.sh` and run unattended: the composite and
@@ -1230,15 +1316,83 @@ the O-12 machine yields three things that must agree with each other anyway:
 
 1. **Submitted telemetry**, from the untouched official profiler, no flags of ours
    (section 9e-bis). This is the number Gate 2 audits.
-2. **Ranking verification**: the composite's tie cluster re-measured on hardware that can
-   actually resolve it, since the VPS cannot order candidates closer together than its own
-   27.8% spread.
+2. **Ranking completion**: the provisional cluster's throughput measured on hardware that
+   can resolve it. Section 9f-bis supersedes the earlier wording here, which called this
+   verification: the VPS perf column has no ordering authority to be confirmed, so this
+   sitting produces the first complete ranking rather than checking an existing one.
 3. **Judge-real latency** on true topology, which is the only latency that may enter
    `REPORT.md`, and which bears on `S_acc` through judge patience rather than through
    `S_perf` (section 6a).
 
 Running them together also means the latency and the telemetry describe **the same machine
 in the same state**, which is exactly the claim the report needs to make.
+
+### Budget: a full day, not an evening, if a 3.8 to 4B candidate is in the cluster
+
+**Estimate, for scheduling only. Never quoted, and derived from VPS rates**, which is not
+a claim about the physical machine. It is a ceiling: an unshared machine should be faster.
+Planning on the optimistic case is how a sitting ends with the chat pass half-run and the
+machine handed back.
+
+Inputs, all named: 15 probe questions (`competition/chat_probe.yaml`), `max_tokens` 320
+per answer (`scripts/judge_chat.py`), up to 3 arms for a reasoning-family candidate,
+qwen3.5-4b **measured at 0.80 tok/s** on this host, and `llama-bench` at `-p 512 -n 128`.
+
+| Work | Arithmetic | Time |
+|---|---|---|
+| One answer at the cap | 320 / 0.80 tok/s | ~6.7 min |
+| One arm, 15 questions | 15 x 6.7 min | ~1.7 h |
+| Three-arm pass, one 4B candidate | 3 x 1.7 h | **~5 h** |
+| Official profiler per cluster member, several reps | 4B prompt and generation at these rates | ~1 h each |
+| Cluster re-bench, 2 large candidates, 4 reps interleaved | from the sweep's round timings | ~2.7 h |
+
+That is **8 to 10 hours for a cluster with one 4B-class candidate**, and the chat pass
+doubles if there are two. Answers below the cap shorten it and the machine being unshared
+shortens it further, but neither turns it into an evening.
+
+**Sequencing inside the sitting, so an overrun cannot cost the audited number.** The
+profiler run that completes the ranking *is* the telemetry run: same official image, same
+invocation, no flags of ours. So run it **for every cluster member first**, before any
+chat. Then the submitted telemetry exists for whichever candidate the qualitative pass
+later picks, and the pass can overrun without leaving Gate 2's number unmeasured.
+
+1. Official profiler, every cluster member, several reps. Completes the ranking and
+   produces submittable telemetry for all of them at once.
+2. Three-arm qualitative pass, `--host-class physical`. Picks the candidate.
+3. Anything left over: measured RSS to replace the file-size estimate, and the `-t 4`
+   oversubscription diagnostic (O-14), which is RANKING ONLY and never submitted.
+
+**Pre-registered cut, if the day runs out:** drop **arm 2** (thinking guard only) before
+dropping a candidate. Arms 1 and 3 carry the decision, stock versus full bake. Arm 2 only
+separates the persona effect from the much larger thinking fix, which is a finding we would
+like rather than one the submission depends on. Dropping a candidate instead would mean
+choosing between models on fewer transcripts than the rubric asks for.
+
+### What the cut decides by default, registered now
+
+Dropping arm 2 removes the only evidence the minimal bake would ever have, so the default
+has to be settled before the day, not at hour nine with a machine to hand back.
+
+> **If arm 2 is dropped, ship-full versus ship-minimal follows whichever arm ran clean on
+> the selected candidate.** Arm 3 clean means ship the full bake. Arm 3 not clean and arm 1
+> clean means ship stock, which is the existing `decide()` path. Neither clean is a
+> candidate-fail, unchanged by the cut.
+
+**The minimal bake is not shippable on no transcript.** That is the substance of the rule.
+Shipping the minimal template because it is *probably* enough would put an artefact in
+front of judges that no arm ever ran, to save baked text we have already tested. A tested
+template with more text in it beats an untested one with less, and the full bake's content
+is safety posture only, with a build test failing it if a quantity or a month name appears.
+
+**Persona isolation defers to the semifinal window** (after Gate 1 closes, before the Gate 2
+audit). Nothing is lost by deferring: the Gate 1 artefact is fixed at submission and its
+hash is what Gate 2 re-profiles, so answering "was it the persona or the thinking guard?"
+in that window is a finding that informs the next gate and the product path, never a
+re-bake of a submitted file. Recorded as an open item rather than dropped.
+
+The cost of the default, stated: we may ship more baked text than was strictly needed. That
+is a real cost, since every baked token is text we put in a judge's context that upstream
+did not. It is the smaller cost. The alternative trades tested behaviour for a guess.
 
 ### What this means for O-12
 
@@ -1317,6 +1471,35 @@ telemetry.
 That is exactly the failure mode the rule exists for: not a wrong number, but a number
 whose provenance had evaporated.
 
+### A stated basis containing a number carries its own provenance
+
+**An exemption in one guard is not an exemption in another.** Section 9f-bis lets an
+ordering claim stand when it names its basis ("scaled by parameter count", "an estimate",
+"within sampling error"). That exemption covers the *ordering claim*. It does not cover any
+number inside the basis clause, which faces this section's rule exactly as if it appeared
+anywhere else in the document.
+
+Verified rather than assumed, because the two rules were written a day apart and it would
+be easy to read the first as softening the second: a sentence exempted by the basis marker
+and containing `9.9 tok/s` is still reported by the figure scan as an undeclared figure.
+The scan does not know or care that the sentence was exempted elsewhere.
+
+**Recorded, not newly enforced**, so nobody builds a second mechanism for it. Two boundaries
+are worth naming so the coverage is not overstated:
+
+- The scan keys on measurement units (`tok/s`, `MB`, `GB`, `%`, `x`, minutes, seconds,
+  degrees C). A unitless quantity in a basis clause, such as "about 9 points of composite",
+  is outside it. Points are a derived arithmetic quantity, so declare them under `derived`
+  in `competition/report_constants.yaml` with their formula when one reaches `REPORT.md`.
+- The rule scans `REPORT.md` only. `docs/BAKEOFF.md` is a working document rather than a
+  submitted one, and is deliberately not held to it. It holds superseded rows kept for the
+  record, estimates scaled from a single measurement, and tables that are mid-revision by
+  design, so a scanner would either fail constantly on content that is correctly
+  provisional or force us to strip it. **The compensating control is a hand-check once, on
+  packaging day** (`SUBMISSION.md` phase 1.2), looking first for a number that contradicts
+  the same number in `REPORT.md`. Two documents in one repository disagreeing about a
+  measurement is worse than either being wrong alone.
+
 ### Implied latency
 
 If the section 9g fallback fires, latency may appear **only as an arithmetic implication
@@ -1392,6 +1575,12 @@ holds. That is exactly why `config.yaml` carries a runner-up fallback alongside 
 On any diff: re-read the changed files, re-run `make profile` on the winner and the
 runner-up, and update `docs/BAKEOFF.md` and `REPORT.md` before submitting.
 
+This check is **phase 2 of `SUBMISSION.md`**, the packaging-day runbook, and it sits there
+deliberately: after the content freeze, before the repository is made public. Running it
+earlier means it can miss late drift; running it after publishing means correcting a
+submission in public. A clean result is recorded here with the date and the HEAD shas,
+because a check run and forgotten is worth nothing.
+
 ---
 
 ## 12a. Superseded rules are enforced, not just edited
@@ -1403,9 +1592,9 @@ and regexes that must not reappear as an assertion in the documents.
 sits nearby.
 
 This exists because a superseded rule left standing reads with exactly the same authority
-as a current one, and the next reader has no way to know it was retracted. Two of the nine
-entries were my own conclusions, and **SR-01 would have caused the Gate 2 compare failure
-it was written to prevent**.
+as a current one, and the next reader has no way to know it was retracted. Two of the
+eleven entries were my own conclusions, and **SR-01 would have caused the Gate 2 compare
+failure it was written to prevent**.
 
 Installing the mechanism immediately caught a genuine survivor: section 4a still asserted
 SR-02 ("pick the largest model that still clears 15 tok/s") in prose written before the
@@ -1417,11 +1606,45 @@ is what stops it coming back.
 
 ---
 
+## 12b. No guard ships without a positive control
+
+**Every guard in this project has a test that feeds it a violating input and asserts the
+guard sees it.** Registered in `tests/test_competition.py::GUARD_POSITIVE_CONTROLS`, which
+fails the build in both directions: a guard with no control, and a control that has
+quietly stopped being registered.
+
+A guard is exercised, in normal life, only against inputs that satisfy it. That is the
+whole problem. A working guard and a broken one produce exactly the same green suite, and
+the failure only surfaces on the day something bad is presented to it, which is the day it
+was supposed to help.
+
+This is not a hypothetical worry here. Two guards in this repository were vacuous while
+looking green:
+
+- The consumer grep that keeps numeric consumers reading through `run_guards` matched
+  nothing at all, because its scanner stripped every string token before searching, and
+  the filenames it hunted for only ever appear as strings. It reported a clean repository
+  because it could not see anything.
+- The superseded-rules matcher would have passed every rule if its regexes had rotted,
+  which is why `test_the_mechanism_catches_a_reintroduced_rule` existed first and is the
+  pattern the rest now follow.
+
+A control is marked `POSITIVE CONTROL` in its own source. The marker is load-bearing: it
+stops a later edit turning a control into an ordinary assertion without anyone noticing
+that a guard is now unproven.
+
+The guards under control today: latency quotability, absent or malformed latency stamps,
+the superseded registry, composite completeness, composite provisionality, the single door
+onto the measurement archive, `Absent` refusing to be a number, the report figure rule, and
+within-cluster ordering language.
+
+---
+
 ## 13. Open items
 
 | ID | Item | State |
 |---|---|---|
-| O-01 | Repo must be public on GitHub. `git init` done locally, **nothing committed or pushed** | Remote and first commit are the user's call |
+| O-01 | Repo must be public on GitHub. `git init` done locally, **nothing committed or pushed** | Remote and first commit are the user's call. Sequenced as phase 3 of `SUBMISSION.md`: after the content freeze and the upstream gate, verified from a fresh clone rather than from this working copy, then tagged so the submitted state can be named later |
 | O-02 | `team_id`, submitter name, email, GitHub handle | **Needed from the user.** `metadata.json` holds `TODO_*` placeholders; `tests/test_competition.py::test_placeholders_are_detectable_before_submission` xfails until they are filled |
 | O-03 | Verify each candidate exists as a public GGUF at the claimed quant | **Done.** All six resolved and downloaded, 11 GB, sha256 in `competition/candidate_hashes.txt` |
 | O-04 | Confirm whether Devpost requires the 2-minute video (C-07) | Not in either repo. Treated as required |
@@ -1429,11 +1652,12 @@ is what stops it coming back.
 | O-06 | Quantify the SIMD-disabled build's throughput cost | **CLOSED 12 Aug. Measured 2.11x generation, 2.63x prompt** on Qwen3.5-0.8B (run `20260811T220127Z_simd_...`). Protocol in section 11 binds all remaining runs |
 | O-07 | Licence check on each candidate model card before the winner is chosen. Gemma 4 E2B carries Gemma Terms, not Apache-2.0 | Phase 4 |
 | O-08 | Hosting for a baked GGUF | **CLOSED 12 Aug.** Bake-at-download verified end to end in the official image (section 9c): stock weights are fetched from upstream and the template applied locally with a stdlib-only script. Nothing is re-hosted, so no private HF repo is needed. Retained as a documented fallback only |
-| O-09 | Native-versus-in-image lm-eval spot check on one candidate, gating whether accuracy runs may use the faster native build | Open. Now worth doing: the 2.11x measured speedup makes the native build materially cheaper for the lm-eval mix |
+| O-09 | Native-versus-in-image lm-eval spot check on one candidate, gating whether accuracy runs may use the faster native build | **CLOSED 12 Aug.** Run `20260812T000046Z_spotcheck_qwen3.5-0.8b-q4_k_m`: identical scores in both images (delta 0.0000), so the gate passes, but the native build was *slower* (127.7s vs 79.6s wall). There is no speedup to move the sweep for, because the official image's accuracy path is already AVX2-enabled (SR-10, SR-11). All accuracy runs stay in the official image |
 | O-10 | Judge-experienced latency is a 50%-weight risk the formula does not measure (section 6a). Record per-turn latency for every qualitative run and treat an intolerable session as a candidate-disqualifying finding | Opened 12 Aug |
 | O-11 | **Throughput is not reproducible on this host: 1.82 vs 4.50 tok/s** (section 9e). Gate 2 fails symmetrically beyond 50% | **Open, blocks any submitted throughput figure.** Ranking: steal-screened interleaved medians on the VPS. Telemetry: physical machine near Standard Laptop spec. Submit the accurate central estimate, NOT a conservative one |
-| O-12 | **PROMOTED again 12 Aug.** A physical machine near the Standard Laptop spec (4 cores, 8 GB, no GPU) now carries **three** deliverables in one sitting: submitted telemetry, ranking verification of the tie cluster, and judge-real latency for the three-arm pass (section 9g) | **Needed from the user. Critical path.** Until it exists there is a composite and a finalist set, but no submittable telemetry and no quotable latency |
-| O-13 | Attribute the 27.8% spread **by elimination**: **warm-up** = first reps rise monotonically then plateau, and vanish under `--warmup`; **steal** = `steal_pct > 0`, directly observed; **neighbour contention** = residual scatter on warm, zero-steal reps, i.e. what remains once the other two are excluded. Thread and run-queue counts are logged to confirm the config was fixed, which is the premise elimination rests on. Run 6+ reps with `--warmup 1` | Open. Cheap, and it decides whether the VPS ranking pass is salvageable |
+| O-12 | **PROMOTED again 12 Aug.** A physical machine near the Standard Laptop spec (4 cores, 8 GB, no GPU) carries **three** deliverables in one sitting: submitted telemetry, ranking **completion** for the provisional cluster (section 9f-bis: the VPS perf column has no ordering authority, so this produces the ranking rather than verifying it), and judge-real latency for the three-arm pass (section 9g). **Budget a full day** if a 3.8 to 4B candidate is in the cluster | **Needed from the user. Critical path.** Until it exists there is a provisional composite, no complete ranking, no submittable telemetry and no quotable latency. Degraded selection path from 18 Aug in section 9f-bis |
+| O-13 | Attribute the 27.8% spread **by elimination**: **warm-up** = first reps rise monotonically then plateau, and vanish under `--warmup`; **steal** = `steal_pct > 0`, directly observed; **neighbour contention** = residual scatter on warm, zero-steal reps, i.e. what remains once the other two are excluded. Thread and run-queue counts are logged to confirm the config was fixed, which is the premise elimination rests on. Run 6+ reps with `--warmup 1` | **CLOSED 12 Aug: neighbour contention.** Run `20260812T034611Z_bench_o13`, six reps, warm-up discarded, threads fixed at 12, every rep at zero steal, spanned 2.88 to 5.57 tok/s around a median of 3.96 = **67.9%**, *wider* than the 27.8% it was meant to explain. Not monotonic, so not warm-up; zero steal, so not theft. By elimination, contention on a resource the kernel does not account to us. **The VPS ranking pass is not salvageable for throughput**: it can only separate candidates further apart than 68%, which none are. This promotes O-12 rather than resolving it |
+| O-15 | **Persona isolation**, deferred by the section 9g cut rule. If arm 2 (thinking guard only) is dropped for time, we ship the arm that ran clean and never learn whether the persona or the thinking guard did the work. Run the two-arm minimal-versus-full comparison in the semifinal window, after Gate 1 closes | Open, deferred by design. Not a Gate 1 blocker: the submitted artefact is fixed at submission and this cannot change it. Informs the next gate and the product path |
 | O-14 | **Oversubscription offset** (optional, report colour only): one paired `default` vs `-t 4` diagnostic on a single candidate. It is an OFFSET on every run in a fixed config, not a source of run-to-run variance, so it cannot be recovered by elimination. Deliberately violates audit fidelity, therefore **stamped RANKING ONLY and never submitted** | Open, low priority |
 
 ### Status against the plan

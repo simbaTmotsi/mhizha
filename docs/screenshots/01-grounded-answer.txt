@@ -1,0 +1,30 @@
+╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮
+│ The planting window for maize in Mashonaland Central, expressed as a date range tied │
+│ to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  │
+│ it, cite it, and tell the farmer plainly that it holds no real planting information  │
+│ for maize in Mashonaland, and that their local AGRITEX extension officer is the      │
+│ correct source until real content is validated into the corpus. [P2] For each        │
+│ agro-ecological region the real document will record: the region, the maize variety  │
+│ maturity class, the trigger condition for planting, the planting window, the         │
+│ expected risk if planted outside that window, and the source and date of the         │
+│ recommendation. [P3]                                                                 │
+╰──────────────────────────────────────────────────────────────────────────────────────╯
+PLACEHOLDER CORPUS. This answer came from sample documents that contain no real 
+agronomic information. It must not be used for farming decisions.
+                                        Based on                                        
+┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ id ┃ source                                                                  ┃ score ┃
+┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ P1 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.749 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+│ P2 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.744 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) What Mhizha should do with this document today              │       │
+│    │ [PLACEHOLDER, unvalidated]                                              │       │
+│ P3 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.716 │
+│    │ project (placeholder, not an agronomic authority), refreshed            │       │
+│    │ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │
+└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+Confidence: medium (0.699, top1=0.749, margin=0.137)

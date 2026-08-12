@@ -115,15 +115,23 @@ before a single token is generated.
 
 ### Composite ranking
 
-**In progress.** `scripts/composite.py` builds it from the lm-eval mix and the screened
-throughput medians, with **uncertainty propagated** (`COMPETITION.md` section 9f):
+**Accuracy complete, throughput in flight, so there is no finalist set yet.**
+`scripts/composite.py` builds the ranking from the lm-eval mix and the screened throughput
+medians, with **uncertainty propagated** (`COMPETITION.md` section 9f):
 
 - accuracy band from binomial sampling error over the mix
 - throughput band from measured min/max across screened repetitions
 - **gaps narrower than host noise are ties**, and the tie cluster is the finalist set for
   the three-arm qualitative pass
 
-Run `make composite` once `make lmeval CANDIDATE=all` completes.
+> **The composite in `runs/20260812T072624Z_composite` must not be used.** It was formed
+> while five of six candidates had no throughput data, and it names a finalist set of one.
+> That set is an artefact of which candidates happened to be measured, not a result. The
+> record marks itself `ranking_complete: false`, and `scripts/report_figures.py` now
+> refuses to publish a finalist set from any composite that does so, so the artefact cannot
+> reach `REPORT.md` while someone forgets. Re-run `python3 scripts/composite.py --auto`
+> when the all-candidate bench sweep lands, and check it warns about no unranked candidate
+> and that `bench_image` is `adtc-profiler:latest`.
 
 **The cluster rule is pre-registered** (`COMPETITION.md` section 9f-pre), recorded while
 candidate 1 of 6 was still running and no scores existed:
@@ -143,6 +151,32 @@ limit narrows the band roughly as `1/sqrt(n)`.
 closest available proxy for the domain. None is agronomy, and no public benchmark we found
 is. Scored through `adtc_profiler.accuracy._make_lm`, the audit's own adapter, so the
 ranking uses the same scoring path rather than a lookalike.
+
+**Result**, all six candidates, official image, limit 50 per task, run
+`20260812T000207Z_lmeval_sweep` (**measured**, INTERNAL PROXY):
+
+| Candidate | Mean across the mix |
+|---|---|
+| Qwen3.5-4B | 76.5% |
+| Phi-4-mini | 76.0% |
+| Gemma-4-E2B-it | 65.5% |
+| Qwen3.5-2B | 65.0% |
+| Qwen3.5-0.8B | 59.0% |
+| Llama-3.2-1B | 55.0% |
+
+**Read this as three pairs, not six places.** At limit 50 the sampling error alone is a
+couple of points per task, so the 76s are a tie with each other and so are the 65s. The two
+largest candidates lead, which sets up the trade this bake-off exists to settle: Qwen3.5-4B
+is 2614 MB and Phi-4-mini 2376 MB, and both pay for it on the efficiency term and in
+judge-experienced latency.
+
+**Which image the sweep ran in (O-09, closed).** The spot check
+(`20260812T000046Z_spotcheck_qwen3.5-0.8b-q4_k_m`) scored one candidate on `arc_easy` in
+both builds: identical, delta 0.0000, so the gate to use the native build passed. It went
+unused anyway, because the native build was *slower* on identical work (127.7s against
+79.6s wall). The official image's accuracy path is already AVX2-enabled (SR-10), so a native
+accuracy image gains nothing and that timing gap is host noise (SR-11). The full sweep ran
+in the official image.
 
 ### Throughput and efficiency (official image)
 

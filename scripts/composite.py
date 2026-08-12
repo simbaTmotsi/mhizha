@@ -44,21 +44,21 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_guards import UnquotableFigure, assert_latency_quotable, audit_archive  # noqa: E402
+import run_guards  # noqa: E402
+from run_guards import (  # noqa: E402
+    Absent,
+    UnquotableFigure,
+    assert_latency_quotable,
+    audit_archive,
+)
 
 REPO = Path(__file__).resolve().parents[1]
-RUNS = REPO / "runs"
 MANIFEST = REPO / "competition" / "candidates.yaml"
 
 TPS_REFERENCE = 15.0
 RAM_LIMIT_GB = 7.0
 
 W_ACC, W_PERF, W_EFF = 0.50, 0.30, 0.20
-
-
-def newest(pattern: str, filename: str) -> Path | None:
-    matches = sorted(RUNS.glob(f"{pattern}/{filename}"), key=lambda p: p.stat().st_mtime)
-    return matches[-1] if matches else None
 
 
 def accuracy_band(tasks: dict) -> tuple[float, float, float]:
@@ -82,24 +82,31 @@ def accuracy_band(tasks: dict) -> tuple[float, float, float]:
 OFFICIAL_IMAGE = "adtc-profiler:latest"
 
 
-def perf_band(bench_summary: dict) -> tuple[float, float, float] | None:
-    """(median, low, high) S_perf from measured throughput min/max, or None if unmeasured.
+def perf_band(bench: dict, candidate: str, run_id: str) -> tuple[float, float, float] | None:
+    """(median, low, high) S_perf from measured throughput, or None if unmeasured.
 
     Returns None rather than zero for a candidate with no throughput data. An earlier
     version returned 0.0, which silently charged five candidates the full 30% weight for
     never having been benchmarked and produced a finalist set of one that was an artefact
     of missing data, not a measurement.
+
+    The figures arrive typed, so the zero cannot come back by a different route: an
+    `Absent` median refuses to be divided by the reference at all.
     """
-    median = bench_summary.get("median_generation_tok_s")
-    if median is None:
+    median = run_guards.figure(bench, "summary", candidate, "median_generation_tok_s",
+                               run_id=run_id, why=f"{candidate} is not in this bench run")
+    if isinstance(median, Absent):
         return None
-    lo = bench_summary.get("min", median)
-    hi = bench_summary.get("max", median)
-    to_score = lambda tps: min(tps / TPS_REFERENCE, 1.0) * 100
+    lo = run_guards.figure(bench, "summary", candidate, "min", run_id=run_id)
+    hi = run_guards.figure(bench, "summary", candidate, "max", run_id=run_id)
+    # A run that recorded a median but no min/max is a narrower claim, not a missing one.
+    lo = median if isinstance(lo, Absent) else lo
+    hi = median if isinstance(hi, Absent) else hi
+    to_score = lambda tps: min(float(tps) / TPS_REFERENCE, 1.0) * 100
     return to_score(median), to_score(lo), to_score(hi)
 
 
-def eff_score(peak_rss_mb: float | None) -> float:
+def eff_score(peak_rss_mb: float) -> float:
     if not peak_rss_mb:
         return 0.0
     return max(0.0, (RAM_LIMIT_GB - peak_rss_mb / 1024.0) / RAM_LIMIT_GB) * 100
@@ -120,18 +127,24 @@ def main() -> int:
                          "REFUSED unless the run is stamped latency_quotable.")
     args = ap.parse_args()
 
-    lmeval_path = args.lmeval or (newest("*_lmeval*", "lmeval.json") if args.auto else None)
-    bench_path = args.bench or (newest("*_bench*", "bench.json") if args.auto else None)
+    def source(explicit: Path | None, pattern: str, filename: str):
+        if explicit:
+            run_id, record = run_guards.record_at(explicit)
+            return run_id, record, explicit
+        return run_guards.newest_record(pattern, filename) if args.auto else None
 
-    missing = [n for n, p in (("lmeval", lmeval_path), ("bench", bench_path)) if not p]
+    lmeval_src = source(args.lmeval, "*_lmeval*", "lmeval.json")
+    bench_src = source(args.bench, "*_bench*", "bench.json")
+
+    missing = [n for n, s in (("lmeval", lmeval_src), ("bench", bench_src)) if not s]
     if missing:
         print(f"error: no {', '.join(missing)} results found. "
               f"Run scripts/lmeval_mix.py and scripts/bench_screened.py first.",
               file=sys.stderr)
         return 2
 
-    lmeval = json.loads(lmeval_path.read_text(encoding="utf-8"))
-    bench = json.loads(bench_path.read_text(encoding="utf-8"))
+    lmeval_id, lmeval, lmeval_path = lmeval_src
+    bench_id, bench, bench_path = bench_src
 
     # Provenance guard. --auto takes the newest bench file, which once selected the
     # never-submitted native AVX2 build. A ranking built on a build we have promised not
@@ -145,15 +158,22 @@ def main() -> int:
               f"  Pass --allow-non-official only for an explicitly labelled comparison.",
               file=sys.stderr)
         return 2
+    # Provisional unless the bench source positively declares a physical host, on the same
+    # fail-closed principle as latency_quotable. A shared host cannot order candidates
+    # separated by less than its own spread (COMPETITION.md section 9f-bis), so its perf
+    # column is a placeholder that happens to be numeric, and the record has to say so.
+    perf_host_class = bench.get("host_class") or "unstated"
+    provisional = perf_host_class != "physical"
+
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     sizes = {c["id"]: c.get("file_mb") for c in manifest["candidates"]}
-    rss_override = json.loads(args.rss.read_text()) if args.rss else {}
+    rss_override = run_guards.read(args.rss) if args.rss else {}
 
     # Consumer-side guard, same pattern as FIDELITY_STALE: a figure that must not be
     # quoted cannot enter the table even if someone forgets why it was marked.
     latency = None
     if args.latency_from:
-        record = json.loads(args.latency_from.read_text(encoding="utf-8"))
+        _, record = run_guards.record_at(args.latency_from)
         try:
             assert_latency_quotable(record, str(args.latency_from))
         except UnquotableFigure as exc:
@@ -167,7 +187,7 @@ def main() -> int:
             rows.append({"id": candidate, "error": acc_row["error"]})
             continue
         acc, acc_lo, acc_hi = accuracy_band(acc_row.get("tasks", {}))
-        band = perf_band((bench.get("summary") or {}).get(candidate, {}))
+        band = perf_band(bench, candidate, bench_id)
         if band is None:
             rows.append({
                 "id": candidate,
@@ -221,13 +241,32 @@ def main() -> int:
     leader = scored[0]
     finalists = [r for r in scored if r["composite_band"][1] >= leader["composite_band"][0]]
 
+    # A provisional table partitions; it does not order. The perf term is noise on this
+    # host (section 9f-bis), so "which of these two is ahead" has no answer here, only a
+    # leader-by-arithmetic that would read as a result. The selection set is emitted
+    # sorted by id precisely so it cannot be mistaken for a ranking.
+    selection_set = sorted(r["id"] for r in finalists)
+    excluded = sorted(r["id"] for r in scored if r["id"] not in set(selection_set))
+    partition = {
+        "selection_set": selection_set,
+        "excluded": excluded,
+        "ordering_claimed": not provisional,
+        "basis": (
+            "band overlap with the widest band in the table. Membership is a claim; "
+            "position inside the set is not, until throughput is measured on hardware "
+            "that can resolve it (COMPETITION.md section 9f-bis)."
+            if provisional else
+            "band overlap with the leader's band, from a complete ranking"
+        ),
+    }
+
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out_dir = RUNS / f"{stamp}_composite"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = run_guards.new_run_dir(stamp, "composite")
     record = {
         "recorded_at": stamp,
         "label": "INTERNAL PROXY. S_acc is judge-scored; this ranks candidates only.",
         "sources": {"lmeval": str(lmeval_path), "bench": str(bench_path)},
+        "source_runs": {"lmeval": lmeval_id, "bench": bench_id},
         "weights": {"accuracy": W_ACC, "throughput": W_PERF, "efficiency": W_EFF},
         "constants": {"tps_reference": TPS_REFERENCE, "ram_limit_gb": RAM_LIMIT_GB},
         "rows": scored,
@@ -235,7 +274,20 @@ def main() -> int:
         "not_ranked_missing_throughput": [r["id"] for r in incomplete],
         "ranking_complete": not incomplete,
         "bench_image": bench_image,
-        "finalists": [r["id"] for r in finalists],
+        "perf_host_class": perf_host_class,
+        "provisional": provisional,
+        "provisional_reason": (
+            None if not provisional else
+            f"throughput measured on a {perf_host_class} host. Section 9f-bis: this "
+            f"column carries no ordering authority, and the physical sitting re-measures "
+            f"it and re-forms the table (completion, not verification)."
+        ),
+        "partition": partition,
+        "finalists": selection_set if provisional else [r["id"] for r in finalists],
+        "finalist_label": (
+            "provisional cluster: the set worth taking to the qualitative pass, not a "
+            "ranking" if provisional else "finalist set from a complete ranking"
+        ),
         "tie_rule": "composite band overlaps the leader's band",
         "latency": ("omitted: no quotable run" if latency is None
                     else latency.get("_meta", {}).get("run_dir")),
@@ -245,10 +297,20 @@ def main() -> int:
                                             encoding="utf-8")
 
     print("INTERNAL PROXY. Bands, not points: this host resolves throughput to ~27%.\n")
+    if provisional:
+        print("  PARTITION, not a ranking. Rows are sorted by id inside each group: the\n"
+              "  set membership is a claim, the order within it is not.\n")
+    # Sorting the display by composite would present an ordering the perf term cannot
+    # support. Provisional tables print alphabetically, grouped by selection membership.
+    display_rows = (sorted(scored, key=lambda r: (r["id"] not in selection_set, r["id"]))
+                    if provisional else scored)
     print(f"  {'candidate':30s} {'compos':>7s} {'band':>16s} {'acc':>7s} {'perf':>6s} {'eff':>6s}")
-    for r in scored:
+    for r in display_rows:
         band = f"[{r['composite_band'][0]:.1f},{r['composite_band'][1]:.1f}]"
-        mark = " <- finalist" if r["id"] in record["finalists"] else ""
+        if provisional:
+            mark = " <- selection set" if r["id"] in selection_set else ""
+        else:
+            mark = " <- finalist" if r["id"] in record["finalists"] else ""
         print(f"  {r['id']:30s} {r['composite']:7.2f} {band:>16s} "
               f"{r['accuracy_proxy']:7.2f} {r['s_perf']:6.2f} {r['s_eff']:6.2f}{mark}")
     for r in record["errors"]:
@@ -259,7 +321,14 @@ def main() -> int:
         print("\n  latency: no quotable run in the archive, so no latency column is "
               "shown.\n           Expected until the O-12 physical sitting (section 9g).")
 
-    print(f"\n  finalist set ({len(finalists)}): {', '.join(record['finalists'])}")
+    if provisional:
+        print(f"\n  PROVISIONAL: throughput came from a {perf_host_class} host, which "
+              f"cannot order\n  candidates closer together than its own spread. The "
+              f"physical sitting re-measures\n  perf and re-forms this table (section "
+              f"9f-bis: completion, not verification).")
+
+    print(f"\n  {'provisional cluster' if provisional else 'finalist set'} "
+          f"({len(finalists)}): {', '.join(record['finalists'])}")
     print("  These go to the three-arm qualitative pass, which discriminates better than")
     print("  any of these numbers for a submission judged by conversation.")
     print(f"\nwrote {out_dir}/composite.json")

@@ -1,7 +1,7 @@
 .PHONY: help setup ingest embed index build ask eval test doctor models clean \
         profile profile-image profile-smoke candidates chunk \
         bake bake-minimal chat-probe apply-template upstream simd-compare native-image bench \
-        native-acc-image spot-check lmeval composite
+        native-acc-image spot-check lmeval composite captures
 
 PY ?= python3
 MHIZHA = PYTHONPATH=src $(PY) -m mhizha
@@ -142,6 +142,11 @@ lmeval:
 # Composite ranking with propagated uncertainty. Ties are the finalist set.
 composite:
 	$(PY) scripts/composite.py --auto
+
+# Regenerate the CLI captures used in the submission. Runs the shipped entry point, so
+# the assets cannot drift from what the software actually does.
+captures:
+	$(PY) scripts/capture_cli.py
 
 # Run before submitting, around 22 Aug.
 upstream:

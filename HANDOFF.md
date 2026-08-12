@@ -1,0 +1,274 @@
+# HANDOFF
+
+Written 12 Aug 2026, updated 12 Aug ~08:40Z. **Read `COMPETITION.md` first**: it is the
+source of truth and this file only points into it.
+
+---
+
+## Read these, in order
+
+0. **`SUBMISSION.md`** if it is 20 August or later. It is the ordered packaging-day
+   runbook and it supersedes any recollection of what order things happen in.
+1. **`COMPETITION.md`** (~1500 lines). Sections 9a to 9h are the recent working decisions.
+   Section 13 is the open-items table.
+2. **`competition/superseded.yaml`** (11 entries). Conclusions this project has **reversed**,
+   each with the evidence that overturned it. `make test` fails if any reappears as an
+   assertion. Read this before trusting any recollection of "what we decided".
+3. **`docs/BAKEOFF.md`** for candidate state, **`REPORT.md`** for the submission draft.
+
+## Ground truth, briefly
+
+The competition scores a **bare GGUF**, not our code. The profiler runs `llama-bench` for
+throughput and lm-eval for accuracy against the model file directly; `S_acc` is produced by
+**judges chatting with the live model**. Our RAG/safety stack is the story and the
+evidence, not the measured subject. The only channel from our work into a judge's session
+is the GGUF's embedded chat template, which we bake at download time.
+
+The product path (offline agronomy assistant, 4 GB phone) is **untouched and green**:
+300 tests pass, red-team eval 100%, no critical failures.
+
+---
+
+## What changed on 12 Aug (~08:20 to 08:40Z)
+
+No new measurement was taken: the bench sweep owns the CPU, and adding load to a host whose
+whole problem is unaccounted contention would corrupt the thing being measured. The suite
+was run twice, niced, in windows 08:35:52-08:36:03Z and 08:37:10-08:37:19Z; if a repetition
+in those windows looks odd, that is why. **302 tests pass, 1 xfail** (the O-02 placeholder
+guard, as intended).
+
+- **The artefact composite can no longer reach the report.** `report_figures.py` published
+  `composite.finalists` without ever reading `ranking_complete`, so the finalist set of one
+  was one hand-copy away from `REPORT.md`, reading exactly like a real result. It is now
+  refused with the unranked candidates named, matching how latency and telemetry are
+  already refused consumer-side. Two tests cover it: a partial table publishes nothing, a
+  complete one still publishes.
+- **`REPORT.md` 4.5 filled**: the six-candidate accuracy proxy, read as three pairs rather
+  than six places, plus O-09's outcome.
+- **`REPORT.md` 4.2 filled**: O-13's resolution as an elimination table, and the point that
+  matters more than the attribution, which is that this host cannot order candidates on
+  throughput at all.
+- **O-09 and O-13 marked closed** in the section 13 table with their run ids. Both were
+  still listed open while their evidence sat in the archive.
+- **`CITATIONS.md` written.** Every third-party licence claim is marked *retrieved* with a
+  date or *unverified*, because this project has already been wrong about one (SR-04).
+  Section 6 states plainly that no agronomic content is attributed because none was used.
+- **`README.md`**: an ADTC section with the judge-facing reproduction path; the stale
+  "174 tests" count dropped rather than re-pinned.
+- **`docs/BAKEOFF.md`**: accuracy results recorded, and the artefact composite fenced off.
+
+Then, in a second pass on the same day:
+
+- **One door onto the measurement archive.** `run_guards.py` gained typed access:
+  `Measurement` carries its run id, `Absent` refuses to be a number at all. `composite.py`,
+  `report_figures.py` and `ab_template.py` no longer open `runs/`, parse a record, or hold
+  their own `RUNS`. Two tests: one greps consumers, one proves the grep can fail against
+  the shape of the code that existed before.
+- **9f-bis pre-registered at 08:55:09Z**, while the sweep was in round 1 of 4 with five
+  candidates unmeasured. The VPS composite is provisional *by construction*; the physical
+  sitting completes the ranking rather than verifying it; and the degraded selection path
+  is fixed in advance for 18 Aug. **SR-12** forbids the verification framing coming back.
+- **The sitting is budgeted and ordered** (section 9g), including the ordering that keeps
+  an overrun from costing the audited number, and a pre-registered cut with a registered
+  default (**O-15** carries the deferred persona question).
+- **Provisional tables partition rather than rank**, in the record, in the printed table,
+  and in prose: a doc-regression check refuses candidate-ordering language in `REPORT.md`
+  and `docs/BAKEOFF.md` while no run declares `host_class: physical`. Writing it caught a
+  legitimate across-class claim in `BAKEOFF.md` resting on parameter-count arithmetic, so
+  the rule exempts claims that state their basis, the same way the superseded registry
+  exempts a forbidden phrase near a correction marker.
+- **Section 12b, the positive-control rule.** Every guard now has a test that feeds it a
+  violation. Two guards here were vacuous while green, including one written earlier the
+  same day, which is why the rule exists rather than the habit.
+
+**The guard layer is frozen as of 12 Aug.** New guards only on a demonstrated failure,
+never on anticipation. There are nine, each with a positive control, and that is enough.
+Effort now goes to machine-independent submission artifacts, which is everything that does
+not need the O-12 machine.
+
+Third pass, same day:
+
+- **`REPORT.md` prose is complete except for blocked figures.** Sections 2.4, 2.5, 4.6, 5,
+  6 and 7 are written out: the selection *method* including the partition rule and the
+  degraded path, the fine-tuning trigger and why an invented agronomy instruction set is
+  excluded, the qualitative protocol, a fuller reproduction section, four limitations that
+  were missing (proxy fidelity, estimated efficiency, our own rubric, no audit hardware),
+  and the vacuous-guard lesson. Only figure slots remain `[PENDING]`.
+- **CLI captures are generated, not pasted.** `make captures` runs the shipped entry point
+  and writes `docs/screenshots/*.txt` and matching SVGs, plus `docs/SCREENSHOTS.md`. Four
+  paths: cited answer, abstention, agrochemical refusal, device budget. Re-runnable and
+  diffable, so an asset cannot outlive the behaviour it claims.
+- **`docs/VIDEO.md`**: the 2-minute script skeleton, beat-timed to 1:55, with the rule that
+  no figure is spoken unless it is already in `REPORT.md` under 9h, and that an unavailable
+  figure means the sentence is cut rather than softened.
+- **Section 9h gained a note**, at your instruction: a stated basis containing a number
+  carries its own 9h provenance. An exemption in one guard is not an exemption in another.
+  Verified, and its two boundaries are written down (unitless quantities, and BAKEOFF.md
+  not being scanned) so the coverage is not overstated. Recorded only, nothing built.
+- **`SUBMISSION.md`**, the packaging-day runbook: go/no-go, content freeze, the 22 Aug
+  upstream gate, the repo flip verified from a fresh clone, video upload, the Devpost form.
+  Ordered by dependency, with the reasoning for the order, because each phase either feeds
+  the next or gates whether it is still valid. Its phase 1.2 is the recorded compensating
+  control for `BAKEOFF.md` sitting outside the figure rule: one hand-check on the day,
+  looking first for a number that contradicts `REPORT.md`. Not a scanner, by decision.
+
+  Writing it surfaced three things worth knowing before the day: `runs/` is gitignored, so
+  the report's provenance claim is currently unverifiable by anyone outside this machine
+  (the JSON records are a few hundred KB against 600 MB of bulk, so publishing the records
+  is cheap); the template asks for a one-to-three-page report and ours is far longer; and
+  `metadata.json` still names the artefact candidate rather than a chosen one.
+
+Still true and still worth reading below: the finalist set is not formed, telemetry and
+latency are blocked on O-12, and `metadata.json` still holds `TODO_*`.
+
+## In flight right now
+
+One background job, started 12 Aug 07:26Z (**not** 04:30Z as first written here):
+
+```
+python3 scripts/bench_screened.py --candidates all --reps 4 --warmup 1 --tag all-candidates
+  log: /tmp/bench_all.log        # progress
+  out: runs/<stamp>_bench_all-candidates/bench.json
+```
+
+It supplies the throughput data the composite is missing. Round 1 of 4 took roughly
+70 minutes (all six candidates interleaved), so expect it to land around **12:00 to
+12:30Z**. The 4B candidates dominate the wall clock: qwen3.5-4b measured 0.80 tok/s,
+gemma-4-e2b 1.63, qwen3.5-2b 1.80, llama-3.2-1b 2.27, qwen3.5-0.8b 4.12, all at zero steal
+with threads at 12. When it finishes:
+
+```
+python3 scripts/composite.py --auto      # re-forms the ranking and tie cluster
+```
+
+Check it did not warn about unranked candidates, and check `bench_image` is
+`adtc-profiler:latest`.
+
+---
+
+## The single most important caveat
+
+**The current finalist set of 1 (`qwen3.5-0.8b`) is an artefact and must not be used.**
+It came from a composite where five of six candidates had no throughput data and were
+scored `perf 0.00`. The bug is fixed (missing data is now refused, not scored zero), but
+the ranking has not yet been re-formed against complete data.
+
+This is now enforced rather than remembered. `report_figures.py` refuses to publish a
+finalist set from any composite recording `ranking_complete: false`, and names the
+candidates that were missing when asked why. The warning above stays because the guard
+stops the artefact reaching `REPORT.md`, not a person quoting it from
+`runs/20260812T072624Z_composite/composite.json` directly.
+
+**Accuracy proxy is real** (limit 50; arc_easy, arc_challenge, mmlu_high_school_biology,
+mmlu_nutrition), run `20260812T000207Z_lmeval_sweep`:
+
+| candidate | mean |
+|---|---|
+| qwen3.5-4b | 0.765 |
+| phi-4-mini | 0.760 |
+| gemma-4-e2b | 0.655 |
+| qwen3.5-2b | 0.650 |
+| qwen3.5-0.8b | 0.590 |
+| llama-3.2-1b | 0.550 |
+
+---
+
+## Blocked on the user
+
+| Item | What is needed | Blocks |
+|---|---|---|
+| **O-02** | `team_id`, submitter name, email, GitHub handle | `metadata.json` has `TODO_*`; an xfail guards it |
+| **O-12** | A **physical machine** near the Standard Laptop spec (4 cores, 8 GB, no GPU), **booked for a full day** if a 3.8 to 4B candidate is in the cluster | Submitted telemetry, ranking **completion** (not verification, SR-12), **and** judge-real latency, in one sitting (section 9g). Critical path |
+
+**O-12 became urgent.** O-13 concluded: six repetitions of one model on this VPS, warm-up
+discarded, every one at 0.00% steal, threads fixed at 12, spanned **67.9%**. Not monotonic
+so not warm-up, zero steal so not theft. By elimination, neighbour contention on a resource
+the kernel does not account to us. **This host cannot rank candidates on throughput at
+all.**
+
+Two dated fallbacks now hang off **18 Aug**, and they are separate things:
+
+| | Decides | Fallback |
+|---|---|---|
+| **9g telemetry fallback** | what number is *submitted* | VPS medians, central-estimate rule, labelled `FALLBACK`, spread documented. Latency never falls back |
+| **9f-bis degraded selection** | how the *finalist is chosen* | accuracy + efficiency + behavioural pass; throughput enters as size-class bands only (boundaries fixed at 1 GB and 2 GB), no ordering claimed inside a class |
+
+The degraded path names its own weakness: efficiency is already derived from file size, so
+size would drive half the composite weight through two columns that look independent.
+Documented rather than adjusted, because adjusting it means inventing a throughput number.
+
+**Budget the sitting as a full day** if a 3.8 to 4B candidate is in the cluster: a
+three-arm pass on one 4B is ~5 h at the measured 0.80 tok/s, before the re-bench. Run the
+official profiler on **every cluster member first**, because that run is simultaneously the
+ranking completion and the submitted telemetry, so an overrunning chat pass costs a finding
+rather than the audited number.
+
+**Pre-registered cut if the day runs out:** drop arm 2, never a candidate. Its default is
+also registered: ship-full versus ship-minimal follows whichever arm ran clean on the
+selected candidate, because the minimal bake is not shippable on no transcript. Persona
+isolation then defers to the semifinal window as **O-15**, which costs nothing at Gate 1
+since the submitted artefact is fixed at submission and its hash is what Gate 2 re-profiles.
+
+---
+
+## Standing rules that are enforced, not remembered
+
+- **Audit fidelity** (9e-bis): no flag the profiler does not pass may touch a run feeding a
+  submitted number. Allowed set is *derived from vendored source*
+  (`competition/fidelity_oracle.json`), not hand-listed.
+- **Figure rule** (9h): numeric figures enter `REPORT.md` only via
+  `scripts/report_figures.py`; measured / retrieved / derived, nothing else.
+- **Latency quotability**: only from `--host-class physical`. Consumer-side refusal in
+  `run_guards.py`, used by both `composite.py` and `report_figures.py`.
+- **Superseded rules**: `competition/superseded.yaml` (12 entries), build fails on
+  reappearance.
+- **One door onto the archive**: every numeric consumer reads runs through
+  `scripts/run_guards.py`. A missing measurement comes back as `Absent`, which raises on
+  any numeric use *including truthiness*, so `x or 0.0` cannot resurrect the zero that
+  produced the artefact finalist set. A test greps consumers for JSON parsing, archive
+  globbing, or a private `RUNS`, and a second test proves that grep can fail.
+- **Composite completeness**: a composite recording `ranking_complete: false` publishes no
+  finalist set. Same consumer-side pattern as latency.
+- **Composite provisionality**: a composite whose bench source does not positively declare
+  `host_class: physical` is stamped `provisional: true` and labelled PROVISIONAL wherever
+  it surfaces. Complete is not the same as final (section 9f-bis).
+- **Partition, not ranking**: a provisional composite emits a `partition` (selection set
+  and excluded, both sorted by id, `ordering_claimed: false`) and prints alphabetically,
+  so nothing about it reads as an order. `REPORT.md` and `docs/BAKEOFF.md` may not order
+  two candidates in prose while no run declares `host_class: physical`; the check is
+  candidate-proximity based and exempts claims that state an arithmetic or accuracy basis.
+- **Positive controls** (section 12b): no guard ships without a test proving it can fire.
+  `GUARD_POSITIVE_CONTROLS` in `tests/test_competition.py` is bidirectional, so a new guard
+  with no control and an unregistered control both fail the build. Nine guards covered.
+- **Gate 2 comparison is symmetric** and normalises by the *submitted* value:
+  underclaiming fails at 1.5x error, overclaiming survives to 2x. Submit the accurate
+  central estimate, never a deliberately conservative one (SR-01).
+
+## Next actions, in order
+
+1. Wait for the bench sweep (~12:00-12:30Z); re-run `python3 scripts/composite.py --auto`.
+   Then check `python3 scripts/report_figures.py` lists `composite` as AVAILABLE: while it
+   is still BLOCKED, the table is incomplete and the finalist set is not real. It will be
+   labelled **PROVISIONAL** even once complete, which is correct and stays until the
+   physical sitting re-measures perf (section 9f-bis).
+2. Apply the pre-registered cluster rule (section 9f-pre) to whatever cluster forms.
+   Cluster > 3 fires the limit 150-200 accuracy re-run on tied candidates, official image,
+   automatically via `scripts/after_sweep.sh`.
+3. Take the tie cluster to the three-arm qualitative pass **on physical hardware only**
+   (`scripts/ab_template.py`, `--host-class physical`).
+4. Remaining `REPORT.md` `[PENDING]` markers, all genuinely blocked, none fillable here:
+   sections 2.1, 2.4 and 2.5 need the finalist set and the qualitative pass; section 4.1
+   and the section 4.4 confirmation need O-12 telemetry; section 4.6 needs the three-arm
+   pass.
+5. From 20 Aug, stop using this list and follow **`SUBMISSION.md`** in order. It absorbs
+   the 22 Aug `check_upstream.sh` run as its phase 2 gate.
+6. Remaining deliverables: **record the video** to `docs/VIDEO.md`'s beat sheet, which
+   needs O-02 for the closing card. CITATIONS.md, the README quickstart, and the CLI
+   captures are done.
+
+**Do not add guards.** The layer is frozen: nine guards, nine positive controls. A new one
+needs a failure that actually happened, not a failure that could. If you find yourself
+writing a tenth, check first whether the thing you are worried about is already refused by
+`run_guards`, and whether the effort belongs on the submission artifacts instead.
+
+Gate 1 closes **24 Aug 2026 23:45 PDT**; package target 20 Aug.

@@ -47,11 +47,11 @@ import yaml
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import run_guards  # noqa: E402
 from mhizha.app import safety as product_safety  # noqa: E402
 from mhizha.config import load_config  # noqa: E402
-
-RUNS = REPO / "runs"
 BAKEOFF = REPO / "models" / "bakeoff"
 SUBMISSION = REPO / "models" / "submission"
 
@@ -100,7 +100,7 @@ def run_arm(model: Path, subset: str, tag: str) -> dict:
             break
     if run_dir is None:
         raise SystemExit(f"could not locate the run dir for arm {tag!r}")
-    return json.loads((run_dir / "chat.json").read_text(encoding="utf-8"))
+    return run_guards.record_in(run_dir.name, "chat.json")
 
 
 def analyse(arm: dict, questions: dict, cfg_safety) -> dict:
@@ -385,8 +385,7 @@ def main() -> int:
     )
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out_dir = RUNS / f"{stamp}_ab_{args.candidate}"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = run_guards.new_run_dir(stamp, f"ab_{args.candidate}")
     (out_dir / "ab.json").write_text(json.dumps({
         "candidate": args.candidate,
         "subset": args.only,

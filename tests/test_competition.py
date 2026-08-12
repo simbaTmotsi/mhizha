@@ -12,8 +12,10 @@ constant quietly misrank the bake-off.
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -1035,7 +1037,9 @@ def test_superseded_patterns_actually_compile() -> None:
 
 
 def test_the_mechanism_catches_a_reintroduced_rule(tmp_path) -> None:
-    """Guard the guard: if the matcher were broken, every rule would pass vacuously."""
+    """POSITIVE CONTROL for the superseded registry.
+
+    Guard the guard: if the matcher were broken, every rule would pass vacuously."""
     import re
 
     rule = next(r for r in SUPERSEDED["rules"] if r["id"] == "SR-01")
@@ -1363,7 +1367,8 @@ def test_sequencing_is_documented_with_the_merged_physical_session() -> None:
     assert "Sequencing: what runs where" in flat
     assert "completes before any qualitative work" in flat
     assert "never delays the composite" in flat
-    for deliverable in ("Submitted telemetry", "Ranking verification", "Judge-real latency"):
+    # "Ranking completion", not verification: SR-12. There is no VPS ordering to confirm.
+    for deliverable in ("Submitted telemetry", "Ranking completion", "Judge-real latency"):
         assert deliverable in flat, f"the merged session must name {deliverable}"
 
 
@@ -1387,7 +1392,9 @@ def guards():
 
 
 def test_absent_stamp_is_treated_as_not_quotable(guards) -> None:
-    """Every run predating the stamp was measured under `-t 4`, so a permissive default
+    """POSITIVE CONTROL: an absent or malformed stamp must read as not quotable.
+
+    Every run predating the stamp was measured under `-t 4`, so a permissive default
     would admit exactly the figures the stamp exists to exclude."""
     assert guards.latency_quotable({}) is False
     assert guards.latency_quotable({"_meta": {}}) is False
@@ -1397,6 +1404,7 @@ def test_absent_stamp_is_treated_as_not_quotable(guards) -> None:
 
 
 def test_consumer_refuses_an_unquotable_figure(guards) -> None:
+    # POSITIVE CONTROL for the latency quotability guard.
     with pytest.raises(guards.UnquotableFigure, match="refusing a latency figure"):
         guards.assert_latency_quotable({"_meta": {"host_class": "shared"}}, "somewhere")
 
@@ -1412,6 +1420,475 @@ def test_report_builder_refuses_and_reports_blocked_figures() -> None:
     source = (REPO / "scripts" / "report_figures.py").read_text(encoding="utf-8")
     assert "audit_archive" in source
     assert '"blocked"' in source, "an absent figure must be visible, not silent"
+
+
+# ----------------------------------------------------------- the positive-control rule
+#
+# COMPETITION.md section 12b: no guard ships without a test proving it can fire. A guard
+# is only ever exercised against inputs that satisfy it, so a broken one and a working one
+# look identical in a green suite. Every entry below feeds its guard a violating input and
+# asserts the guard sees it.
+#
+# The registry is bidirectional on purpose: a new guard with no control fails the first
+# assertion, and a control that stops being registered fails the second.
+
+GUARD_POSITIVE_CONTROLS = {
+    "latency quotability": "test_consumer_refuses_an_unquotable_figure",
+    "absent or malformed latency stamp": "test_absent_stamp_is_treated_as_not_quotable",
+    "superseded rules registry": "test_the_mechanism_catches_a_reintroduced_rule",
+    "composite completeness": "test_partial_composite_never_yields_a_finalist_set",
+    "composite provisionality": "test_a_composite_without_the_flag_is_treated_as_provisional",
+    "one door onto the archive": "test_the_consumer_check_can_actually_fail",
+    "absence is not a number": "test_absence_is_a_type_that_refuses_to_be_a_number",
+    "report figure rule": "test_the_figure_rule_can_actually_fail",
+    "within-cluster ordering language": "test_the_ordering_check_can_actually_fail",
+}
+
+MARKER = "POSITIVE CONTROL"
+
+
+def test_every_guard_has_a_positive_control() -> None:
+    """No guard ships without a test proving it can fire.
+
+    Two of this project's guards were once vacuous and looked green: the consumer grep
+    matched nothing because its scanner stripped the very strings it hunted for, and the
+    superseded matcher would have passed every rule if its regexes had rotted. Both were
+    found by writing the control, not by reading the guard.
+    """
+    import inspect
+    import sys as _sys
+
+    module = _sys.modules[__name__]
+    for guard, control in GUARD_POSITIVE_CONTROLS.items():
+        function = getattr(module, control, None)
+        assert callable(function), f"{guard}: positive control {control!r} does not exist"
+        assert MARKER in inspect.getsource(function), (
+            f"{guard}: {control} is registered as a positive control but is not marked "
+            f"as one. A control must say what it is, so a later edit cannot quietly turn "
+            f"it into an ordinary assertion.")
+
+    registered = set(GUARD_POSITIVE_CONTROLS.values())
+    marked = set()
+    for name, obj in vars(module).items():
+        if not name.startswith("test_") or not callable(obj) or name in (
+                "test_every_guard_has_a_positive_control",):
+            continue
+        try:
+            source = inspect.getsource(obj)
+        except (OSError, TypeError):
+            continue
+        if MARKER in source:
+            marked.add(name)
+    assert marked == registered, (
+        "the positive-control registry and the marked tests disagree.\n"
+        f"  marked but unregistered: {sorted(marked - registered)}\n"
+        f"  registered but unmarked: {sorted(registered - marked)}")
+
+
+# ------------------------------------------------- one door onto the measurement archive
+#
+# Every script that turns archived runs into numbers reads them through run_guards, so
+# there is one definition of "may this be quoted" and one representation of "absent".
+# A consumer that opens runs/ for itself has, by definition, skipped both.
+
+PRODUCERS = {
+    # These create run directories. They are the archive's writers, not its readers, and
+    # each one legitimately names its own output file.
+    "adtc_profile.py",
+    "bench_screened.py",
+    "judge_chat.py",
+    "lmeval_mix.py",
+    "lmeval_inner.py",
+    "run_guards.py",   # the door itself
+}
+
+ARCHIVE_READS = (
+    "bench.json", "lmeval.json", "run.json", "chat.json",
+    "spotcheck.json", "composite.json", "simd_summary.json",
+)
+
+# Every archived measurement is JSON, so a consumer that parses JSON is reading a record
+# for itself. Globbing and a private RUNS are the other two ways to open a second door.
+# Reading YAML config (candidates.yaml, chat_probe.yaml) is not an archive read.
+FORBIDDEN_IN_CONSUMERS = {
+    "json.loads(": "parses an archive record itself instead of asking run_guards",
+    "json.load(": "parses an archive record itself instead of asking run_guards",
+    ".glob(": "searches the archive itself; run_guards.newest_record/all_records do that",
+    'RUNS = REPO / "runs"': "defines a second path to the archive",
+}
+
+
+def _executable_code(source: str) -> str:
+    """Source with comments and docstrings removed, other strings kept.
+
+    A usage example in a docstring may say `runs/<id>/bench.json`; that documents the
+    tool, it does not read the archive. Ordinary string literals must survive, because
+    the filename a consumer opens is itself a string.
+    """
+    import io
+    import tokenize
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return source
+    docstring_lines: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
+                                 ast.ClassDef)):
+            continue
+        if ast.get_docstring(node, clean=False) is None:
+            continue
+        first = node.body[0]
+        docstring_lines.update(range(first.lineno, (first.end_lineno or first.lineno) + 1))
+
+    # Blank the docstring and comment spans in place rather than re-joining tokens:
+    # `json.loads(` is four tokens, and a scanner that reassembles them with separators
+    # can no longer see it.
+    lines = source.splitlines()
+    handle = io.BytesIO(source.encode("utf-8"))
+    try:
+        comments = [t.start for t in tokenize.tokenize(handle.readline)
+                    if t.type == tokenize.COMMENT]
+    except tokenize.TokenError:
+        comments = []
+    for row, col in comments:
+        lines[row - 1] = lines[row - 1][:col]
+    for row in docstring_lines:
+        if 1 <= row <= len(lines):
+            lines[row - 1] = ""
+    return "\n".join(lines)
+
+
+def _executable_source(path: Path) -> str:
+    return _executable_code(path.read_text(encoding="utf-8"))
+
+
+def _consumer_scripts() -> list[Path]:
+    return [p for p in sorted((REPO / "scripts").glob("*.py"))
+            if p.name not in PRODUCERS]
+
+
+def _archive_violations(source: str) -> list[str]:
+    code = _executable_code(source)
+    found = [why for token, why in FORBIDDEN_IN_CONSUMERS.items() if token in code]
+    if any(name in code for name in ARCHIVE_READS) and "run_guards" not in code:
+        found.append("names an archive record without importing run_guards")
+    return found
+
+
+def test_numeric_consumers_read_only_through_run_guards() -> None:
+    """No consumer reaches into runs/ itself.
+
+    The bug this closes is not one call site. `perf_band` scored an unmeasured candidate
+    0.00 and produced a finalist set that was an artefact of which candidates had been
+    benchmarked. Any consumer that loads a bench.json for itself can reintroduce exactly
+    that, because both the quotability guards and the Absent type live behind this door.
+    """
+    offenders = []
+    for script in _consumer_scripts():
+        for why in _archive_violations(script.read_text(encoding="utf-8")):
+            offenders.append(f"{script.name}: {why}")
+    assert not offenders, (
+        "numeric consumers must read measurements through scripts/run_guards.py:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_the_consumer_check_can_actually_fail() -> None:
+    """POSITIVE CONTROL. A grep that cannot fail is decoration.
+
+    This is the shape of the code that existed before the guards were centralised, and
+    the shape a hurried edit reaches for again.
+    """
+    unguarded = (
+        'import json\n'
+        'from pathlib import Path\n'
+        'RUNS = REPO / "runs"\n'
+        'def median(candidate):\n'
+        '    """Read the newest bench run: runs/<id>/bench.json."""\n'
+        '    newest = sorted(RUNS.glob("*_bench*/bench.json"))[-1]\n'
+        '    data = json.loads(newest.read_text())\n'
+        '    return data["summary"].get(candidate, {}).get("median_generation_tok_s", 0.0)\n'
+    )
+    violations = _archive_violations(unguarded)
+    assert "parses an archive record itself instead of asking run_guards" in violations
+    assert "searches the archive itself; run_guards.newest_record/all_records do that" \
+        in violations
+    assert "defines a second path to the archive" in violations
+
+    documented_only = (
+        '"""usage: composite.py --bench runs/<id>/bench.json"""\n'
+        'import run_guards\n'
+        'x = run_guards.newest_record("*_bench*", "bench.json")\n'
+    )
+    assert _archive_violations(documented_only) == [], (
+        "a usage example in a docstring is documentation, not an archive read")
+
+
+def test_absence_is_a_type_that_refuses_to_be_a_number(guards) -> None:
+    """POSITIVE CONTROL. Absent fails closed on every numeric use, including truthiness.
+
+    `x or 0.0`, `if not x:` and `sum(...)` are how a missing measurement becomes a
+    confident zero. None satisfies all three quietly. Absent satisfies none of them.
+    """
+    absent = guards.Absent("median_generation_tok_s", "20260812T072644Z_bench", "not run")
+
+    for use in (
+        lambda: float(absent),
+        lambda: int(absent),
+        lambda: bool(absent),
+        lambda: absent or 0.0,        # the exact shape of the original bug
+        lambda: not absent,
+        lambda: absent + 1,
+        lambda: 1 + absent,
+        lambda: absent * 0.3,
+        lambda: absent / 15.0,
+        lambda: absent < 1.0,
+        lambda: round(absent, 2),
+    ):
+        with pytest.raises(guards.UnquotableFigure):
+            use()
+
+    assert absent.present is False
+    assert "not run" in str(absent)
+
+
+def test_a_present_measurement_carries_its_run(guards) -> None:
+    figure = guards.Measurement(3.96, "median_generation_tok_s", "20260812T034611Z_bench_o13")
+    assert float(figure) == 3.96
+    assert figure.present is True
+    assert "20260812T034611Z_bench_o13" in str(figure)
+
+
+def test_figure_returns_absent_for_every_shape_of_missing(guards) -> None:
+    record = {"summary": {"qwen3.5-0.8b": {"median_generation_tok_s": 3.96,
+                                           "min": None,
+                                           "max": "n/a"}}}
+    present = guards.figure(record, "summary", "qwen3.5-0.8b", "median_generation_tok_s",
+                            run_id="r")
+    assert float(present) == 3.96
+
+    for keys in (
+        ("summary", "qwen3.5-0.8b", "min"),        # recorded as null
+        ("summary", "qwen3.5-0.8b", "max"),        # recorded as a non-number
+        ("summary", "phi-4-mini", "min"),          # candidate absent
+        ("summary", "qwen3.5-0.8b", "ttft"),       # field absent
+        ("nothing",),                              # section absent
+    ):
+        assert isinstance(guards.figure(record, *keys, run_id="r"), guards.Absent)
+
+
+def test_composite_refuses_to_score_an_unmeasured_candidate() -> None:
+    """The artefact that started this: absent throughput must not become perf 0.00."""
+    spec = importlib.util.spec_from_file_location(
+        "composite", REPO / "scripts" / "composite.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    bench = {"summary": {"qwen3.5-0.8b": {"median_generation_tok_s": 4.0,
+                                          "min": 3.4, "max": 4.5}}}
+    assert module.perf_band(bench, "qwen3.5-0.8b", "r") is not None
+    assert module.perf_band(bench, "phi-4-mini", "r") is None, (
+        "an unbenchmarked candidate must be excluded, never scored zero")
+
+
+def _report_figures_module():
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_partial_composite_never_yields_a_finalist_set(tmp_path, monkeypatch) -> None:
+    """POSITIVE CONTROL. A ranking missing a candidate's throughput ranks what was measured.
+
+    The first finalist set this project produced named one model only because five of six
+    candidates had no throughput data and could not be scored. The composite records that
+    it was incomplete; the consumer has to act on it, or the artefact reaches REPORT.md
+    reading exactly like a real result.
+    """
+    from datetime import date
+
+    module = _report_figures_module()
+    runs = tmp_path / "runs"
+    (runs / "20260812T000000Z_composite").mkdir(parents=True)
+    (runs / "20260812T000000Z_composite" / "composite.json").write_text(json.dumps({
+        "finalists": ["qwen3.5-0.8b-q4_k_m"],
+        "tie_rule": "composite band overlaps the leader's band",
+        "ranking_complete": False,
+        "not_ranked_missing_throughput": ["qwen3.5-2b-q4_k_m", "phi-4-mini-instruct-q4_k_m"],
+    }), encoding="utf-8")
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+
+    report = module.gather(today=date(2026, 8, 12))
+    assert "composite" not in report["figures"], (
+        "a partial composite must not publish a finalist set")
+    entry = next(b for b in report["blocked"] if b["figure"] == "composite")
+    assert entry["unranked"] == ["qwen3.5-2b-q4_k_m", "phi-4-mini-instruct-q4_k_m"]
+    assert "incomplete" in entry["reason"]
+
+
+def test_complete_composite_publishes_its_finalist_set(tmp_path, monkeypatch) -> None:
+    """The guard refuses partial tables, not every table."""
+    from datetime import date
+
+    module = _report_figures_module()
+    runs = tmp_path / "runs"
+    (runs / "20260812T000000Z_composite").mkdir(parents=True)
+    (runs / "20260812T000000Z_composite" / "composite.json").write_text(json.dumps({
+        "finalists": ["qwen3.5-2b-q4_k_m", "phi-4-mini-instruct-q4_k_m"],
+        "tie_rule": "composite band overlaps the leader's band",
+        "ranking_complete": True,
+        "not_ranked_missing_throughput": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+
+    report = module.gather(today=date(2026, 8, 12))
+    assert report["figures"]["composite"]["finalists"] == [
+        "qwen3.5-2b-q4_k_m", "phi-4-mini-instruct-q4_k_m"]
+
+
+def test_a_shared_host_composite_is_stamped_provisional() -> None:
+    """Absence of a physical stamp is provisional, like absence of latency_quotable.
+
+    A bench record that does not say what host it ran on cannot be assumed to have run on
+    one that can resolve the differences it is being used to order.
+    """
+    source = (REPO / "scripts" / "composite.py").read_text(encoding="utf-8")
+    assert '"provisional": provisional' in source
+    assert 'perf_host_class != "physical"' in source, (
+        "provisional must be the default, positively cleared only by a physical stamp")
+
+
+def test_report_builder_carries_the_provisional_flag(tmp_path, monkeypatch) -> None:
+    """A complete table is not a final one, and the figures must not blur the two."""
+    from datetime import date
+
+    module = _report_figures_module()
+    runs = tmp_path / "runs"
+    (runs / "20260812T000000Z_composite").mkdir(parents=True)
+    (runs / "20260812T000000Z_composite" / "composite.json").write_text(json.dumps({
+        "finalists": ["qwen3.5-2b-q4_k_m", "phi-4-mini-instruct-q4_k_m"],
+        "ranking_complete": True,
+        "not_ranked_missing_throughput": [],
+        "provisional": True,
+        "perf_host_class": "unstated",
+    }), encoding="utf-8")
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+
+    composite = module.gather(today=date(2026, 8, 12))["figures"]["composite"]
+    assert composite["provisional"] is True
+    assert "PROVISIONAL" in composite["label"]
+
+
+def test_a_composite_without_the_flag_is_treated_as_provisional(tmp_path, monkeypatch) -> None:
+    """Records written before the flag existed must not read as final.
+
+    POSITIVE CONTROL.
+    """
+    from datetime import date
+
+    module = _report_figures_module()
+    runs = tmp_path / "runs"
+    (runs / "20260811T000000Z_composite").mkdir(parents=True)
+    (runs / "20260811T000000Z_composite" / "composite.json").write_text(json.dumps({
+        "finalists": ["qwen3.5-2b-q4_k_m"],
+        "ranking_complete": True,
+        "not_ranked_missing_throughput": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+
+    composite = module.gather(today=date(2026, 8, 12))["figures"]["composite"]
+    assert composite["provisional"] is True
+
+
+def test_the_provisional_rule_was_registered_before_the_sweep_landed() -> None:
+    """9f-bis is a pre-registration, and its value is entirely in its timing.
+
+    Registered while the sweep was in round 1 of 4 with five candidates unmeasured. A rule
+    about how much authority a table carries, written after seeing the table, is not a
+    rule.
+    """
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "9f-bis" in flat
+    assert re.search(r"Registered 2026-08-12T08:55:09\+00:00, before the all-candidate "
+                     r"throughput sweep landed", flat), (
+        "the pre-registration must carry the timestamp it was written at")
+    assert "provisional by construction" in flat
+    assert "completes the ranking; it does not verify it" in flat
+
+
+def test_the_degraded_selection_path_is_documented_and_dated() -> None:
+    """Distinct from the 9g telemetry fallback: this one decides how a finalist is picked.
+
+    It also has to name its own weakness, because size drives both the efficiency term and
+    the size-class throughput term, and two correlated columns look independent in a table.
+    """
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "size-class bands" in flat
+    assert "1 GB and 2 GB" in flat, "the class boundaries must be fixed in advance"
+    assert "No ordering is claimed inside a class" in flat
+    assert "double count" in flat or "two columns that look independent" in flat, (
+        "the degraded path must state that size carries half the weight twice")
+
+    spec = importlib.util.spec_from_file_location(
+        "report_figures", REPO / "scripts" / "report_figures.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    from datetime import date
+
+    assert module.PHYSICAL_DEADLINE == date(2026, 8, 18), (
+        "the degraded selection path and the telemetry fallback share one date")
+
+
+def test_the_physical_sitting_is_budgeted_and_ordered_against_overrun() -> None:
+    """A day's work booked as an evening is how the audited number goes unmeasured.
+
+    The ordering matters more than the estimate: the profiler run that completes the
+    ranking is the same run as the submitted telemetry, so doing it for every cluster
+    member first means an overrunning chat pass costs a finding, not the submission.
+    """
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "full day, not an evening" in flat
+    assert "for scheduling only" in flat and "Never quoted" in flat, (
+        "a planning figure derived from VPS rates must be fenced off from the report")
+    assert "the telemetry run" in flat, (
+        "the sitting must state that ranking completion and telemetry are one run")
+    assert "drop **arm 2**" in flat or "drop arm 2" in flat, (
+        "the cut rule must be pre-registered, not decided at hour nine")
+
+
+def test_the_arm_two_cut_has_a_registered_default() -> None:
+    """Dropping arm 2 removes the only evidence the minimal bake would ever have.
+
+    Registered before the sitting, because the alternative is deciding what to ship while
+    a borrowed machine is being handed back.
+    """
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "ship-full versus ship-minimal follows whichever arm ran clean" in flat
+    assert "minimal bake is not shippable on no transcript" in flat, (
+        "the default must say why, not only what")
+    assert "semifinal window" in flat and "O-15" in flat, (
+        "persona isolation must be deferred to a named window and tracked, not dropped")
+
+
+def test_positive_control_rule_is_documented() -> None:
+    import re
+
+    flat = re.sub(r"\s+", " ", (REPO / "COMPETITION.md").read_text(encoding="utf-8"))
+    assert "No guard ships without a positive control" in flat
+    assert "GUARD_POSITIVE_CONTROLS" in flat, (
+        "the doc must name where the registry lives, or it drifts from the code")
 
 
 def test_report_builder_currently_blocks_latency_and_telemetry() -> None:
@@ -1484,11 +1961,11 @@ def test_chain_is_serial_and_orders_composite_before_o13() -> None:
 # later nobody can tell which run produced it or whether it still holds.
 
 
-def _report_numbers() -> dict[str, set[str]]:
-    """Numbers appearing in a measurement context in REPORT.md."""
+def _report_numbers(doc: str | None = None) -> dict[str, set[str]]:
+    """Numbers appearing in a measurement context, defaulting to REPORT.md."""
     import re
 
-    doc = (REPO / "REPORT.md").read_text(encoding="utf-8")
+    doc = (REPO / "REPORT.md").read_text(encoding="utf-8") if doc is None else doc
     # Strip inline code and fenced blocks: those quote commands and schema, not claims.
     doc = re.sub(r"```.*?```", "", doc, flags=re.DOTALL)
     doc = re.sub(r"`[^`]*`", "", doc)
@@ -1500,6 +1977,240 @@ def _report_numbers() -> dict[str, set[str]]:
     for match in pattern.finditer(doc):
         found.setdefault(match.group(1), set()).add(match.group(2))
     return found
+
+
+# ------------------------------------------------- ordering language is gated on hardware
+#
+# COMPETITION.md section 9f-bis: a provisional table partitions candidates, it does not
+# order them. Prose is where that distinction gets lost, because "the winner" and "faster
+# than" read as conclusions whether or not a measurement supports them.
+
+ORDERING_CLAIMS = (
+    r"\bthe winner\b",
+    r"\bour winner\b",
+    r"\bwinner is\b",
+    r"\brank(?:s|ed) (?:first|second|third|above|below|ahead)\b",
+    r"\btop-ranked\b",
+    r"\bthe (?:leading|best|strongest|fastest) candidate\b",
+    r"\boutperform(?:s|ed)\b",
+    r"\bbeats\b",
+    r"\b(?:faster|slower) than\b",
+)
+
+# A claim that states what it rests on is not the claim this rule is about. Section 9f-bis
+# permits across-class ordering from weights read per token, which is arithmetic, and
+# accuracy ordering, which carries its own sampling-error bands and never touched this
+# host's clock. What is forbidden is an unqualified ordering, which reads as measured.
+BASIS_MARKERS = (
+    "estimate", "parameter count", "weights read per token", "arithmetic",
+    "accuracy", "sampling error", "size class", "size-class",
+)
+
+
+def _prose(text: str) -> str:
+    """Document text with code, fenced blocks and PENDING markers removed.
+
+    A `[PENDING: winner, runner-up fallback]` marker names what is still missing; it does
+    not claim it. Nor does a shell command or a config key in backticks.
+    """
+    import re
+
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+    text = re.sub(r"`[^`]*`", "", text)
+    text = re.sub(r"\[PENDING[^\]]*\]", "", text)
+    return re.sub(r"\s+", " ", text)
+
+
+PROXIMITY = 140   # characters either side, wide enough to span a wrapped sentence
+
+
+def _candidate_pattern() -> str:
+    """Model-family names, separator-tolerant: `Qwen3.5 4B` and `qwen3.5-4b` both count."""
+    import re
+
+    manifest = yaml.safe_load(
+        (REPO / "competition" / "candidates.yaml").read_text(encoding="utf-8"))
+    families = set()
+    for row in manifest["candidates"]:
+        chunks = re.split(r"[-_.]", row["id"])[:2]      # qwen3, 5 / phi, 4 / gemma, 4
+        families.add(r"[-_. ]*".join(re.escape(c) for c in chunks))
+    return "(?:" + "|".join(sorted(families)) + ")"
+
+
+def _ordering_claims_in(text: str) -> list[str]:
+    """Ordering phrases that sit next to a candidate name.
+
+    Proximity to a candidate is the whole test. "The benchmarked speed is slower than the
+    speed the model is evaluated at" compares two code paths on one model and is measured;
+    "Qwen3.5-4B is faster than Phi-4-mini" orders two candidates on a term this host
+    cannot resolve. Accuracy-scoped comparisons stay available: accuracy carries its own
+    sampling-error bands and does not depend on the host at all.
+    """
+    import re
+
+    prose = _prose(text)
+    candidates = re.compile(_candidate_pattern(), re.IGNORECASE)
+    found = []
+    for pattern in ORDERING_CLAIMS:
+        for match in re.finditer(pattern, prose, re.IGNORECASE):
+            window = prose[max(0, match.start() - PROXIMITY): match.end() + PROXIMITY]
+            if not candidates.search(window):
+                continue
+            if any(marker in window.lower() for marker in BASIS_MARKERS):
+                continue
+            found.append(match.group(0))
+    return found
+
+
+def test_no_ordering_language_until_a_physical_run_exists() -> None:
+    """`REPORT.md` may name a selection set; it may not order it.
+
+    Gated on the archive rather than on a date: the moment a run declares
+    host_class physical, throughput can separate candidates and this check retires
+    itself.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "run_guards", REPO / "scripts" / "run_guards.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if module.physical_runs():
+        pytest.skip("a physical run exists; ordering between candidates is now measurable")
+
+    for doc in ("REPORT.md", "docs/BAKEOFF.md"):
+        claims = _ordering_claims_in((REPO / doc).read_text(encoding="utf-8"))
+        assert not claims, (
+            f"{doc} orders candidates while no run declares host_class physical: "
+            f"{sorted(set(claims))}.\n"
+            "  A provisional composite partitions candidates into a selection set; the "
+            "position of a candidate inside that set is not a measurement "
+            "(COMPETITION.md section 9f-bis)."
+        )
+
+
+def test_the_ordering_check_can_actually_fail() -> None:
+    """Positive control: the shape of sentence this rule exists to stop.
+
+    POSITIVE CONTROL.
+    """
+    offending = (
+        "Qwen3.5-4B is the winner, and it outperforms Phi-4-mini on the composite. "
+        "It is also faster than Gemma 4 E2B."
+    )
+    claims = {c.lower() for c in _ordering_claims_in(offending)}
+    assert "the winner" in claims
+    assert "outperforms" in claims
+    assert "faster than" in claims
+
+    permitted = (
+        "The selection set is Qwen3.5-4B and Phi-4-mini, listed alphabetically. "
+        "`[PENDING: winner, runner-up fallback, and the reasoning]` "
+        "Their bands overlap, so neither is placed above the other on this evidence."
+    )
+    assert _ordering_claims_in(permitted) == [], (
+        "naming a set, and a PENDING marker for a choice not yet made, are not claims")
+
+    with_basis = (
+        "Scaled by parameter count, an estimate rather than a measurement, Qwen3.5-0.8B "
+        "beats Qwen3.5-4B by about 9 points on perf and efficiency combined."
+    )
+    assert _ordering_claims_in(with_basis) == [], (
+        "an across-class claim that names its arithmetic basis is permitted by 9f-bis")
+
+    unqualified = "Qwen3.5-0.8B beats Qwen3.5-4B on the composite."
+    assert _ordering_claims_in(unqualified) == ["beats"], (
+        "the same claim without its basis is exactly what the rule catches")
+
+
+def test_a_provisional_composite_publishes_a_set_not_an_order(tmp_path, monkeypatch) -> None:
+    """The figure a report would quote must be a partition when perf cannot order."""
+    from datetime import date
+
+    module = _report_figures_module()
+    runs = tmp_path / "runs"
+    (runs / "20260812T120000Z_composite").mkdir(parents=True)
+    (runs / "20260812T120000Z_composite" / "composite.json").write_text(json.dumps({
+        # Deliberately not alphabetical, as composite.py's internal sort leaves it.
+        "finalists": ["qwen3.5-4b-q4_k_m", "phi-4-mini-instruct-q4_k_m"],
+        "partition": {
+            "selection_set": ["qwen3.5-4b-q4_k_m", "phi-4-mini-instruct-q4_k_m"],
+            "excluded": ["llama-3.2-1b-instruct-q4_k_m"],
+            "ordering_claimed": False,
+        },
+        "ranking_complete": True,
+        "not_ranked_missing_throughput": [],
+        "provisional": True,
+        "perf_host_class": "unstated",
+    }), encoding="utf-8")
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+
+    composite = module.gather(today=date(2026, 8, 12))["figures"]["composite"]
+    assert composite["ordering_claimed"] is False
+    assert composite["selection_set"] == ["phi-4-mini-instruct-q4_k_m", "qwen3.5-4b-q4_k_m"], (
+        "a provisional selection set is emitted sorted by id, so it cannot be read as "
+        "an ordering")
+
+
+def _run_composite(tmp_path, monkeypatch, bench_summary, host_class=None):
+    """Run composite.py end to end against a synthetic archive, return its record."""
+    spec = importlib.util.spec_from_file_location(
+        "composite", REPO / "scripts" / "composite.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    runs = tmp_path / "runs"
+    (runs / "20260812T100000Z_lmeval_sweep").mkdir(parents=True)
+    (runs / "20260812T110000Z_bench_all").mkdir(parents=True)
+    tasks = {
+        "qwen3.5-4b-q4_k_m": 0.765,
+        "phi-4-mini-instruct-q4_k_m": 0.760,
+        "llama-3.2-1b-instruct-q4_k_m": 0.550,
+    }
+    (runs / "20260812T100000Z_lmeval_sweep" / "lmeval.json").write_text(json.dumps({
+        "results": {c: {"tasks": {"arc_easy": {"score": s, "samples": 50}}}
+                    for c, s in tasks.items()}}), encoding="utf-8")
+    bench = {"image": "adtc-profiler:latest", "summary": bench_summary}
+    if host_class:
+        bench["host_class"] = host_class
+    (runs / "20260812T110000Z_bench_all" / "bench.json").write_text(
+        json.dumps(bench), encoding="utf-8")
+
+    monkeypatch.setattr(module.run_guards, "RUNS", runs)
+    monkeypatch.setattr(sys, "argv", ["composite.py", "--auto"])
+    assert module.main() == 0
+    written = sorted(runs.glob("*_composite/composite.json"))[-1]
+    return json.loads(written.read_text(encoding="utf-8"))
+
+
+def test_a_provisional_composite_partitions_rather_than_ranks(tmp_path, monkeypatch) -> None:
+    """End to end: a shared-host table yields a set, sorted by id, ordering disclaimed."""
+    summary = {
+        "qwen3.5-4b-q4_k_m": {"median_generation_tok_s": 0.80, "min": 0.6, "max": 1.1},
+        "phi-4-mini-instruct-q4_k_m": {"median_generation_tok_s": 0.95, "min": 0.7, "max": 1.3},
+        "llama-3.2-1b-instruct-q4_k_m": {"median_generation_tok_s": 2.27, "min": 1.8, "max": 3.1},
+    }
+    record = _run_composite(tmp_path, monkeypatch, summary)
+
+    assert record["provisional"] is True
+    assert record["perf_host_class"] == "unstated"
+    partition = record["partition"]
+    assert partition["ordering_claimed"] is False
+    assert partition["selection_set"] == sorted(partition["selection_set"]), (
+        "a provisional selection set is emitted sorted by id, never in composite order")
+    assert set(partition["selection_set"]) | set(partition["excluded"]) == set(summary)
+    assert record["finalists"] == sorted(record["finalists"])
+
+
+def test_a_physical_composite_may_claim_its_ordering(tmp_path, monkeypatch) -> None:
+    """The partition rule is about what the host can resolve, not a permanent hedge."""
+    summary = {
+        "qwen3.5-4b-q4_k_m": {"median_generation_tok_s": 0.80, "min": 0.78, "max": 0.82},
+        "llama-3.2-1b-instruct-q4_k_m": {"median_generation_tok_s": 2.27, "min": 2.2, "max": 2.3},
+    }
+    record = _run_composite(tmp_path, monkeypatch, summary, host_class="physical")
+
+    assert record["provisional"] is False
+    assert record["perf_host_class"] == "physical"
+    assert record["partition"]["ordering_claimed"] is True
 
 
 @pytest.fixture(scope="module")
@@ -1539,6 +2250,30 @@ def test_every_report_figure_has_a_declared_source(figure_sources) -> None:
         "source), or DERIVED (declare it with its formula). "
         "COMPETITION.md section 9h."
     )
+
+
+def test_the_figure_rule_can_actually_fail(figure_sources) -> None:
+    """POSITIVE CONTROL for the figure rule.
+
+    The rule's whole job is to catch a number that arrived without provenance. A check
+    that only ever runs against a document already known to be clean proves nothing about
+    whether it can see one.
+    """
+    manifest, declared = figure_sources["manifest"], figure_sources["declared"]
+
+    def undeclared_in(text: str) -> list[str]:
+        return [value for value in _report_numbers(text)
+                if value not in manifest and value not in declared]
+
+    # A plausible hand-typed figure, in a measurement context, from no run.
+    assert undeclared_in("The winner sustained **9.37 tok/s** on the audit box.") == ["9.37"]
+    assert undeclared_in("Peak RSS was 4321.5 MB.") == ["4321.5"]
+
+    # Whereas a figure that is in the manifest passes, and one inside code does not count.
+    measured = next(iter(manifest))
+    assert undeclared_in(f"Throughput was {measured} tok/s.") == []
+    assert undeclared_in("Reproduce with `llama-bench --threshold 99999.0 tok/s`.") == [], (
+        "a number inside a code span quotes a command, it does not claim a measurement")
 
 
 def test_derived_constants_declare_a_formula(figure_sources) -> None:
