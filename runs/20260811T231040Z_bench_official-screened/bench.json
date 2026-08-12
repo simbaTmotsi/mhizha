@@ -1,0 +1,49 @@
+{
+  "recorded_at": "20260811T231040Z",
+  "purpose": "RANKING ONLY. Not submittable telemetry.",
+  "image": "adtc-profiler:latest",
+  "constraints": {
+    "memory": "7.5g",
+    "cpus": "4"
+  },
+  "reps": 3,
+  "max_steal_pct": 1.0,
+  "idle_steal_pct": 0.0,
+  "host_note": "shared virtualised host; --cpus is a quota, not pinned cores",
+  "raw": {
+    "qwen3.5-0.8b-q4_k_m": [
+      {
+        "generation_tok_s": 3.422044,
+        "prompt_tok_s": 27.421312,
+        "steal_pct": 0.0,
+        "wall_seconds": 329.8,
+        "rep": 1
+      },
+      {
+        "generation_tok_s": 3.797018,
+        "prompt_tok_s": 33.310224,
+        "steal_pct": 0.0,
+        "wall_seconds": 279.4,
+        "rep": 2
+      },
+      {
+        "generation_tok_s": 4.477133,
+        "prompt_tok_s": 31.949814,
+        "steal_pct": 0.0,
+        "wall_seconds": 245.2,
+        "rep": 3
+      }
+    ]
+  },
+  "summary": {
+    "qwen3.5-0.8b-q4_k_m": {
+      "kept": 3,
+      "discarded": 0,
+      "median_generation_tok_s": 3.797,
+      "min": 3.422,
+      "max": 4.477,
+      "spread_pct_of_median": 27.8,
+      "max_steal_seen": 0.0
+    }
+  }
+}

@@ -112,11 +112,37 @@ Third pass, same day:
   control for `BAKEOFF.md` sitting outside the figure rule: one hand-check on the day,
   looking first for a number that contradicts `REPORT.md`. Not a scanner, by decision.
 
-  Writing it surfaced three things worth knowing before the day: `runs/` is gitignored, so
-  the report's provenance claim is currently unverifiable by anyone outside this machine
-  (the JSON records are a few hundred KB against 600 MB of bulk, so publishing the records
-  is cheap); the template asks for a one-to-three-page report and ours is far longer; and
-  `metadata.json` still names the artefact candidate rather than a chosen one.
+  Writing it surfaced three things worth knowing before the day, two now resolved: the
+  template asks for a one-to-three-page report and ours is far longer, and `metadata.json`
+  still names the artefact candidate rather than a chosen one.
+
+Fourth pass, on your rulings:
+
+- **`runs/` ships as records, not bulk.** `.gitignore` now publishes every record (58
+  files, under half a MB) and keeps the bulk out. **Not-for-quotation runs ship too, markers
+  intact**, including every `FIDELITY_STALE` directory: they are the evidence the guards
+  fired on us, and an archive with them removed would be cleaner than the one we worked
+  from. `REPORT.md` section 5 states records-not-bulk explicitly rather than leaving a
+  reader to infer it from an absent file.
+- **`scripts/scrub_runs.py`**, run at phase 3.2 **before the first `git add`**, because git
+  history is not scrubbable afterwards and `runs/` has never been committed. It rewrites
+  this repo's absolute path to a relative one (lossless) and *flags without rewriting*
+  home directories, hostnames, IPs and provider names, since a wrong automatic substitution
+  inside an archived record is worse than a flagged one. Current state: 9 files to rewrite,
+  nothing flagged. It deliberately keeps `cpu_model`, `ram_gb`, `host_cpu_count` and steal
+  readings, and prints that list every run, because the oversubscription finding cannot be
+  stated without `host_cpu_count`.
+- **The producers now write repo-relative paths** (`judge_chat.py`, `composite.py`), so the
+  scrub is a safety net rather than a recurring chore. It still must be re-run on the day.
+- **`REPORT.md` section 0 is the executive summary**, drafted with its figure slots and
+  marked in the source with an `EXEC SUMMARY` comment. Only its **inclusion** is a
+  packaging-day call: keep or cut as one block, never part-edit.
+- **The `african_alpha` defence is written**, one sentence in design tense, in `SUBMISSION.md`
+  phase 1.3. Every clause names something that exists in the repo, which is the test of
+  whether the claim is load bearing.
+- One guard change, not a new guard: the archive-door test gained a **conditional**
+  exemption for text-only tools, asserted by requiring that such a tool parses no JSON at
+  all. `scrub_runs.py` reads records as text and never as measurements.
 
 Still true and still worth reading below: the finalist set is not formed, telemetry and
 latency are blocked on O-12, and `metadata.json` still holds `TODO_*`.

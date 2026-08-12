@@ -1507,6 +1507,14 @@ ARCHIVE_READS = (
     "spotcheck.json", "composite.json", "simd_summary.json",
 )
 
+# Tools that open run records as TEXT and never as measurements. The exemption is
+# conditional, not a pass: the test asserts each one parses no JSON at all, which is the
+# property that makes it incapable of reading a measurement in the first place. Widen this
+# set only for a tool with the same property.
+TEXT_ONLY_TOOLS = {
+    "scrub_runs.py",   # removes machine-identifying strings before the records are published
+}
+
 # Every archived measurement is JSON, so a consumer that parses JSON is reading a record
 # for itself. Globbing and a private RUNS are the other two ways to open a second door.
 # Reading YAML config (candidates.yaml, chat_probe.yaml) is not an archive read.
@@ -1587,7 +1595,15 @@ def test_numeric_consumers_read_only_through_run_guards() -> None:
     """
     offenders = []
     for script in _consumer_scripts():
-        for why in _archive_violations(script.read_text(encoding="utf-8")):
+        source = script.read_text(encoding="utf-8")
+        if script.name in TEXT_ONLY_TOOLS:
+            code = _executable_code(source)
+            assert "json.load" not in code, (
+                f"{script.name} is exempt from the door only because it never parses a "
+                f"record. It now does, so either route it through run_guards or drop the "
+                f"exemption.")
+            continue
+        for why in _archive_violations(source):
             offenders.append(f"{script.name}: {why}")
     assert not offenders, (
         "numeric consumers must read measurements through scripts/run_guards.py:\n  "

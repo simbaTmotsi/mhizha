@@ -1,0 +1,159 @@
+{
+  "recorded_at": "20260812T034611Z",
+  "label": "INTERNAL PROXY. S_acc is judge-scored; this ranks candidates only.",
+  "sources": {
+    "lmeval": "/home/simbatmotsi/Documents/mhizha/runs/20260812T000207Z_lmeval_sweep/lmeval.json",
+    "bench": "/home/simbatmotsi/Documents/mhizha/runs/20260811T232533Z_bench_native-screened/bench.json"
+  },
+  "weights": {
+    "accuracy": 0.5,
+    "throughput": 0.3,
+    "efficiency": 0.2
+  },
+  "constants": {
+    "tps_reference": 15.0,
+    "ram_limit_gb": 7.0
+  },
+  "rows": [
+    {
+      "id": "qwen3.5-0.8b-q4_k_m",
+      "accuracy_proxy": 59.0,
+      "accuracy_band": [
+        52.49,
+        65.51
+      ],
+      "s_perf": 37.27,
+      "s_perf_band": [
+        30.17,
+        40.06
+      ],
+      "s_eff": 90.43,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 58.77,
+      "composite_band": [
+        53.38,
+        62.86
+      ]
+    },
+    {
+      "id": "phi-4-mini-instruct-q4_k_m",
+      "accuracy_proxy": 76.0,
+      "accuracy_band": [
+        70.23,
+        81.77
+      ],
+      "s_perf": 0.0,
+      "s_perf_band": [
+        0.0,
+        0.0
+      ],
+      "s_eff": 55.25,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 49.05,
+      "composite_band": [
+        46.16,
+        51.94
+      ]
+    },
+    {
+      "id": "qwen3.5-4b-q4_k_m",
+      "accuracy_proxy": 76.5,
+      "accuracy_band": [
+        70.95,
+        82.05
+      ],
+      "s_perf": 0.0,
+      "s_perf_band": [
+        0.0,
+        0.0
+      ],
+      "s_eff": 50.77,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 48.4,
+      "composite_band": [
+        45.63,
+        51.18
+      ]
+    },
+    {
+      "id": "qwen3.5-2b-q4_k_m",
+      "accuracy_proxy": 65.0,
+      "accuracy_band": [
+        58.71,
+        71.29
+      ],
+      "s_perf": 0.0,
+      "s_perf_band": [
+        0.0,
+        0.0
+      ],
+      "s_eff": 76.99,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 47.9,
+      "composite_band": [
+        44.75,
+        51.04
+      ]
+    },
+    {
+      "id": "llama-3.2-1b-instruct-q4_k_m",
+      "accuracy_proxy": 55.0,
+      "accuracy_band": [
+        48.46,
+        61.54
+      ],
+      "s_perf": 0.0,
+      "s_perf_band": [
+        0.0,
+        0.0
+      ],
+      "s_eff": 85.5,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 44.6,
+      "composite_band": [
+        41.33,
+        47.87
+      ]
+    },
+    {
+      "id": "gemma-4-e2b-it-q4_k_m",
+      "accuracy_proxy": 65.5,
+      "accuracy_band": [
+        58.97,
+        72.03
+      ],
+      "s_perf": 0.0,
+      "s_perf_band": [
+        0.0,
+        0.0
+      ],
+      "s_eff": 44.2,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 41.59,
+      "composite_band": [
+        38.32,
+        44.85
+      ]
+    }
+  ],
+  "errors": [],
+  "finalists": [
+    "qwen3.5-0.8b-q4_k_m"
+  ],
+  "tie_rule": "composite band overlaps the leader's band",
+  "latency": "omitted: no quotable run",
+  "archive_audit": {
+    "quotable_latency": [],
+    "shared_host_not_quotable": [],
+    "fidelity_stale": [
+      "20260811T215334Z_chat_test-baked",
+      "20260811T221559Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
+      "20260811T221656Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
+      "20260811T222339Z_chat_mhizha-qwen3.5-0.8b-q4_k_m",
+      "20260811T222409Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
+      "20260811T222510Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
+      "20260811T223438Z_chat_stdlib-test"
+    ],
+    "unmarked_treated_as_not_quotable": []
+  }
+}

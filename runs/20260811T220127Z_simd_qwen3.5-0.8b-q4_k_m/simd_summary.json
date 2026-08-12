@@ -1,0 +1,16 @@
+{
+  "official_image": {
+    "prompt_tok_s": 22.048691,
+    "generation_tok_s": 1.815836
+  },
+  "native_avx2_image": {
+    "prompt_tok_s": 57.989862,
+    "generation_tok_s": 3.831094
+  },
+  "speedup_generation": 2.11,
+  "speedup_prompt": 2.63,
+  "tps_reference": 15.0,
+  "official_meets_reference": false,
+  "native_meets_reference": false,
+  "label": "native figure is an ENGINEERING FINDING ONLY, never submitted"
+}

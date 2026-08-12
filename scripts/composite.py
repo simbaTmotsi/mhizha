@@ -61,6 +61,14 @@ RAM_LIMIT_GB = 7.0
 W_ACC, W_PERF, W_EFF = 0.50, 0.30, 0.20
 
 
+def _relative(path: Path) -> str:
+    """Repo-relative where possible, unchanged where the file lives outside the repo."""
+    try:
+        return str(Path(path).resolve().relative_to(REPO))
+    except ValueError:
+        return str(path)
+
+
 def accuracy_band(tasks: dict) -> tuple[float, float, float]:
     """(mean, low, high) as percentages, from binomial sampling error per task."""
     scores, variances = [], []
@@ -265,7 +273,9 @@ def main() -> int:
     record = {
         "recorded_at": stamp,
         "label": "INTERNAL PROXY. S_acc is judge-scored; this ranks candidates only.",
-        "sources": {"lmeval": str(lmeval_path), "bench": str(bench_path)},
+        # Repo-relative, for the same reason judge_chat.py records them that way: these
+        # records ship, and an absolute path publishes a home directory to no purpose.
+        "sources": {"lmeval": _relative(lmeval_path), "bench": _relative(bench_path)},
         "source_runs": {"lmeval": lmeval_id, "bench": bench_id},
         "weights": {"accuracy": W_ACC, "throughput": W_PERF, "efficiency": W_EFF},
         "constants": {"tps_reference": TPS_REFERENCE, "ram_limit_gb": RAM_LIMIT_GB},

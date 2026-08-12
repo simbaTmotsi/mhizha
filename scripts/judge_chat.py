@@ -196,7 +196,9 @@ def run(model: Path, questions: list[dict], mode: str, tag: str,
     # non-faithful invocation is self-identifying rather than relying on someone
     # remembering which week it was produced.
     result["_meta"] = {
-        "run_dir": str(run_dir),
+        # Repo-relative: these records ship with the submission, and an absolute path
+        # publishes a developer's home directory while telling a reader nothing.
+        "run_dir": str(run_dir.relative_to(REPO)),
         "model": model.name,
         "image": IMAGE,
         "constraints": {"memory": AUDIT_MEMORY, "cpus": AUDIT_CPUS, "ctx": CTX},

@@ -1,0 +1,190 @@
+{
+  "recorded_at": "20260812T000207Z",
+  "tasks": "arc_easy,arc_challenge,mmlu_high_school_biology,mmlu_nutrition",
+  "limit": 50,
+  "seed": 42,
+  "image": "adtc-profiler:latest",
+  "label": "INTERNAL PROXY. Not the judges' score.",
+  "results": {
+    "llama-3.2-1b-instruct-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.64,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.28,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.6,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.68,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 3.5,
+      "eval_seconds": 1600.5,
+      "mean_score": 0.55,
+      "tasks_scored": 4,
+      "wall_seconds": 1605.5,
+      "image": "adtc-profiler:latest"
+    },
+    "qwen3.5-0.8b-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.66,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.34,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.66,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.7,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 1.1,
+      "eval_seconds": 995.4,
+      "mean_score": 0.59,
+      "tasks_scored": 4,
+      "wall_seconds": 997.9,
+      "image": "adtc-profiler:latest"
+    },
+    "qwen3.5-2b-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.72,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.42,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.82,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.64,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 4.7,
+      "eval_seconds": 2272.2,
+      "mean_score": 0.65,
+      "tasks_scored": 4,
+      "wall_seconds": 2278.4,
+      "image": "adtc-profiler:latest"
+    },
+    "qwen3.5-4b-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.76,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.54,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.9,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.86,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 17.0,
+      "eval_seconds": 3434.8,
+      "mean_score": 0.765,
+      "tasks_scored": 4,
+      "wall_seconds": 3454.0,
+      "image": "adtc-profiler:latest"
+    },
+    "gemma-4-e2b-it-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.74,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.56,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.66,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.66,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 6.5,
+      "eval_seconds": 1974.9,
+      "mean_score": 0.655,
+      "tasks_scored": 4,
+      "wall_seconds": 1983.5,
+      "image": "adtc-profiler:latest"
+    },
+    "phi-4-mini-instruct-q4_k_m": {
+      "tasks": {
+        "arc_easy": {
+          "score": 0.82,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "arc_challenge": {
+          "score": 0.6,
+          "metric": "acc_norm",
+          "samples": 50
+        },
+        "mmlu_high_school_biology": {
+          "score": 0.84,
+          "metric": "acc",
+          "samples": 50
+        },
+        "mmlu_nutrition": {
+          "score": 0.78,
+          "metric": "acc",
+          "samples": 50
+        }
+      },
+      "load_seconds": 5.1,
+      "eval_seconds": 3069.1,
+      "mean_score": 0.76,
+      "tasks_scored": 4,
+      "wall_seconds": 3075.9,
+      "image": "adtc-profiler:latest"
+    }
+  }
+}

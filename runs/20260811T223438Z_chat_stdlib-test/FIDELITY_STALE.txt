@@ -1,0 +1,11 @@
+FIDELITY-STALE. DO NOT QUOTE ANY LATENCY FROM THIS RUN.
+
+Measured with `-t 4` passed to llama-server, which the profiler does not pass and the
+judges' harness has no reason to pass either (COMPETITION.md section 9e-bis). Every
+per-turn latency here describes a thread configuration no judge will run.
+
+The BEHAVIOURAL findings from these runs remain valid: empty content from reasoning
+models, the volunteered fertiliser rate, refusal and redirection. Thread count does not
+change what the model says, only how fast it says it.
+
+Retained for provenance. Superseded by re-measurement under the corrected invocation.

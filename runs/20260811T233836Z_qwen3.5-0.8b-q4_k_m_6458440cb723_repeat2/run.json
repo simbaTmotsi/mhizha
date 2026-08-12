@@ -1,0 +1,68 @@
+{
+  "run_id": "20260811T233836Z_qwen3.5-0.8b-q4_k_m_6458440cb723_repeat2",
+  "recorded_at": "2026-08-11T23:42:55+00:00",
+  "status": "ok",
+  "candidate": {
+    "id": "qwen3.5-0.8b-q4_k_m",
+    "label": "Qwen3.5 0.8B",
+    "repo": "unsloth/Qwen3.5-0.8B-GGUF",
+    "file": "Qwen3.5-0.8B-Q4_K_M.gguf",
+    "params_estimate": "0.8B",
+    "quant": "Q4_K_M",
+    "licence": "Apache-2.0"
+  },
+  "model_sha256_source": "competition/candidate_hashes.txt",
+  "git_commit_sha": "6458440cb723",
+  "docker_image": "adtc-profiler:latest",
+  "constraints": {
+    "memory": "7.5g",
+    "cpus": "4"
+  },
+  "accuracy_task": null,
+  "accuracy_limit": null,
+  "seed": 42,
+  "os_tuning": {
+    "vm.swappiness": "60",
+    "vm.overcommit_memory": "0",
+    "transparent_hugepage": "always [madvise] never",
+    "host_cpu_count": "12",
+    "mlock_enabled_in_profile": true,
+    "note": "The profiler drives llama-bench itself and does not read our config, so mlock and thread count here describe the product-side laptop_8gb profile, not flags passed to llama-bench. llama-bench is pinned -ngl 0 by the profiler and inherits the container's 4 CPUs."
+  },
+  "scoring_constants": {
+    "tps_reference": 15.0,
+    "ram_limit_gb": 7.0,
+    "thermal_limit_c": 85.0,
+    "source": "vendor/adtc-profiler/README.md (retrieved)"
+  },
+  "score": {
+    "tokens_per_second": 4.29,
+    "peak_rss_mb": 715.45,
+    "peak_rss_gb": 0.699,
+    "core_temp_c_peak": null,
+    "throttled": false,
+    "s_acc": null,
+    "s_perf": 28.6,
+    "s_eff": 90.02,
+    "p_thermal": 0.0,
+    "s_total": null,
+    "s_total_excluding_accuracy": 26.58,
+    "accuracy_measured": false,
+    "tps_headroom_wasted": 0.0
+  },
+  "hard_fails": [],
+  "environment": {
+    "measured_on": "participant_laptop",
+    "cpu_model": "AMD EPYC Processor (with IBPB)",
+    "ram_gb": 47.0,
+    "gpu": "none",
+    "os": "Debian GNU/Linux 13 (trixie)"
+  },
+  "model_info": {
+    "params_count": 752393024,
+    "context_length": 262144,
+    "architecture": "qwen35",
+    "claimed_params_estimate": "0.8B",
+    "params_match": true
+  }
+}

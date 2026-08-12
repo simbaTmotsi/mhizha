@@ -1,0 +1,127 @@
+{
+  "recorded_at": "20260812T034611Z",
+  "purpose": "RANKING ONLY. Not submittable telemetry.",
+  "image": "adtc-profiler:latest",
+  "constraints": {
+    "memory": "7.5g",
+    "cpus": "4"
+  },
+  "reps": 6,
+  "warmup_discarded": 1,
+  "max_steal_pct": 1.0,
+  "idle_steal_pct": 0.0,
+  "host_note": "shared virtualised host; --cpus is a quota, not pinned cores",
+  "raw": {
+    "qwen3.5-0.8b-q4_k_m": [
+      {
+        "generation_tok_s": 3.916866,
+        "prompt_tok_s": 28.572436,
+        "steal_pct": 0.0,
+        "wall_seconds": 285.7,
+        "host": {
+          "threads_before": 2464,
+          "threads_after": 2469,
+          "threads_delta": 5,
+          "runnable_before": 1,
+          "runnable_after": 1
+        },
+        "bench_threads_reported": 12,
+        "rep": 1
+      },
+      {
+        "generation_tok_s": 5.573438,
+        "prompt_tok_s": 31.454091,
+        "steal_pct": 0.0,
+        "wall_seconds": 218.3,
+        "host": {
+          "threads_before": 2469,
+          "threads_after": 2468,
+          "threads_delta": -1,
+          "runnable_before": 2,
+          "runnable_after": 2
+        },
+        "bench_threads_reported": 12,
+        "rep": 2
+      },
+      {
+        "generation_tok_s": 3.961141,
+        "prompt_tok_s": 27.817775,
+        "steal_pct": 0.0,
+        "wall_seconds": 276.9,
+        "host": {
+          "threads_before": 2468,
+          "threads_after": 2467,
+          "threads_delta": -1,
+          "runnable_before": 2,
+          "runnable_after": 1
+        },
+        "bench_threads_reported": 12,
+        "rep": 3
+      },
+      {
+        "generation_tok_s": 2.885047,
+        "prompt_tok_s": 25.401966,
+        "steal_pct": 0.0,
+        "wall_seconds": 383.3,
+        "host": {
+          "threads_before": 2467,
+          "threads_after": 2470,
+          "threads_delta": 3,
+          "runnable_before": 1,
+          "runnable_after": 1
+        },
+        "bench_threads_reported": 12,
+        "rep": 4
+      },
+      {
+        "generation_tok_s": 4.49816,
+        "prompt_tok_s": 27.242856,
+        "steal_pct": 0.0,
+        "wall_seconds": 261.8,
+        "host": {
+          "threads_before": 2470,
+          "threads_after": 2472,
+          "threads_delta": 2,
+          "runnable_before": 1,
+          "runnable_after": 5
+        },
+        "bench_threads_reported": 12,
+        "rep": 5
+      },
+      {
+        "generation_tok_s": 2.942944,
+        "prompt_tok_s": 27.177203,
+        "steal_pct": 0.0,
+        "wall_seconds": 353.3,
+        "host": {
+          "threads_before": 2472,
+          "threads_after": 2465,
+          "threads_delta": -7,
+          "runnable_before": 7,
+          "runnable_after": 1
+        },
+        "bench_threads_reported": 12,
+        "rep": 6
+      }
+    ]
+  },
+  "summary": {
+    "qwen3.5-0.8b-q4_k_m": {
+      "kept": 5,
+      "discarded": 0,
+      "median_generation_tok_s": 3.961,
+      "min": 2.885,
+      "max": 5.573,
+      "spread_pct_of_median": 67.9,
+      "max_steal_seen": 0.0,
+      "bench_threads": [
+        12
+      ],
+      "host_runnable_range": [
+        1,
+        5
+      ],
+      "warmup_discarded": 1
+    }
+  }
+}

@@ -16,6 +16,58 @@
 
 ---
 
+<!-- EXEC SUMMARY: drafted 12 Aug 2026. Its INCLUSION is a packaging-day decision
+     (SUBMISSION.md phase 1). The content is final; keep or cut as one block. -->
+
+## 0. Summary
+
+**Mhizha is an offline agronomy co-pilot for Zimbabwean smallholder farmers**, built to run
+on a mid-range Android phone with no connectivity, and entered here on the Laptop LLM track.
+It answers practical agronomy questions from a curated corpus, cites what it used, and
+abstains when the corpus cannot support an answer.
+
+**The finding that reshaped this project is that the competition profiles a bare model
+file.** The harness never executes participant code; it runs `llama-bench` and lm-eval
+against the GGUF directly, and judges score accuracy by chatting with the model. Our
+retrieval and safety work therefore cannot move the measured numbers, and we do not pretend
+otherwise. It is the submission's evidence and its argument, not its measured subject. The
+single channel from our design into a judge's session is the chat template, which we bake
+into stock upstream weights at download time, re-hosting nothing.
+
+**Three things the agronomy forces on the architecture**, each of which a general assistant
+would not have: a validated-source dosage gate that never emits an agrochemical rate unless
+it is verbatim in a human-signed-off passage; a named-region hard filter, because one
+province's planting calendar is actively wrong advice in another; and a quantity-intent gate
+that refuses a dose question before generation rather than filtering afterwards.
+
+**What we did not do:** author agronomic content. Everything in `data/corpus/` is
+structural placeholder, machine-detectable, and states no date, rate or product name. The
+gaps are registered with the organisations that hold them. Inventing plausible agronomy to
+make a demo look complete would produce exactly the failure the system exists to prevent, a
+fluent and cited wrong answer.
+
+**On measurement, the honest headline is negative.** Our measurement host cannot resolve
+throughput well enough to rank these candidates: six repetitions of one model, warm, at zero
+CPU steal and fixed thread count, spanned **67.9%** of their own median, and the cause is
+contention we can neither see nor control from inside the VM. So the ranking here partitions
+candidates into a selection set rather than ordering them, no throughput figure measured on
+that host is submitted, and the figures that need hardware we do not have are **left blocked
+rather than filled with the closest available number**.
+
+`[PENDING: selected model and the composite that produced it]`
+
+`[PENDING: submitted telemetry, from the physical machine or the documented fallback]`
+
+**What we would want a reader to take from this** is the measurement discipline rather than
+any single number. Numbers enter this report only through a generator that can trace each
+to an archived run; a registry of twelve reversed conclusions fails the build if a retracted
+claim reappears; and every guard carries a test proving it can fire, because we found two of
+our own guards passing while unable to detect anything at all. The specific throughput
+figures here will be obsolete the moment someone runs them on better hardware. The habits
+will not be.
+
+---
+
 ## 1. Problem
 
 Smallholder farmers in Zimbabwe make decisions with real consequences (what to plant, when
@@ -455,9 +507,22 @@ make ask Q="when should I plant maize in Mashonaland"    # fully offline; L=sn f
 make eval                       # grounding, abstention, red-team, per category
 ```
 
-**Every measurement in this document has a run directory** under `runs/` holding the raw
-tool output, the exact command, the image, the container constraints, and the host state at
-the time. Nothing here is quoted from a terminal scrollback.
+**Every measurement in this document has a run directory** under `runs/` holding the tool
+output, the exact command, the image, the container constraints, and the host state at the
+time. Nothing here is quoted from a terminal scrollback.
+
+**Those run records ship with this repository. The bulk does not.** What you get is every
+record: the JSON, the small logs, and the markers, for every run we made. What is excluded
+is the bulky raw material, chiefly copied model weights, which `download_model.sh` fetches
+from upstream anyway. We mention the distinction rather than leaving you to infer it from
+an absent file.
+
+**Runs we refuse to quote are published too, with their markers intact.** Directories
+stamped `FIDELITY_STALE.txt` held figures measured under an invocation the official
+profiler does not use; we caught it, retired the figures, and kept the runs. Shared-host
+runs are marked as not quotable for latency and are here as well. Removing them would
+present a tidier archive than the one this work actually came from, and would delete the
+evidence of the guards firing on us rather than for us.
 
 Two things are worth trying if you want to test the discipline rather than the result:
 

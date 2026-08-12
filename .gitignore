@@ -27,9 +27,26 @@ eval/reports/
 model/
 !model/.gitkeep
 
-# Bake-off candidates (several GB) and archived profiler runs.
+# Bake-off candidates, several GB.
 models/bakeoff/
-runs/
+
+# Archived measurement runs: publish the RECORDS, never the bulk.
+#
+# REPORT.md tells a reader that every measurement has a run directory they can inspect.
+# If nothing ships, that claim is true internally and unverifiable externally, which is
+# the weakest position a provenance claim can be in. The records are a few hundred KB of
+# JSON plus stale markers and small logs. The bulk is copied model weights, which are
+# excluded by *.gguf above and would be several hundred MB.
+#
+# Not-for-quotation runs ship too, markers intact. A FIDELITY_STALE directory is evidence
+# that we caught our own violation and retired the figures it produced; deleting it would
+# publish a cleaner archive than the one we actually worked from.
+runs/**
+!runs/**/
+!runs/**/*.json
+!runs/**/*.log
+!runs/**/*.stderr
+!runs/**/FIDELITY_STALE.txt
 
 # Profiler output at the repo root, if run manually rather than through make profile.
 submission.json

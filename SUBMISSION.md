@@ -95,9 +95,20 @@ that file, not against memory, and not against this list, which is a reading aid
   actually selected, not the one the file inherited.
 - `_runtime.model_path`: must match exactly what `download_model.sh` writes. A test asserts
   the two agree; run it rather than eyeballing it.
-- `african_alpha_claim`: we set this `true`. Be able to defend it in one sentence if asked,
-  from the Zimbabwe-specific corpus design and the Shona and Ndebele locale seam, not from
-  the fact that it is flattering.
+- `african_alpha_claim`: we set this `true`. The defence, written in design tense because
+  the claim is about how the system is built rather than about outcomes it has not yet
+  had:
+
+  > **Mhizha is designed around a Zimbabwean smallholder farmer as its primary user rather
+  > than adapted toward one: every corpus chunk requires a named source and refresh date so
+  > an answer is defensible to an AGRITEX extension officer, retrieval hard-filters on
+  > named province because one province's planting calendar is wrong advice in another,
+  > the agrochemical gate refuses any rate not verbatim in a human-validated passage, and
+  > Shona and Ndebele are a seam in the architecture, carried through the locale layer and
+  > the retrieval path, rather than a translation pass added at the end.**
+
+  Say it in that tense if asked. Every clause names something in the repository, which is
+  the test of whether the claim is load bearing or decorative.
 - `test_prompts`: exactly two, in our domain. **Organisers add two hidden prompts to test
   for overfitting**, which is worth pausing on: a prompt written to flatter our model is a
   prompt that makes the hidden pair look worse by comparison. Ours are a real field question
@@ -109,21 +120,33 @@ that file, not against memory, and not against this list, which is a reading aid
 the software have diverged since they were last made. Diff them; an unexpected change on
 packaging day is a finding, not a formality.
 
-### 1.5 Decide what ships under `runs/`
+### 1.5 What ships under `runs/`: records, not bulk
 
-**A decision, not a default.** `runs/` is currently gitignored and holds around 600 MB,
-almost all of it in two profiler directories. The run *records* are a few hundred kilobytes
-of JSON across forty files.
+**Ruled, not open.** `.gitignore` now publishes every run *record* and ignores the bulk.
+Records are the JSON, the small logs, and the marker files, currently 58 files and under
+half a megabyte. The bulk is copied model weights, several hundred megabytes, already
+excluded as `*.gguf`.
 
-This matters because `REPORT.md` tells a reader that every measurement has a run directory
-they can inspect. If nothing under `runs/` is published, that sentence is true internally
-and unverifiable externally, which is the weakest position: a provenance claim nobody can
-check.
+**Not-for-quotation runs ship too, markers intact.** Every `FIDELITY_STALE.txt` directory
+is published as it stands, and so is every shared-host run whose figures we refuse to
+quote. That is deliberate. Those directories are the evidence that we caught our own
+audit-fidelity violation and retired the figures it produced. An archive with them removed
+would be a cleaner archive than the one we actually worked from, and it would quietly
+delete the part of the record that shows the guards firing on us rather than for us.
 
-The recommendation is to commit the JSON records and the small marker files, keep the bulky
-raw outputs ignored, and say in the report exactly which of the two a reader is getting. A
-judge who can open `composite.json` and see `provisional: true` learns more from that one
-file than from the paragraph describing it.
+`REPORT.md` states the distinction explicitly, in section 5: a reader is getting the
+records and not the raw bulk, and it says which is which. The claim and what backs it have
+to match, or the provenance rule is decorative.
+
+On the day, confirm the split still holds rather than assuming it:
+
+```bash
+git ls-files --others --exclude-standard runs/ | wc -l      # record count
+git ls-files --others --exclude-standard runs/ | tr '\n' '\0' | du -ch --files0-from=- | tail -1
+```
+
+A total in the tens of megabytes means something bulky landed in a run directory under a
+name the ignore rules do not cover. Find it before it is committed, not after.
 
 ### 1.6 Record the video
 
@@ -177,9 +200,34 @@ has passed, and it happens in this order.
    decided about `runs/` is reflected there. `git status --short` and
    `git count-objects -vH` after staging: a repository that is unexpectedly large is a
    repository that is about to publish something it should not.
-2. **Search the history and the tree for anything personal or private** before it is
-   public: absolute home-directory paths in committed files, an email address that is not
-   the submitter's, tokens, anything under a scratch directory. This is a one-way door.
+2. **Scrub the run records, then search the rest of the tree.** This is a one-way door:
+   git history is not scrubbable after the fact, and `runs/` has never been committed, so
+   there is exactly one clean moment and it is before `git add`.
+
+   ```bash
+   python3 scripts/scrub_runs.py            # report only; exits non-zero if anything is found
+   python3 scripts/scrub_runs.py --apply    # rewrite, then review the diff
+   ```
+
+   It rewrites this repository's absolute path to a repo-relative one, which loses nothing
+   and gives a reader a more useful record than a redaction would. It **flags and refuses
+   to auto-rewrite** anything else it recognises as identifying: a home directory outside
+   this repo, a hostname or FQDN, an IP address, a hosting provider's name. Those need a
+   human decision, and a wrong automatic substitution inside an archived measurement record
+   is worse than a flagged one.
+
+   Re-run it even if it was clean last week. Every new run re-introduces paths, and the
+   producers only write repo-relative paths for the fields we have already found.
+
+   **What it deliberately keeps, and why:** `cpu_model`, `ram_gb`, `host_cpu_count`, steal
+   readings, thread counts. These describe the measurement conditions rather than the
+   machine's owner, and several are load bearing. The oversubscription finding *is* that
+   llama-bench reported 12 threads inside a container capped at 4 CPUs, which cannot be
+   stated without `host_cpu_count`. Scrubbing those would publish a cleaner archive that
+   proves less. The script prints this list every run so the decision stays visible.
+
+   Then search the rest of the tree: an email address that is not the submitter's, tokens,
+   anything under a scratch directory, absolute paths in files outside `runs/`.
 3. **Push, then clone the public URL into a fresh directory** and work only from that copy
    for the rest of this phase. Verifying the repository you already have proves nothing
    about the one a judge will get.
@@ -241,10 +289,15 @@ Two things carry forward into the semifinal window rather than Gate 1:
 Written down because each has a cheap mitigation and an expensive discovery.
 
 **The report is too long.** The template says one to three pages is ideal, and ours is
-considerably more, read by both judges and an LLM-based audit. The mitigation is not to
-gut it: the depth is the evidence, and the corrections are the most useful part. Add a
-short executive summary at the top that stands alone, so a reader who stops after a page
-has still read the argument. Decide this on packaging day rather than at 23:00 on the 24th.
+considerably more, read by both judges and an LLM-based audit. The mitigation is not to gut
+it: the depth is the evidence, and the corrections are the most useful part.
+
+**Section 0 is already written** for this, drafted 12 August and marked in the source with
+an `EXEC SUMMARY` comment. It stands alone, so a reader who stops after a page has still
+read the argument. **Only its inclusion is open**: keep it or cut it as one block, and do
+not part-edit it on the day. Its figure slots follow the phase 1.1 rule like any others,
+which for the summary means a blocked slot is cut rather than left showing, because the
+first page is the wrong place to advertise an absence that section 4 explains properly.
 
 **The model name disagrees with itself.** `metadata.json`, `download_model.sh`, the report,
 and `docs/BAKEOFF.md` all name the selected model. A test covers the metadata-to-script
