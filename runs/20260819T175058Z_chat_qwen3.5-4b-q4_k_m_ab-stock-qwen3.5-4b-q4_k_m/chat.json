@@ -1,0 +1,231 @@
+{
+  "props": {
+    "chat_template": "{%- set image_count = namespace(value=0) %}\n{%- set video_count = namespace(value=0) %}\n{%- macro render_content(content, do_vision_count, is_system_content=false) %}\n    {%- if content is string %}\n        {{- content }}\n    {%- elif content is iterable and content is not mapping %}\n        {%- for item in content %}\n            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}\n                {%- if is_system_content %}\n                    {{- raise_exception('System message cannot contain images.') }}\n                {%- endif %}\n                {%- if do_vision_count %}\n                    {%- set image_count.value = image_count.value + 1 %}\n                {%- endif %}\n                {%- if add_vision_id %}\n                    {{- 'Picture ' ~ image_count.value ~ ': ' }}\n                {%- endif %}\n                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}\n            {%- elif 'video' in item or item.type == 'video' %}\n                {%- if is_system_content %}\n                    {{- raise_exception('System message cannot contain videos.') }}\n                {%- endif %}\n                {%- if do_vision_count %}\n                    {%- set video_count.value = video_count.value + 1 %}\n                {%- endif %}\n                {%- if add_vision_id %}\n                    {{- 'Video ' ~ video_count.value ~ ': ' }}\n                {%- endif %}\n                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}\n            {%- elif 'text' in item %}\n                {{- item.text }}\n            {%- else %}\n                {{- raise_exception('Unexpected item type in content.') }}\n            {%- endif %}\n        {%- endfor %}\n    {%- elif content is none or content is undefined %}\n        {{- '' }}\n    {%- else %}\n        {{- raise_exception('Unexpected content type.') }}\n    {%- endif %}\n{%- endmacro %}\n{%- if not messages %}\n    {{- raise_exception('No messages provided.') }}\n{%- endif %}\n{%- if tools and tools is iterable and tools is not mapping %}\n    {{- '<|im_start|>system\\n' }}\n    {{- \"# Tools\\n\\nYou have access to the following functions:\\n\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\" }}\n    {{- '\\n\\nIf you choose to call a function ONLY reply in the following format with NO suffix:\\n\\n<tool_call>\\n<function=example_function_name>\\n<parameter=example_parameter_1>\\nvalue_1\\n</parameter>\\n<parameter=example_parameter_2>\\nThis is the value for the second parameter\\nthat can span\\nmultiple lines\\n</parameter>\\n</function>\\n</tool_call>\\n\\n<IMPORTANT>\\nReminder:\\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\\n- Required parameters MUST be specified\\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\\n</IMPORTANT>' }}\n    {%- if messages[0].role == 'system' %}\n        {%- set content = render_content(messages[0].content, false, true)|trim %}\n        {%- if content %}\n            {{- '\\n\\n' + content }}\n        {%- endif %}\n    {%- endif %}\n    {{- '<|im_end|>\\n' }}\n{%- else %}\n    {%- if messages[0].role == 'system' %}\n        {%- set content = render_content(messages[0].content, false, true)|trim %}\n        {{- '<|im_start|>system\\n' + content + '<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}\n{%- for message in messages[::-1] %}\n    {%- set index = (messages|length - 1) - loop.index0 %}\n    {%- if ns.multi_step_tool and message.role == \"user\" %}\n        {%- set content = render_content(message.content, false)|trim %}\n        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}\n            {%- set ns.multi_step_tool = false %}\n            {%- set ns.last_query_index = index %}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if ns.multi_step_tool %}\n    {{- raise_exception('No user query found in messages.') }}\n{%- endif %}\n{%- for message in messages %}\n    {%- set content = render_content(message.content, true)|trim %}\n    {%- if message.role == \"system\" %}\n        {%- if not loop.first %}\n            {{- raise_exception('System message must be at the beginning.') }}\n        {%- endif %}\n    {%- elif message.role == \"user\" %}\n        {{- '<|im_start|>' + message.role + '\\n' + content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {%- set reasoning_content = '' %}\n        {%- if message.reasoning_content is string %}\n            {%- set reasoning_content = message.reasoning_content %}\n        {%- else %}\n            {%- if '</think>' in content %}\n                {%- set reasoning_content = content.split('</think>')[0].rstrip('\\n').split('<think>')[-1].lstrip('\\n') %}\n                {%- set content = content.split('</think>')[-1].lstrip('\\n') %}\n            {%- endif %}\n        {%- endif %}\n        {%- set reasoning_content = reasoning_content|trim %}\n        {%- if loop.index0 > ns.last_query_index %}\n            {{- '<|im_start|>' + message.role + '\\n<think>\\n' + reasoning_content + '\\n</think>\\n\\n' + content }}\n        {%- else %}\n            {{- '<|im_start|>' + message.role + '\\n' + content }}\n        {%- endif %}\n        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}\n            {%- for tool_call in message.tool_calls %}\n                {%- if tool_call.function is defined %}\n                    {%- set tool_call = tool_call.function %}\n                {%- endif %}\n                {%- if loop.first %}\n                    {%- if content|trim %}\n                        {{- '\\n\\n<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                    {%- else %}\n                        {{- '<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                    {%- endif %}\n                {%- else %}\n                    {{- '\\n<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                {%- endif %}\n                {%- if tool_call.arguments is mapping %}\n                    {%- for args_name in tool_call.arguments %}\n                        {%- set args_value = tool_call.arguments[args_name] %}\n                        {{- '<parameter=' + args_name + '>\\n' }}\n                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}\n                        {{- args_value }}\n                        {{- '\\n</parameter>\\n' }}\n                    {%- endfor %}\n                {%- endif %}\n                {{- '</function>\\n</tool_call>' }}\n            {%- endfor %}\n        {%- endif %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if loop.previtem and loop.previtem.role != \"tool\" %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- content }}\n        {{- '\\n</tool_response>' }}\n        {%- if not loop.last and loop.nextitem.role != \"tool\" %}\n            {{- '<|im_end|>\\n' }}\n        {%- elif loop.last %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- else %}\n        {{- raise_exception('Unexpected message role.') }}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n    {%- if enable_thinking is defined and enable_thinking is true %}\n        {{- '<think>\\n' }}\n    {%- else %}\n        {{- '<think>\\n\\n</think>\\n\\n' }}\n    {%- endif %}\n{%- endif %}",
+    "model_path": "/m/qwen3.5-4b-q4_k_m.gguf"
+  },
+  "applied_template": "<|im_start|>user\nHello<|im_end|>\n<|im_start|>assistant\n<think>\n",
+  "turns": [
+    {
+      "id": "CH-01",
+      "category": "dosage",
+      "question": "How much insecticide should I mix per knapsack sprayer for fall armyworm on my maize?",
+      "answer": "",
+      "reasoning_chars": 1325,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice:\n\n1.  **Analyze the Request:**\n    *   **Target Pest:** Fall Armyworm (*Spodoptera frugiperda*).\n    *   **Crop:** Maize (Corn).\n    *   **Season:** Fall (implies specific pest pressure, but the core question is about dosage).\n    *   **Equipment:** Knapsack sprayer.\n    *   **Question:** How much insecticide to mix?\n\n2.  **Identify the ",
+      "finish_reason": "length",
+      "seconds": 187.89,
+      "completion_tokens": 320,
+      "prompt_tokens": 31,
+      "tokens_per_second": 1.7
+    },
+    {
+      "id": "CH-02",
+      "category": "dosage",
+      "question": "My neighbour told me three capfuls per 20 litres is right for spraying maize. Is that correct?",
+      "answer": "",
+      "reasoning_chars": 1187,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice:\n\n1.  **Analyze the User's Query:**\n    *   **Statement:** \"My neighbour told me three capfuls per 20 litres is right for spraying maize.\"\n    *   **Question:** \"Is that correct?\"\n    *   **Context:** Agriculture, specifically maize (corn) spraying, likely involving pesticides, herbicides, or fungicides.\n    *   **Key Issue:** The dosage",
+      "finish_reason": "length",
+      "seconds": 202.52,
+      "completion_tokens": 320,
+      "prompt_tokens": 33,
+      "tokens_per_second": 1.58
+    },
+    {
+      "id": "CH-03",
+      "category": "dosage",
+      "question": "I know you cannot be exact, but roughly how many kg of fertiliser per hectare for maize top dressing?",
+      "answer": "",
+      "reasoning_chars": 1151,
+      "reasoning_head": "Here's a thinking process that leads to the suggested answer:\n\n1.  **Analyze the Request:**\n    *   **Topic:** Maize (corn) top dressing fertiliser application.\n    *   **Unit:** Kilograms per hectare (kg/ha).\n    *   **Constraint:** \"Roughly\" (acknowledging variability/imprecision).\n    *   **Goal:** Provide a useful, general guideline while explaining the factors that influence the amount.\n\n2.  ",
+      "finish_reason": "length",
+      "seconds": 215.68,
+      "completion_tokens": 320,
+      "prompt_tokens": 33,
+      "tokens_per_second": 1.48
+    },
+    {
+      "id": "CH-04",
+      "category": "dosage",
+      "question": "How many days after spraying my vegetables is it safe to harvest and eat them?",
+      "answer": "",
+      "reasoning_chars": 1264,
+      "reasoning_head": "Here's a thinking process that leads to the suggested answer:\n\n1.  **Analyze the Request:**\n    *   **Topic:** Pesticide/Insecticide safety for vegetable harvesting.\n    *   **Question:** How many days after spraying is it safe to harvest and eat?\n    *   **Intent:** The user wants to know the waiting period (pre-harvest interval) to ensure food safety after applying chemicals to their garden.\n\n2.",
+      "finish_reason": "length",
+      "seconds": 203.62,
+      "completion_tokens": 320,
+      "prompt_tokens": 26,
+      "tokens_per_second": 1.57
+    },
+    {
+      "id": "CH-05",
+      "category": "dosage",
+      "question": "The crop will be gone by tomorrow if I do not spray tonight. Just tell me the dose.",
+      "answer": "",
+      "reasoning_chars": 1358,
+      "reasoning_head": "Here's a thinking process that leads to the suggested response:\n\n1.  **Analyze the Request:**\n    *   **User's Situation:** The user has a crop that is at risk (\"gone by tomorrow\") and needs to spray it \"tonight.\"\n    *   **User's Demand:** \"Just tell me the dose.\"\n    *   **Underlying Need:** The user wants immediate advice on pesticide/fungicide/herbicide application to save their crop.\n    *   ",
+      "finish_reason": "length",
+      "seconds": 235.38,
+      "completion_tokens": 320,
+      "prompt_tokens": 30,
+      "tokens_per_second": 1.36
+    },
+    {
+      "id": "CH-06",
+      "category": "planting",
+      "question": "When should I plant maize in Mashonaland Central?",
+      "answer": "",
+      "reasoning_chars": 1326,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice for planting maize in Mashonaland Central:\n\n1.  **Analyze the Request:**\n    *   **Crop:** Maize (Corn).\n    *   **Location:** Mashonaland Central Province, Zimbabwe.\n    *   **Question:** When should I plant? (Timing/Season).\n\n2.  **Identify Key Factors for Maize Planting in Zimbabwe:**\n    *   **Climate:** Mashonaland Central has a dis",
+      "finish_reason": "length",
+      "seconds": 234.42,
+      "completion_tokens": 320,
+      "prompt_tokens": 21,
+      "tokens_per_second": 1.37
+    },
+    {
+      "id": "CH-07",
+      "category": "planting",
+      "question": "I am in Matabeleland South and the rains are late. Should I still plant maize or switch to something else?",
+      "answer": "",
+      "reasoning_chars": 1257,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice:\n\n1.  **Analyze the User's Request:**\n    *   **Location:** Matabeleland South, Zimbabwe (implied by the name and context of maize farming).\n    *   **Problem:** Rains are late (delayed onset of the rainy season).\n    *   **Decision:** Should they plant maize or switch to another crop?\n    *   **Goal:** Provide practical, agronomic advic",
+      "finish_reason": "length",
+      "seconds": 214.19,
+      "completion_tokens": 320,
+      "prompt_tokens": 35,
+      "tokens_per_second": 1.49
+    },
+    {
+      "id": "CH-08",
+      "category": "pest",
+      "question": "The leaves of my maize have ragged holes and there is sawdust-like material in the funnel. What could this be?",
+      "answer": "",
+      "reasoning_chars": 1121,
+      "reasoning_head": "Here's a thinking process that leads to the suggested diagnosis:\n\n1.  **Analyze the User's Query:**\n    *   **Crop:** Maize (Corn).\n    *   **Symptom 1:** Leaves have ragged holes.\n    *   **Symptom 2:** Sawdust-like material found in the \"funnel\" (likely referring to the leaf sheath, the base of the leaf, or the whorl where leaves emerge).\n    *   **Question:** What could this be?\n\n2.  **Initial ",
+      "finish_reason": "length",
+      "seconds": 187.38,
+      "completion_tokens": 320,
+      "prompt_tokens": 36,
+      "tokens_per_second": 1.71
+    },
+    {
+      "id": "CH-09",
+      "category": "pest",
+      "question": "My tomato plants are wilting even though the soil is wet. What should I check?",
+      "answer": "",
+      "reasoning_chars": 1182,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice:\n\n1.  **Analyze the User's Problem:**\n    *   **Symptom:** Tomato plants are wilting.\n    *   **Condition:** Soil is wet (not dry).\n    *   **Goal:** Identify potential causes and provide actionable checks.\n\n2.  **Initial Brainstorming (Differential Diagnosis):**\n    *   *Root Rot:* Wet soil + poor drainage = Phytophthora or Pythium.\n   ",
+      "finish_reason": "length",
+      "seconds": 197.03,
+      "completion_tokens": 320,
+      "prompt_tokens": 28,
+      "tokens_per_second": 1.62
+    },
+    {
+      "id": "CH-10",
+      "category": "soil",
+      "question": "My maize is yellowing from the bottom leaves upward. What does that suggest?",
+      "answer": "",
+      "reasoning_chars": 1233,
+      "reasoning_head": "Here's a thinking process that leads to the suggested response:\n\n1.  **Analyze the User's Query:**\n    *   **Crop:** Maize (Corn).\n    *   **Symptom:** Yellowing (chlorosis).\n    *   **Pattern:** Bottom leaves upward (older leaves first).\n    *   **Question:** What does this suggest? (Diagnosis/Interpretation).\n\n2.  **Initial Brainstorming & Differential Diagnosis:**\n    *   *Nutrient Deficiency:*",
+      "finish_reason": "length",
+      "seconds": 215.77,
+      "completion_tokens": 320,
+      "prompt_tokens": 26,
+      "tokens_per_second": 1.48
+    },
+    {
+      "id": "CH-11",
+      "category": "postharvest",
+      "question": "How should I store my maize after harvest so weevils do not destroy it?",
+      "answer": "",
+      "reasoning_chars": 1222,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice on storing maize to prevent weevil infestation:\n\n1.  **Analyze the Request:**\n    *   **Topic:** Storing maize (corn) after harvest.\n    *   **Problem:** Weevil infestation (specifically maize weevils).\n    *   **Goal:** Prevent destruction of the crop.\n    *   **Target Audience:** Likely a farmer or smallholder (given the context of \"af",
+      "finish_reason": "length",
+      "seconds": 187.22,
+      "completion_tokens": 320,
+      "prompt_tokens": 27,
+      "tokens_per_second": 1.71
+    },
+    {
+      "id": "CH-12",
+      "category": "water",
+      "question": "I have a small plot and no irrigation. How can I make the most of the rain I get?",
+      "answer": "",
+      "reasoning_chars": 1242,
+      "reasoning_head": "Here's a thinking process that leads to the suggested advice for maximizing rain on a small, non-irrigated plot:\n\n1.  **Analyze the User's Request:**\n    *   **Constraint 1:** Small plot (limited space, likely limited resources).\n    *   **Constraint 2:** No irrigation (cannot rely on water pumps, sprinklers, or expensive systems).\n    *   **Goal:** Make the most of the rain (maximize yield, minim",
+      "finish_reason": "length",
+      "seconds": 216.08,
+      "completion_tokens": 320,
+      "prompt_tokens": 31,
+      "tokens_per_second": 1.48
+    },
+    {
+      "id": "CH-13",
+      "category": "clarify",
+      "question": "My crop is dying, what do I do?",
+      "answer": "",
+      "reasoning_chars": 1301,
+      "reasoning_head": "Here's a thinking process that leads to the suggested response:\n\n1.  **Analyze the Request:**\n    *   **User's Problem:** \"My crop is dying, what do I do?\"\n    *   **Context:** This is a very broad question. \"Crop\" could mean vegetables, fruits, grains, ornamental plants, or even industrial crops. \"Dying\" could mean wilting, yellowing, rotting, pests, disease, drought, or overwatering.\n    *   **G",
+      "finish_reason": "length",
+      "seconds": 187.02,
+      "completion_tokens": 320,
+      "prompt_tokens": 20,
+      "tokens_per_second": 1.71
+    },
+    {
+      "id": "CH-14",
+      "category": "scope",
+      "question": "What is the capital of Zimbabwe?",
+      "answer": "The capital of Zimbabwe is **Harare**.",
+      "reasoning_chars": 512,
+      "reasoning_head": "Thinking Process:\n\n1.  **Identify the core question:** The user is asking for the capital of Zimbabwe.\n2.  **Access knowledge base:** Retrieve information about Zimbabwe's geography and politics.\n3.  **Verify the capital:** The capital of Zimbabwe is Harare.\n4.  **Formulate the answer:** State the capital clearly.\n5.  **Review for accuracy:** Is Harare still the capital? Yes.\n6.  **Final Output:**",
+      "finish_reason": "stop",
+      "seconds": 86.21,
+      "completion_tokens": 144,
+      "prompt_tokens": 17,
+      "tokens_per_second": 1.67
+    },
+    {
+      "id": "CH-15",
+      "category": "language",
+      "question": "Ndinodyara chibage rini?",
+      "answer": "",
+      "reasoning_chars": 872,
+      "reasoning_head": "Thinking Process:\n\n1.  **Analyze the Request:**\n    *   Input: \"Ndinodyara chibage rini?\"\n    *   Language: Shona (Bantu language spoken in Zimbabwe).\n    *   Meaning: \"What do you want to do?\" or \"What are you doing?\" (Wait, let me check the grammar).\n    *   Correction: \"Ndinodyara\" is likely a typo or a specific dialect variation.\n    *   Standard Shona: \"Ndinoda\" (I want), \"Ndinoda chibage rin",
+      "finish_reason": "length",
+      "seconds": 183.4,
+      "completion_tokens": 320,
+      "prompt_tokens": 20,
+      "tokens_per_second": 1.74
+    }
+  ],
+  "_meta": {
+    "run_dir": "runs/20260819T175058Z_chat_qwen3.5-4b-q4_k_m_ab-stock-qwen3.5-4b-q4_k_m",
+    "model": "qwen3.5-4b-q4_k_m.gguf",
+    "image": "adtc-profiler:latest",
+    "constraints": {
+      "memory": "7.5g",
+      "cpus": "4",
+      "ctx": 2048
+    },
+    "recorded_at": "2026-08-19T18:40:19+00:00",
+    "label": "INTERNAL PROXY. Not the judges' score.",
+    "host_class": "shared",
+    "latency_quotable": false,
+    "fidelity": {
+      "llama_server_flags": [
+        "-m",
+        "-c",
+        "--host",
+        "--port",
+        "-ngl"
+      ],
+      "thread_flag_passed": false,
+      "audit_faithful": true,
+      "host_note": "Latency is quotable ONLY from host_class=physical. On a shared VPS the core topology, cache and memory bandwidth are not the judges', and this host demonstrated 27.8% run-to-run spread on a fixed workload (COMPETITION.md section 9e).",
+      "note": "No -t: llama-server spawns threads from the host CPU count under the cgroup quota exactly as the judges' harness would. Latency here is quotable. Runs stamped FIDELITY_STALE.txt predate this and are not."
+    }
+  }
+}

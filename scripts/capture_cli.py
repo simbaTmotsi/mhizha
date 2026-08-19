@@ -96,7 +96,12 @@ def run(argv: list[str]) -> str:
         raise SystemExit(f"capture failed: mhizha {' '.join(argv)}\n{proc.stderr[-2000:]}")
     lines = [ln for ln in (proc.stdout + proc.stderr).splitlines()
              if not NOISE.match(ln) and "it/s]" not in ln]
-    return "\n".join(lines).rstrip() + "\n"
+    text = "\n".join(lines).rstrip() + "\n"
+    # `doctor` prints absolute config, index and embedder paths. These captures ship with
+    # the submission, so the developer's home directory is replaced by a repo-relative
+    # path, which is also what a reader running this from their own clone would see.
+    # Same rule as scripts/scrub_runs.py, applied at the point the asset is made.
+    return text.replace(str(REPO).rstrip("/") + "/", "")
 
 
 def to_svg(text: str, title: str) -> str:

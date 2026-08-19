@@ -149,13 +149,13 @@ The 4 GB phone profile is the default and stays the default. Every runtime compo
 <details><summary>as text</summary>
 
 ```
-profile: dev   config: /home/simbatmotsi/Documents/mhizha/config.yaml
+profile: dev   config: config.yaml
                                         index                                        
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ key            ┃ value                                                            ┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
 │ status         │ present                                                          │
-│ path           │ /home/simbatmotsi/Documents/mhizha/data/index/mhizha.db          │
+│ path           │ data/index/mhizha.db          │
 │ backend        │ sqlite-vec                                                       │
 │ chunks         │ 9                                                                │
 │ file_size_mb   │ 1.61                                                             │
@@ -179,7 +179,7 @@ profile: dev   config: /home/simbatmotsi/Documents/mhizha/config.yaml
 └──────────────────┴──────┴─────────────────────────────────────┘
 fits with 8 MB headroom (model: llama-3.2-1b-instruct-q4_k_m)
 embedder weights: present  
-(/home/simbatmotsi/Documents/mhizha/models/embedder/all-MiniLM-L6-v2)
+(models/embedder/all-MiniLM-L6-v2)
 embedder is not multilingual: a Shona or Ndebele query cannot match an English passage. 
 See docs/model-shortlist.md
 locale sn: 23 untranslated, 0 missing, 0 orphaned

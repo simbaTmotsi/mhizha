@@ -1,0 +1,166 @@
+{
+  "recorded_at": "20260819T163941Z",
+  "label": "INTERNAL PROXY. S_acc is judge-scored; this ranks candidates only.",
+  "sources": {
+    "lmeval": "runs/20260812T205645Z_lmeval_cluster-rerun/lmeval.json",
+    "bench": "runs/20260812T072644Z_bench_all-candidates/bench.json"
+  },
+  "source_runs": {
+    "lmeval": "20260812T205645Z_lmeval_cluster-rerun",
+    "bench": "20260812T072644Z_bench_all-candidates"
+  },
+  "weights": {
+    "accuracy": 0.5,
+    "throughput": 0.3,
+    "efficiency": 0.2
+  },
+  "constants": {
+    "tps_reference": 15.0,
+    "ram_limit_gb": 7.0
+  },
+  "rows": [
+    {
+      "id": "qwen3.5-0.8b-q4_k_m",
+      "accuracy_proxy": 57.0,
+      "accuracy_band": [
+        53.14,
+        60.86
+      ],
+      "s_perf": 19.83,
+      "s_perf_band": [
+        18.51,
+        21.37
+      ],
+      "s_eff": 90.43,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 52.53,
+      "composite_band": [
+        50.21,
+        54.93
+      ]
+    },
+    {
+      "id": "qwen3.5-2b-q4_k_m",
+      "accuracy_proxy": 64.17,
+      "accuracy_band": [
+        60.53,
+        67.8
+      ],
+      "s_perf": 14.6,
+      "s_perf_band": [
+        8.82,
+        17.61
+      ],
+      "s_eff": 76.99,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 51.86,
+      "composite_band": [
+        48.31,
+        54.58
+      ]
+    },
+    {
+      "id": "phi-4-mini-instruct-q4_k_m",
+      "accuracy_proxy": 73.67,
+      "accuracy_band": [
+        70.19,
+        77.15
+      ],
+      "s_perf": 10.93,
+      "s_perf_band": [
+        10.44,
+        12.12
+      ],
+      "s_eff": 55.25,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 51.16,
+      "composite_band": [
+        49.28,
+        53.26
+      ]
+    },
+    {
+      "id": "qwen3.5-4b-q4_k_m",
+      "accuracy_proxy": 76.16,
+      "accuracy_band": [
+        72.92,
+        79.41
+      ],
+      "s_perf": 6.63,
+      "s_perf_band": [
+        5.09,
+        7.09
+      ],
+      "s_eff": 50.77,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 50.22,
+      "composite_band": [
+        48.14,
+        51.98
+      ]
+    },
+    {
+      "id": "llama-3.2-1b-instruct-q4_k_m",
+      "accuracy_proxy": 51.17,
+      "accuracy_band": [
+        47.26,
+        55.08
+      ],
+      "s_perf": 20.71,
+      "s_perf_band": [
+        20.41,
+        25.01
+      ],
+      "s_eff": 85.5,
+      "rss_source": "estimate from file size x1.35",
+      "composite": 48.9,
+      "composite_band": [
+        46.85,
+        52.14
+      ]
+    }
+  ],
+  "errors": [],
+  "not_ranked_missing_throughput": [],
+  "ranking_complete": true,
+  "bench_image": "adtc-profiler:latest",
+  "perf_host_class": "unstated",
+  "provisional": true,
+  "provisional_reason": "throughput measured on a unstated host. Section 9f-bis: this column carries no ordering authority, and the physical sitting re-measures it and re-forms the table (completion, not verification).",
+  "partition": {
+    "selection_set": [
+      "llama-3.2-1b-instruct-q4_k_m",
+      "phi-4-mini-instruct-q4_k_m",
+      "qwen3.5-0.8b-q4_k_m",
+      "qwen3.5-2b-q4_k_m",
+      "qwen3.5-4b-q4_k_m"
+    ],
+    "excluded": [],
+    "ordering_claimed": false,
+    "basis": "band overlap with the widest band in the table. Membership is a claim; position inside the set is not, until throughput is measured on hardware that can resolve it (COMPETITION.md section 9f-bis)."
+  },
+  "finalists": [
+    "llama-3.2-1b-instruct-q4_k_m",
+    "phi-4-mini-instruct-q4_k_m",
+    "qwen3.5-0.8b-q4_k_m",
+    "qwen3.5-2b-q4_k_m",
+    "qwen3.5-4b-q4_k_m"
+  ],
+  "finalist_label": "provisional cluster: the set worth taking to the qualitative pass, not a ranking",
+  "tie_rule": "composite band overlaps the leader's band",
+  "latency": "omitted: no quotable run",
+  "archive_audit": {
+    "quotable_latency": [],
+    "shared_host_not_quotable": [],
+    "fidelity_stale": [
+      "20260811T215334Z_chat_test-baked",
+      "20260811T221559Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
+      "20260811T221656Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
+      "20260811T222339Z_chat_mhizha-qwen3.5-0.8b-q4_k_m",
+      "20260811T222409Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
+      "20260811T222510Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
+      "20260811T223438Z_chat_stdlib-test"
+    ],
+    "unmarked_treated_as_not_quotable": []
+  }
+}

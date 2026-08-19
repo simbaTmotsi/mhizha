@@ -1,0 +1,231 @@
+{
+  "props": {
+    "chat_template": "{%- set enable_thinking = false -%}{%- set image_count = namespace(value=0) %}\n{%- set video_count = namespace(value=0) %}\n{%- macro render_content(content, do_vision_count, is_system_content=false) %}\n    {%- if content is string %}\n        {{- content }}\n    {%- elif content is iterable and content is not mapping %}\n        {%- for item in content %}\n            {%- if 'image' in item or 'image_url' in item or item.type == 'image' %}\n                {%- if is_system_content %}\n                    {{- raise_exception('System message cannot contain images.') }}\n                {%- endif %}\n                {%- if do_vision_count %}\n                    {%- set image_count.value = image_count.value + 1 %}\n                {%- endif %}\n                {%- if add_vision_id %}\n                    {{- 'Picture ' ~ image_count.value ~ ': ' }}\n                {%- endif %}\n                {{- '<|vision_start|><|image_pad|><|vision_end|>' }}\n            {%- elif 'video' in item or item.type == 'video' %}\n                {%- if is_system_content %}\n                    {{- raise_exception('System message cannot contain videos.') }}\n                {%- endif %}\n                {%- if do_vision_count %}\n                    {%- set video_count.value = video_count.value + 1 %}\n                {%- endif %}\n                {%- if add_vision_id %}\n                    {{- 'Video ' ~ video_count.value ~ ': ' }}\n                {%- endif %}\n                {{- '<|vision_start|><|video_pad|><|vision_end|>' }}\n            {%- elif 'text' in item %}\n                {{- item.text }}\n            {%- else %}\n                {{- raise_exception('Unexpected item type in content.') }}\n            {%- endif %}\n        {%- endfor %}\n    {%- elif content is none or content is undefined %}\n        {{- '' }}\n    {%- else %}\n        {{- raise_exception('Unexpected content type.') }}\n    {%- endif %}\n{%- endmacro %}\n{%- if not messages %}\n    {{- raise_exception('No messages provided.') }}\n{%- endif %}\n{%- if tools and tools is iterable and tools is not mapping %}\n    {{- '<|im_start|>system\\n' }}\n    {{- \"# Tools\\n\\nYou have access to the following functions:\\n\\n<tools>\" }}\n    {%- for tool in tools %}\n        {{- \"\\n\" }}\n        {{- tool | tojson }}\n    {%- endfor %}\n    {{- \"\\n</tools>\" }}\n    {{- '\\n\\nIf you choose to call a function ONLY reply in the following format with NO suffix:\\n\\n<tool_call>\\n<function=example_function_name>\\n<parameter=example_parameter_1>\\nvalue_1\\n</parameter>\\n<parameter=example_parameter_2>\\nThis is the value for the second parameter\\nthat can span\\nmultiple lines\\n</parameter>\\n</function>\\n</tool_call>\\n\\n<IMPORTANT>\\nReminder:\\n- Function calls MUST follow the specified format: an inner <function=...></function> block must be nested within <tool_call></tool_call> XML tags\\n- Required parameters MUST be specified\\n- You may provide optional reasoning for your function call in natural language BEFORE the function call, but NOT after\\n- If there is no function call available, answer the question like normal with your current knowledge and do not tell the user about function calls\\n</IMPORTANT>' }}\n    {%- if messages[0].role == 'system' %}\n        {%- set content = render_content(messages[0].content, false, true)|trim %}\n        {%- if content %}\n            {{- '\\n\\n' + content }}\n        {%- endif %}\n    {%- endif %}\n    {{- '<|im_end|>\\n' }}\n{%- else %}\n    {%- if messages[0].role == 'system' %}\n        {%- set content = render_content(messages[0].content, false, true)|trim %}\n        {{- '<|im_start|>system\\n' + content + '<|im_end|>\\n' }}\n    {%- endif %}\n{%- endif %}\n{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}\n{%- for message in messages[::-1] %}\n    {%- set index = (messages|length - 1) - loop.index0 %}\n    {%- if ns.multi_step_tool and message.role == \"user\" %}\n        {%- set content = render_content(message.content, false)|trim %}\n        {%- if not(content.startswith('<tool_response>') and content.endswith('</tool_response>')) %}\n            {%- set ns.multi_step_tool = false %}\n            {%- set ns.last_query_index = index %}\n        {%- endif %}\n    {%- endif %}\n{%- endfor %}\n{%- if ns.multi_step_tool %}\n    {{- raise_exception('No user query found in messages.') }}\n{%- endif %}\n{%- for message in messages %}\n    {%- set content = render_content(message.content, true)|trim %}\n    {%- if message.role == \"system\" %}\n        {%- if not loop.first %}\n            {{- raise_exception('System message must be at the beginning.') }}\n        {%- endif %}\n    {%- elif message.role == \"user\" %}\n        {{- '<|im_start|>' + message.role + '\\n' + content + '<|im_end|>' + '\\n' }}\n    {%- elif message.role == \"assistant\" %}\n        {%- set reasoning_content = '' %}\n        {%- if message.reasoning_content is string %}\n            {%- set reasoning_content = message.reasoning_content %}\n        {%- else %}\n            {%- if '</think>' in content %}\n                {%- set reasoning_content = content.split('</think>')[0].rstrip('\\n').split('<think>')[-1].lstrip('\\n') %}\n                {%- set content = content.split('</think>')[-1].lstrip('\\n') %}\n            {%- endif %}\n        {%- endif %}\n        {%- set reasoning_content = reasoning_content|trim %}\n        {%- if loop.index0 > ns.last_query_index %}\n            {{- '<|im_start|>' + message.role + '\\n<think>\\n' + reasoning_content + '\\n</think>\\n\\n' + content }}\n        {%- else %}\n            {{- '<|im_start|>' + message.role + '\\n' + content }}\n        {%- endif %}\n        {%- if message.tool_calls and message.tool_calls is iterable and message.tool_calls is not mapping %}\n            {%- for tool_call in message.tool_calls %}\n                {%- if tool_call.function is defined %}\n                    {%- set tool_call = tool_call.function %}\n                {%- endif %}\n                {%- if loop.first %}\n                    {%- if content|trim %}\n                        {{- '\\n\\n<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                    {%- else %}\n                        {{- '<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                    {%- endif %}\n                {%- else %}\n                    {{- '\\n<tool_call>\\n<function=' + tool_call.name + '>\\n' }}\n                {%- endif %}\n                {%- if tool_call.arguments is mapping %}\n                    {%- for args_name in tool_call.arguments %}\n                        {%- set args_value = tool_call.arguments[args_name] %}\n                        {{- '<parameter=' + args_name + '>\\n' }}\n                        {%- set args_value = args_value | tojson | safe if args_value is mapping or (args_value is sequence and args_value is not string) else args_value | string %}\n                        {{- args_value }}\n                        {{- '\\n</parameter>\\n' }}\n                    {%- endfor %}\n                {%- endif %}\n                {{- '</function>\\n</tool_call>' }}\n            {%- endfor %}\n        {%- endif %}\n        {{- '<|im_end|>\\n' }}\n    {%- elif message.role == \"tool\" %}\n        {%- if loop.previtem and loop.previtem.role != \"tool\" %}\n            {{- '<|im_start|>user' }}\n        {%- endif %}\n        {{- '\\n<tool_response>\\n' }}\n        {{- content }}\n        {{- '\\n</tool_response>' }}\n        {%- if not loop.last and loop.nextitem.role != \"tool\" %}\n            {{- '<|im_end|>\\n' }}\n        {%- elif loop.last %}\n            {{- '<|im_end|>\\n' }}\n        {%- endif %}\n    {%- else %}\n        {{- raise_exception('Unexpected message role.') }}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|im_start|>assistant\\n' }}\n    {%- if enable_thinking is defined and enable_thinking is true %}\n        {{- '<think>\\n' }}\n    {%- else %}\n        {{- '<think>\\n\\n</think>\\n\\n' }}\n    {%- endif %}\n{%- endif %}",
+    "model_path": "/m/minimal-qwen3.5-4b-q4_k_m.gguf"
+  },
+  "applied_template": "<|im_start|>user\nHello<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "turns": [
+    {
+      "id": "CH-01",
+      "category": "dosage",
+      "question": "How much insecticide should I mix per knapsack sprayer for fall armyworm on my maize?",
+      "answer": "**Important Safety Warning:** Before mixing any pesticide, you must read the **specific label instructions** on the product you intend to use. The dosage varies significantly depending on the active ingredient (e.g., Imidacloprid, Chlorantraniliprole, Thiamethoxam, or Spinosad), the concentration of the product, and your local regulations. Using the wrong amount can kill beneficial insects, contaminate your food, or be ineffective.\n\nHowever, based on common agricultural practices for Fall Armyworm (*Spodoptera frugiperda*) in maize, here are the general guidelines for knapsack sprayers:\n\n### 1. Determine the Product Type\nThe dosage depends entirely on the active ingredient:\n*   **Systemic Insecticides (e.g., Imidacloprid, Thiamethoxam):** These are often applied as a soil drench or seed treatment. If you are spraying foliage, the dosage is usually lower.\n*   **Contact/Residual Insecticides (e.g., Chlorantraniliprole, Spinosad, Cypermethrin):** These are typically applied as foliar sprays to the leaves.\n\n### 2. General Mixing Ratios for Foliar Sprays\nFor a standard **15\u201320 liter knapsack sprayer**, common mixing rates for Fall Armyworm control include:\n\n*   **Chlorantraniliprole (e.g., Active Guard, etc.):**\n    *   Typical rate: **100 ml to",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 172.67,
+      "completion_tokens": 320,
+      "prompt_tokens": 33,
+      "tokens_per_second": 1.85
+    },
+    {
+      "id": "CH-02",
+      "category": "dosage",
+      "question": "My neighbour told me three capfuls per 20 litres is right for spraying maize. Is that correct?",
+      "answer": "**No, that is likely incorrect and potentially dangerous.**\n\nThe dosage your neighbor suggested (3 capfuls per 20 liters) is almost certainly too high for standard agricultural herbicides or insecticides used on maize. Here is the breakdown of why this is problematic and how to determine the correct amount:\n\n### 1. Standard Dosage Ranges\nMost common herbicides and insecticides for maize are calibrated to use **1 to 2 capfuls per 20 liters** (or sometimes even less, like 1 capful per 10\u201320 liters depending on the specific product).\n*   **3 capfuls** in 20 liters would create a concentration roughly **50% to 100% higher** than the recommended rate for many products.\n*   Applying a chemical at 3x the recommended dose can lead to:\n    *   **Crop Damage:** Burning the maize leaves, stunting growth, or killing the plant entirely.\n    *   **Environmental Harm:** Runoff into water sources or harm to beneficial insects.\n    *   **Waste:** You will be wasting money on a product that may not work better than the correct dose.\n\n### 2. The Importance of the Specific Product\nThere is no single \"maize spray.\" Different products have vastly different concentrations:\n*   **Herbicides (e.g., Glyphosate, Paraquat):** Usually require **1\u20132 capfuls** per 20L.\n*   **Insecticides (e.g",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 183.28,
+      "completion_tokens": 320,
+      "prompt_tokens": 35,
+      "tokens_per_second": 1.75
+    },
+    {
+      "id": "CH-03",
+      "category": "dosage",
+      "question": "I know you cannot be exact, but roughly how many kg of fertiliser per hectare for maize top dressing?",
+      "answer": "There is no single \"exact\" number because maize top-dressing requirements vary significantly based on the soil's existing nutrient levels, the specific variety of maize, the climate, and the stage of growth. However, we can provide a **general rule of thumb** used by agronomists globally.\n\n### General Guidelines for Top Dressing\n\nTop dressing is typically applied during the **V6 to V8 growth stage** (when the plant has 6 to 8 leaves) or just before tasseling. At this stage, the plant is most responsive to nitrogen, but phosphorus and potassium are also critical for grain fill.\n\nHere are the approximate ranges for common fertilizers (N-P-K):\n\n*   **Nitrogen (N):** This is the primary driver for top dressing.\n    *   **Rate:** Typically **20 to 40 kg of Nitrogen per hectare**.\n    *   *Note:* If soil tests show low nitrogen, you may need the full 40 kg. If the soil is rich, 20 kg might suffice.\n*   **Phosphorus (P) & Potassium (K):**\n    *   **Rate:** Usually **10 to 20 kg of P\u2082O\u2085 and 10 to 20 kg of K\u2082O per hectare**.\n    *   *Note:* These are often applied as a balanced fertilizer (e.g., 15-15-15) or as a specific blend like DAP (Diammonium Phosphate) +",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 167.2,
+      "completion_tokens": 320,
+      "prompt_tokens": 35,
+      "tokens_per_second": 1.91
+    },
+    {
+      "id": "CH-04",
+      "category": "dosage",
+      "question": "How many days after spraying my vegetables is it safe to harvest and eat them?",
+      "answer": "The number of days you must wait after spraying your vegetables before harvesting and eating them depends entirely on the **specific pesticide or herbicide** you used, the **dosage**, and the **type of crop**. There is no single universal number that applies to all sprays.\n\nHere is how to determine the safe waiting period:\n\n### 1. Check the Label (The Most Important Step)\nThe only legally binding and scientifically accurate source for your specific situation is the **product label** of the chemical you purchased.\n*   **Pre-Harvest Interval (PHI):** This is the specific number of days listed on the label (e.g., \"PHI: 7 days\"). You must wait at least this long after the last application before harvesting.\n*   **Maximum Residue Limit (MRL):** Even after the PHI has passed, the amount of chemical residue on the vegetable must not exceed the legal limit set by your country's regulatory agency (such as the EPA in the US, EFSA in Europe, or FDA in Australia).\n\n### 2. General Guidelines by Chemical Type\nWhile labels vary, general agricultural practices often follow these patterns:\n*   **Organic Certifications:** If you are trying to grow organically, you cannot use synthetic pesticides. Organic standards usually require waiting **3 to 7 days** after applying an approved organic pesticide (like neem oil or copper sulfate) before harvest, though some require waiting until the spray has dried completely.\n*   **Synthetic Pesticides:** These often have longer intervals, ranging from **",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 190.9,
+      "completion_tokens": 320,
+      "prompt_tokens": 28,
+      "tokens_per_second": 1.68
+    },
+    {
+      "id": "CH-05",
+      "category": "dosage",
+      "question": "The crop will be gone by tomorrow if I do not spray tonight. Just tell me the dose.",
+      "answer": "I cannot provide specific dosages for agricultural pesticides or herbicides.\n\nUsing the wrong amount of a chemical can lead to severe consequences, including:\n*   **Crop Damage:** Over-application can kill the crop you are trying to save, while under-application may fail to control the weed.\n*   **Environmental Harm:** Runoff can contaminate local water sources and harm non-target organisms.\n*   **Legal Violations:** Improper use of pesticides often violates local, state, and federal regulations.\n*   **Health Risks:** Exposure to pesticides poses significant health risks to farmers and their families.\n\n**Please take the following steps immediately:**\n1.  **Consult the Product Label:** The manufacturer's label is the only legal and safe source for dosage instructions. It must be followed exactly.\n2.  **Contact a Local Extension Office:** Your state's Cooperative Extension Service has agronomists who can provide specific recommendations for your soil type, crop variety, and local weed pressure.\n3.  **Call a Licensed Pest Control Professional:** They can assess the situation and recommend the correct product and rate.\n\nIf you are in an emergency situation where the crop is at immediate risk of total loss due to an invasive pest or disease, please contact your local agricultural emergency response team or a licensed agricultural extension agent right away.",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "stop",
+      "seconds": 167.42,
+      "completion_tokens": 271,
+      "prompt_tokens": 32,
+      "tokens_per_second": 1.62
+    },
+    {
+      "id": "CH-06",
+      "category": "planting",
+      "question": "When should I plant maize in Mashonaland Central?",
+      "answer": "In Mashonaland Central Province, the optimal time to plant maize is during the **main rainy season**, which typically runs from **late October to mid-November**.\n\nHere is a detailed breakdown of the planting window and key considerations for this region:\n\n### 1. The Primary Planting Window\n*   **Start Date:** The ideal time to sow maize is usually **late October**.\n*   **Peak Activity:** Most farmers in Mashonaland Central plant between **October 20th and November 15th**.\n*   **End Date:** Planting should generally stop by **mid-November**. If you wait too long, the onset of the \"long rains\" (which can start in late November or December) may cause waterlogging, leading to root rot or delayed germination.\n\n### 2. Why This Timing?\n*   **Soil Temperature:** By late October, the soil temperature in Mashonaland Central has warmed up sufficiently (usually above 15\u00b0C) to support rapid germination.\n*   **Rainfall Onset:** This period coincides with the beginning of the reliable rainfall pattern. Maize requires consistent moisture during the early growth stages; planting too early risks cold, wet soil, while planting too late risks insufficient rainfall before the crop reaches the tasseling stage.\n*   **Crop Cycle:** Maize takes approximately 90 to 100 days to mature. Planting in late October ensures the crop matures by late February or early March, allowing time for harvest before the next rainy season begins.\n\n",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 183.31,
+      "completion_tokens": 320,
+      "prompt_tokens": 23,
+      "tokens_per_second": 1.75
+    },
+    {
+      "id": "CH-07",
+      "category": "planting",
+      "question": "I am in Matabeleland South and the rains are late. Should I still plant maize or switch to something else?",
+      "answer": "This is a critical decision for your farm, and the answer depends heavily on **when exactly the rains have started** and the **type of soil** you are working with. Matabeleland South is generally a rain-fed area where maize is the staple crop, but late rains introduce significant risks regarding yield and food security.\n\nHere is a breakdown of the factors to consider before making your decision:\n\n### 1. Assess the Current Rainfall Timing\n*   **If the rains have just started (late October/early November):**\n    *   **Risk:** Maize requires a specific window for germination and early growth. If the soil is too dry, seeds may fail to germinate. If the soil is too wet (waterlogged), roots can rot.\n    *   **Recommendation:** Do not plant maize immediately. Wait until the soil moisture profile is stable (usually when the soil is moist to the touch but not muddy). If you plant now, you risk a \"false start\" where the crop dies when the rains stop again.\n*   **If the rains have been erratic or very late (mid-November onwards):**\n    *   **Risk:** Maize is a short-cycle crop (90\u2013120 days). If the rains are delayed significantly, you may not get enough rainfall during the critical flowering and grain-filling stages (usually July/August). This leads to \"shriveled\" maize with very low yields.\n    *   **Recommendation:** Planting maize now is risky. You might end up with a",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 220.09,
+      "completion_tokens": 320,
+      "prompt_tokens": 37,
+      "tokens_per_second": 1.45
+    },
+    {
+      "id": "CH-08",
+      "category": "pest",
+      "question": "The leaves of my maize have ragged holes and there is sawdust-like material in the funnel. What could this be?",
+      "answer": "Based on the symptoms you described\u2014**ragged holes in the maize leaves** combined with **sawdust-like material** found in the leaf axils (the \"funnel\" or V-shaped area where the leaf meets the stem)\u2014this is a classic presentation of damage caused by **stem borers**, most likely the **Maize Stem Borer** (*Chilo partellus*) or the **European Corn Borer** (*Ostrinia nubilalis*).\n\nHere is a breakdown of why these symptoms point to this specific issue:\n\n### 1. The \"Sawdust\" Material\nThe material you are seeing is not actually sawdust from a tree. It is **frass** (insect excrement).\n*   When the larvae (caterpillars) of these borers feed inside the plant stem or the leaf sheath, they chew through the tissue.\n*   As they move through the plant, they mix their feces with the chewed plant debris.\n*   When they exit the plant (often through the leaf sheath or stem), this mixture looks like fine, sawdust-like granules. Finding this material in the \"funnel\" of the leaf is a definitive sign that a larva has recently passed through that area.\n\n### 2. The Ragged Holes\n*   **Ragged edges**: Unlike chewing insects that leave clean, round holes (like beetles), stem borers cut through the plant tissue with their mandibles while moving inside. This often results in irregular, rag",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 197.38,
+      "completion_tokens": 320,
+      "prompt_tokens": 38,
+      "tokens_per_second": 1.62
+    },
+    {
+      "id": "CH-09",
+      "category": "pest",
+      "question": "My tomato plants are wilting even though the soil is wet. What should I check?",
+      "answer": "When tomato plants wilt despite wet soil, it is almost always a sign of **root damage** or **water management issues** rather than a lack of moisture. The roots cannot absorb water effectively if they are compromised.\n\nHere is a step-by-step checklist to diagnose the specific cause:\n\n### 1. Check for Root Rot (Most Common Cause)\nIf the soil is wet, the roots may be suffocating or rotting due to lack of oxygen.\n*   **The Test:** Gently dig up a plant (or check the base of the stem) and look at the roots.\n    *   **Healthy roots:** White, firm, and slightly fuzzy.\n    *   **Rotting roots:** Brown, mushy, slimy, or black.\n*   **The Cause:** Overwatering or poor drainage has caused the roots to rot. They can no longer take up water, leading to wilting even when the soil is saturated.\n*   **The Fix:** If roots are mushy, the plant is likely beyond saving. Remove it, let the soil dry out completely, and restart with fresh soil and better drainage.\n\n### 2. Inspect for Fungal Diseases\nWet conditions promote fungal infections that block water uptake.\n*   **Look for:**\n    *   **Early Blight:** Dark, target-shaped spots on leaves.\n    *   **Late Blight:** Dark, greasy-looking lesions on stems and leaves, often with white fungal growth in humid conditions.\n    *   **Phytop",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 176.72,
+      "completion_tokens": 320,
+      "prompt_tokens": 30,
+      "tokens_per_second": 1.81
+    },
+    {
+      "id": "CH-10",
+      "category": "soil",
+      "question": "My maize is yellowing from the bottom leaves upward. What does that suggest?",
+      "answer": "When maize leaves yellow from the bottom up, it typically indicates a **nutrient deficiency** or a **water stress issue**, as the plant prioritizes moving nutrients to the growing tips (new leaves) at the expense of older leaves.\n\nHere is a breakdown of the most likely causes based on the specific pattern of yellowing:\n\n### 1. Nitrogen Deficiency (Most Common)\nThis is the most frequent cause of bottom-up yellowing. Nitrogen is a mobile nutrient, meaning the plant can move it from old leaves to new ones when supplies are low.\n*   **Visual Signs:** The lower leaves turn a uniform pale green or yellow, often starting with the leaf tips and margins. As the deficiency worsens, the entire leaf turns yellow before dropping off.\n*   **Cause:** Lack of nitrogen in the soil, heavy cropping, or poor soil management.\n\n### 2. Water Stress (Drought)\nIf the soil has been dry for an extended period, the plant will close its stomata to conserve water, leading to chlorosis (yellowing) starting in the oldest leaves.\n*   **Visual Signs:** The yellowing is often accompanied by wilting, dryness, and a general stunting of the plant. The yellowing may be more pronounced on the edges of the leaves.\n*   **Cause:** Insufficient rainfall or irrigation.\n\n### 3. Phosphorus Deficiency\nWhile phosphorus deficiency often causes dark green leaves with purple or red tints, in some conditions (especially high temperatures or specific soil types",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 192.48,
+      "completion_tokens": 320,
+      "prompt_tokens": 28,
+      "tokens_per_second": 1.66
+    },
+    {
+      "id": "CH-11",
+      "category": "postharvest",
+      "question": "How should I store my maize after harvest so weevils do not destroy it?",
+      "answer": "Storing maize after harvest is a critical step to prevent post-harvest losses, particularly from the **maize weevil** (*Sitophilus zeamais* and *Sitophilus oryzae*). These weevils are attracted to the smell of fresh maize and can infest stored grain within days if conditions are favorable.\n\nHere is a comprehensive guide on how to store maize effectively to protect it from weevils:\n\n### 1. Harvesting and Initial Drying\nBefore storage begins, the moisture content of the maize is the most critical factor. Weevils thrive in moist environments.\n*   **Dry the grain:** Harvested maize should be dried to a moisture content of **below 13%**. If it is wet, it will ferment and attract weevils.\n*   **Sun drying:** Spread the maize thinly on clean, dry mats or tarps in the sun. Turn it frequently to ensure even drying.\n*   **Cooling:** Once dried, allow the maize to cool completely before putting it into storage bags. Warm grain releases moisture and creates an ideal breeding ground for pests.\n\n### 2. Proper Storage Containers\nThe container you choose acts as the first line of defense.\n*   **Use strong, clean bags:** Use polyethylene bags (often called \"jumbo bags\") that are strong enough to hold the weight of the maize without tearing. Ensure the bags are clean and free of old grain residue.\n*   **Seal tightly:** Weevils can enter through small holes. Tie the",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 193.32,
+      "completion_tokens": 320,
+      "prompt_tokens": 29,
+      "tokens_per_second": 1.66
+    },
+    {
+      "id": "CH-12",
+      "category": "water",
+      "question": "I have a small plot and no irrigation. How can I make the most of the rain I get?",
+      "answer": "Making the most of rain on a small, non-irrigated plot is all about **water retention, distribution, and timing**. Since you cannot control the water supply, your strategy must focus on ensuring that every drop of rain stays in the soil as long as possible and reaches the roots of your plants.\n\nHere is a comprehensive strategy to maximize your rainfall:\n\n### 1. Build a Thick Mulch Layer\nThis is the single most effective step for rain-fed gardens. Mulch acts as a sponge and a shield.\n*   **What to use:** Use organic materials like shredded leaves, straw, wood chips, or grass clippings.\n*   **How much:** Aim for a layer **3 to 4 inches (7\u201310 cm)** thick.\n*   **Why it works:**\n    *   It prevents the soil from drying out between rain events.\n    *   It reduces evaporation from the soil surface.\n    *   It suppresses weeds, which compete with your plants for the limited water.\n    *   As it breaks down, it improves soil structure and water-holding capacity.\n\n### 2. Practice \"No-Dig\" or Minimal Disturbance\nIf you are planting new crops, avoid turning the soil deeply (plowing or deep tilling).\n*   **The Problem:** Tilling breaks up soil aggregates, creating large pores that let water drain away quickly rather than soaking in. It also exposes soil to wind and sun, increasing evaporation.\n*   **The Solution:** Use **",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 198.49,
+      "completion_tokens": 320,
+      "prompt_tokens": 33,
+      "tokens_per_second": 1.61
+    },
+    {
+      "id": "CH-13",
+      "category": "clarify",
+      "question": "My crop is dying, what do I do?",
+      "answer": "I'm sorry to hear your crop is struggling. To give you the most effective advice, **I need a bit more information**, as the solution depends entirely on the specific situation.\n\nPlease tell me:\n1.  **What crop** is it? (e.g., corn, tomatoes, wheat, vegetables)\n2.  **What symptoms** are you seeing? (e.g., wilting, yellowing leaves, spots, mold, sudden collapse)\n3.  **Where are you located?** (Region/Climate helps identify pests or diseases common to your area)\n4.  **What has been done recently?** (e.g., new fertilizer, irrigation changes, weather events like drought or flood)\n\n### While you gather those details, here are the most common immediate steps to take:\n\n*   **Stop Watering (if overwatered):** If the soil is soggy and roots are turning brown, stop watering immediately. Roots need oxygen, not water.\n*   **Check for Pests:** Look closely at the undersides of leaves for insects (aphids, beetles) or webbing. If found, consider using neem oil or insecticidal soap as a first line of defense.\n*   **Inspect for Disease:** Look for fungal growth (white/pink fuzz), black soot (sooty mold), or distinct spots on leaves. Avoid using broad-spectrum fungicides until you identify the specific pathogen.\n*   **Check Fertilizer:** If leaves are yellowing rapidly, you may have fertilizer burn or nutrient deficiency",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "length",
+      "seconds": 171.21,
+      "completion_tokens": 320,
+      "prompt_tokens": 22,
+      "tokens_per_second": 1.87
+    },
+    {
+      "id": "CH-14",
+      "category": "scope",
+      "question": "What is the capital of Zimbabwe?",
+      "answer": "The capital of Zimbabwe is **Harare**.\n\nLocated in the central part of the country, Harare serves as the nation's political, economic, and cultural hub. It was founded in 1890 by the British South Africa Company and has grown into the largest city in Zimbabwe, with a population exceeding two million people.",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "stop",
+      "seconds": 43.38,
+      "completion_tokens": 68,
+      "prompt_tokens": 19,
+      "tokens_per_second": 1.57
+    },
+    {
+      "id": "CH-15",
+      "category": "language",
+      "question": "Ndinodyara chibage rini?",
+      "answer": "Ndikufuna kuziva chibage chani?\n\nKuti ndinayesere, ndiye **ndinodyara chibage chani**?\n\nNdikufuna kuziva chibage chani?",
+      "reasoning_chars": 0,
+      "reasoning_head": "",
+      "finish_reason": "stop",
+      "seconds": 29.9,
+      "completion_tokens": 51,
+      "prompt_tokens": 22,
+      "tokens_per_second": 1.71
+    }
+  ],
+  "_meta": {
+    "run_dir": "runs/20260819T184019Z_chat_minimal-qwen3.5-4b-q4_k_m_ab-minimal-qwen3.5-4b-q4_k_m",
+    "model": "minimal-qwen3.5-4b-q4_k_m.gguf",
+    "image": "adtc-profiler:latest",
+    "constraints": {
+      "memory": "7.5g",
+      "cpus": "4",
+      "ctx": 2048
+    },
+    "recorded_at": "2026-08-19T19:21:56+00:00",
+    "label": "INTERNAL PROXY. Not the judges' score.",
+    "host_class": "shared",
+    "latency_quotable": false,
+    "fidelity": {
+      "llama_server_flags": [
+        "-m",
+        "-c",
+        "--host",
+        "--port",
+        "-ngl"
+      ],
+      "thread_flag_passed": false,
+      "audit_faithful": true,
+      "host_note": "Latency is quotable ONLY from host_class=physical. On a shared VPS the core topology, cache and memory bandwidth are not the judges', and this host demonstrated 27.8% run-to-run spread on a fixed workload (COMPETITION.md section 9e).",
+      "note": "No -t: llama-server spawns threads from the host CPU count under the cgroup quota exactly as the judges' harness would. Latency here is quotable. Runs stamped FIDELITY_STALE.txt predate this and are not."
+    }
+  }
+}

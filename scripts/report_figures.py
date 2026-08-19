@@ -207,17 +207,23 @@ def numeric_manifest(today: date | None = None) -> dict:
                      if digits else f"{value:.0f}"] = provenance
             manifest[f"{value:.{digits}f}"] = provenance
 
-    # Accuracy proxy, per candidate.
-    accuracy = report["figures"].get("accuracy_proxy", {})
-    acc_run = accuracy.get("source") or "unarchived"
-    results = accuracy.get("results") or {}
-    for candidate in results:
-        mean = run_guards.figure(results, candidate, run_id=acc_run)
-        if isinstance(mean, Absent):
-            continue
-        provenance = f"accuracy_proxy/{candidate}/{acc_run}"
-        add(run_guards.Measurement(float(mean) * 100, candidate, acc_run), provenance)
-        add(mean, provenance)
+    # Accuracy proxy, per candidate, from EVERY archived sweep rather than only the newest.
+    #
+    # A candidate can legitimately be quoted from an older run: the pre-registered cluster
+    # rule re-scores tied candidates only, so an untied candidate's last measurement stays
+    # its current one and belongs in a footnote at its own limit. Keying provenance by run
+    # id is what makes that safe, and matches how bench runs are already handled. gather()
+    # still surfaces the newest sweep as the headline figure.
+    for run_id, data in run_guards.all_records("*_lmeval*", "lmeval.json"):
+        results = {k: v.get("mean_score") for k, v in (data.get("results") or {}).items()
+                   if isinstance(v, dict)}
+        for candidate in results:
+            mean = run_guards.figure(results, candidate, run_id=run_id)
+            if isinstance(mean, Absent):
+                continue
+            provenance = f"accuracy_proxy/{candidate}/{run_id}"
+            add(run_guards.Measurement(float(mean) * 100, candidate, run_id), provenance)
+            add(mean, provenance)
 
     # Throughput, from every archived screened bench run.
     for run_id, data in run_guards.all_records("*_bench*", "bench.json"):

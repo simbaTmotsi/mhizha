@@ -2,8 +2,8 @@
   "recorded_at": "20260812T072624Z",
   "label": "INTERNAL PROXY. S_acc is judge-scored; this ranks candidates only.",
   "sources": {
-    "lmeval": "/home/simbatmotsi/Documents/mhizha/runs/20260812T000207Z_lmeval_sweep/lmeval.json",
-    "bench": "/home/simbatmotsi/Documents/mhizha/runs/20260812T034611Z_bench_o13/bench.json"
+    "lmeval": "runs/20260812T000207Z_lmeval_sweep/lmeval.json",
+    "bench": "runs/20260812T034611Z_bench_o13/bench.json"
   },
   "weights": {
     "accuracy": 0.5,

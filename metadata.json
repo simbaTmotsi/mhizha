@@ -1,5 +1,5 @@
 {
-  "team_id": "TODO_TEAM_ID",
+  "team_id": "mhizha",
   "domain": "agriculture",
   "language_scope": [
     "en",
@@ -9,9 +9,9 @@
   "african_alpha_claim": true,
   "budget_laptop_claim": true,
   "submitter": {
-    "name": "TODO_SUBMITTER_NAME",
-    "email": "TODO_SUBMITTER_EMAIL",
-    "github_handle": "TODO_GITHUB_HANDLE"
+    "name": "Simbarashe Timothy Motsi",
+    "email": "simbamotsi1@gmail.com",
+    "github_handle": "simbaTmotsi"
   },
   "cross_disciplinary_pairing": {
     "discipline": "agriculture",

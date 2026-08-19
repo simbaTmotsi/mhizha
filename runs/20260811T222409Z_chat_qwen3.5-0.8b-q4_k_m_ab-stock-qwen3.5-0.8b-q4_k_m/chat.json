@@ -46,7 +46,7 @@
     }
   ],
   "_meta": {
-    "run_dir": "/home/simbatmotsi/Documents/mhizha/runs/20260811T222409Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
+    "run_dir": "runs/20260811T222409Z_chat_qwen3.5-0.8b-q4_k_m_ab-stock-qwen3.5-0.8b-q4_k_m",
     "model": "qwen3.5-0.8b-q4_k_m.gguf",
     "image": "adtc-profiler:latest",
     "constraints": {

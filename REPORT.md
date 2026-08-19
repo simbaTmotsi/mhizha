@@ -420,22 +420,38 @@ general, only that nothing on this host approaches it.
 
 ### 4.5 Accuracy (internal proxy)
 
-All six candidates, official image, limit 50 per task, run
-`20260812T000207Z_lmeval_sweep`. Mean across the four tasks:
+Scored in two stages, and reported at one limit per table rather than mixed. A first sweep
+covered all six candidates at limit 50. The composite then produced a selection set of five,
+and because a set that large means the mix did not discriminate, a pre-registered rule
+re-scored **the tied candidates only** at limit 150, in the official image, tripling the
+sample and narrowing the band by roughly a third.
 
-| Candidate | Mean | Spread to the next candidate |
-|---|---|---|
-| Qwen3.5 4B | 76.5% | leader |
-| Phi-4-mini | 76.0% | inside sampling error of the leader |
-| Gemma 4 E2B | 65.5% | clear step down |
-| Qwen3.5 2B | 65.0% | inside sampling error of Gemma |
-| Qwen3.5 0.8B | 59.0% | |
-| Llama 3.2 1B | 55.0% | |
+**Limit 150, official image, five candidates, run `20260812T205645Z_lmeval_cluster-rerun`.**
+Mean across the four tasks:
 
-The candidates fall into pairs, not an order. At limit 50 the binomial sampling error
-alone is a couple of points per task, so the two 76% candidates and the two 65% candidates
-are each a tie on this evidence. That is why selection carries **bands rather than points**
-(section 2.4) and why the top pair is separated by conversation rather than by this table.
+| Candidate | Mean |
+|---|---|
+| Qwen3.5 4B | 76.2% |
+| Phi-4-mini | 73.7% |
+| Qwen3.5 2B | 64.2% |
+| Qwen3.5 0.8B | 57.0% |
+| Llama 3.2 1B | 51.2% |
+
+Gemma 4 E2B is deliberately absent from that table. It was outside the selection set after
+the first sweep, so the rule did not re-run it, and its current measurement remains **65.5%
+at limit 50** (`20260812T000207Z_lmeval_sweep`). It is footnoted at its own limit rather
+than placed in the rows above, because a 50 and a 150 in adjacent rows invite a comparison
+their sampling errors do not support, and the entire purpose of the re-run was that the
+band at 50 is about twice the band at 150.
+
+**Tripling the sample did not change the shape of the answer.** The ordering within
+accuracy held, the gaps moved by two or three points, and the top two remain close enough
+relative to their sampling error that this table does not separate them. More importantly
+it did not shrink the selection set at all, which stayed at five: the composite's width is
+dominated by the throughput band, not the accuracy band, so buying accuracy precision
+bought no discrimination. That is a useful negative result. It says the remaining
+uncertainty is on the axis this host cannot measure, and no further sampling on the axis it
+can measure will substitute.
 
 Task mix: `arc_easy`, `arc_challenge`, `mmlu_high_school_biology`, `mmlu_nutrition`. Two
 ARC difficulties for general reasoning, two MMLU subsets as the closest available proxy

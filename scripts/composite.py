@@ -114,6 +114,43 @@ def perf_band(bench: dict, candidate: str, run_id: str) -> tuple[float, float, f
     return to_score(median), to_score(lo), to_score(hi)
 
 
+# COMPETITION.md 9f-bis: boundaries fixed in advance, in MB of on-disk GGUF.
+SIZE_CLASS_BOUNDS_MB = (1024, 2048)
+
+
+def size_class(file_mb: float | None) -> str:
+    if not file_mb:
+        return "unknown"
+    if file_mb < SIZE_CLASS_BOUNDS_MB[0]:
+        return "A"
+    if file_mb < SIZE_CLASS_BOUNDS_MB[1]:
+        return "B"
+    return "C"
+
+
+def size_class_bands(bench: dict, sizes: dict, run_id: str) -> dict:
+    """One S_perf band per size class, shared by every member of the class.
+
+    The degraded path (9f-bis) exists because throughput on this host cannot order these
+    candidates. Giving every member of a class the identical band is how that is expressed
+    in arithmetic rather than only in prose: no member can come out ahead of another on
+    the throughput term, because they are handed the same number.
+    """
+    per_class: dict[str, list[float]] = {}
+    for candidate in (bench.get("summary") or {}):
+        cls = size_class(sizes.get(candidate))
+        lo = run_guards.figure(bench, "summary", candidate, "min", run_id=run_id)
+        hi = run_guards.figure(bench, "summary", candidate, "max", run_id=run_id)
+        med = run_guards.figure(bench, "summary", candidate, "median_generation_tok_s",
+                                run_id=run_id)
+        for value in (lo, hi, med):
+            if not isinstance(value, Absent):
+                per_class.setdefault(cls, []).append(float(value))
+    to_score = lambda tps: min(tps / TPS_REFERENCE, 1.0) * 100
+    return {cls: (to_score(min(v)), to_score(max(v)))
+            for cls, v in per_class.items() if v}
+
+
 def eff_score(peak_rss_mb: float) -> float:
     if not peak_rss_mb:
         return 0.0
@@ -130,6 +167,10 @@ def main() -> int:
                     help="permit a bench file from a non-official image. Only for a "
                          "labelled comparison, never for a ranking that informs the "
                          "submission.")
+    ap.add_argument("--degraded", action="store_true",
+                    help="9f-bis degraded selection: throughput enters only as size-class "
+                         "bands, with no ordering claimed inside a class. For use when no "
+                         "physical machine was available by the section 9g deadline.")
     ap.add_argument("--latency-from", type=Path,
                     help="optional chat.json to annotate rows with judge-real latency. "
                          "REFUSED unless the run is stamped latency_quotable.")
@@ -176,6 +217,17 @@ def main() -> int:
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     sizes = {c["id"]: c.get("file_mb") for c in manifest["candidates"]}
     rss_override = run_guards.read(args.rss) if args.rss else {}
+    class_bands = size_class_bands(bench, sizes, bench_id) if args.degraded else {}
+    if args.degraded:
+        print("DEGRADED SELECTION (section 9f-bis): no physical machine by the deadline, "
+              "so throughput\nenters only as size-class bands. Members of a class share "
+              "one band by construction.")
+        for cls in sorted(class_bands):
+            members = sorted(c for c in (bench.get("summary") or {})
+                             if size_class(sizes.get(c)) == cls)
+            lo, hi = class_bands[cls]
+            print(f"  class {cls}: S_perf [{lo:.2f}, {hi:.2f}]  {', '.join(members)}")
+        print()
 
     # Consumer-side guard, same pattern as FIDELITY_STALE: a figure that must not be
     # quoted cannot enter the table even if someone forgets why it was marked.
@@ -195,7 +247,14 @@ def main() -> int:
             rows.append({"id": candidate, "error": acc_row["error"]})
             continue
         acc, acc_lo, acc_hi = accuracy_band(acc_row.get("tasks", {}))
-        band = perf_band(bench, candidate, bench_id)
+        if args.degraded:
+            cls_band = class_bands.get(size_class(sizes.get(candidate)))
+            # Absence still fails closed: a candidate whose class has no measured
+            # throughput at all is excluded, exactly as in the measured path.
+            band = None if cls_band is None else (
+                (cls_band[0] + cls_band[1]) / 2, cls_band[0], cls_band[1])
+        else:
+            band = perf_band(bench, candidate, bench_id)
         if band is None:
             rows.append({
                 "id": candidate,
@@ -285,6 +344,16 @@ def main() -> int:
         "ranking_complete": not incomplete,
         "bench_image": bench_image,
         "perf_host_class": perf_host_class,
+        "degraded": bool(args.degraded),
+        "degraded_basis": (
+            None if not args.degraded else {
+                "rule": "COMPETITION.md 9f-bis; executed per 9f-bis-exec",
+                "size_class_bounds_mb": list(SIZE_CLASS_BOUNDS_MB),
+                "class_s_perf_bands": {k: [round(v[0], 2), round(v[1], 2)]
+                                       for k, v in class_bands.items()},
+                "note": ("throughput carries no per-candidate value; members of a size "
+                         "class share one band, so the term cannot order them"),
+            }),
         "provisional": provisional,
         "provisional_reason": (
             None if not provisional else

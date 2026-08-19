@@ -191,9 +191,25 @@ a stale number is not.
 
 ## Phase 3. The repo flip (23 August)
 
-**O-01.** The repository is local only; nothing has been committed or pushed. Publishing is
-irreversible in practice, so it happens after the content is frozen and the upstream gate
-has passed, and it happens in this order.
+**Overtaken by events, 19 August: the repository is already on GitHub and already pushed.**
+Five commits, three pushes. So this phase is no longer "publish it", it is "confirm what is
+already published, and freeze it deliberately".
+
+**First, the visibility check, which is still owed.** One glance at the repository page.
+**If it is public, set it private until the 23rd.** The submission is judged from a
+repository URL, and there is no advantage to it being readable while the report still has
+open figure slots and the model is unselected. Public on the 23rd, with the tag, is the
+intended state; public since the 12th by accident is not. This needs Simba's account and
+cannot be checked from here.
+
+**Second, the history.** Decision **D-09** stands: no rewrite. The audit found one
+identifying string class, the home path, equal in information content to the published
+GitHub handle, and no email, token, key, hostname or real IP. It is fixed forward. **If a
+rewrite happens anyway it is Simba's, from his machine, and it must be before the tag** —
+at the tag, history freezes permanently, and a force-push after submission would change the
+shas under a judge who has already cloned.
+
+The remaining steps stand as written.
 
 1. **Read `.gitignore` before the first push, not after.** Confirm `model/`, `*.gguf`,
    `models/`, `data/raw/`, and `data/index/` are excluded, and that whatever Phase 1.5

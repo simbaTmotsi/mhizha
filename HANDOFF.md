@@ -165,30 +165,108 @@ Fourth pass, on your rulings:
 Still true and still worth reading below: the finalist set is not formed, telemetry and
 latency are blocked on O-12, and `metadata.json` still holds `TODO_*`.
 
-## In flight right now
+## State as of 19 August, five days from the deadline
 
-**The all-candidate throughput sweep completed 12 Aug 20:55Z** and the composite was
-re-formed on complete data. See the caveat section below for what it produced.
+**O-02 is filled.** team_id `mhizha`, Simbarashe Timothy Motsi, simbamotsi1@gmail.com,
+GitHub handle `simbaTmotsi` (normalised from a URL: the template asks for a username). The
+placeholder test passes rather than xfails, so the suite is **325 passed, 0 xfailed**.
 
-One background job, started 12 Aug ~20:56Z, the **pre-registered cluster re-run**:
+**The repository is already on GitHub and already pushed.** Five commits, three pushes in
+the reflog, local equal to `origin/master`. That overtakes part of phase 3: the flip is now
+"is it public, and was it scrubbed", not "does it exist". Consequences below.
 
-```
-python3 scripts/lmeval_mix.py --candidates <the 5 tied> --limit 150 \
-    --image adtc-profiler:latest --tag cluster-rerun
-  log: /tmp/cluster_rerun.log
-```
+**Scrub applied.** `scrub_runs.py --apply` rewrote 9 files; the diff is path prefixes only,
+no measurement value touched, verified against a pre-scrub copy. `capture_cli.py` now
+relativises the repo path when it makes an asset, because `doctor` prints absolute config,
+index and embedder paths and would have regenerated them. The working tree has **no
+`/home/` string left outside `vendor/`**.
 
-It fired because the selection set came out at 5, and 9f-pre says a cluster above 3 means
-the mix at limit 50 did not discriminate. Tied candidates only, official image only. The
-limit-50 sweep of six candidates took about 2.5 hours, so expect this to run several hours;
-`arc_easy` and `arc_challenge` dominate. When it finishes:
+**What the history audit found, over all five commits.** Exactly one class of identifying
+string: the absolute home path, in `docs/SCREENSHOTS.md`, the two `04-doctor` capture files,
+and 9 run records. **No email, no token, no key, no hostname, no real IP.** The
+`127.0.0.1` hits are loopback in `judge_chat.py`, and the provider names are
+`scrub_runs.py`'s own detection pattern. `runs/` **was** already committed and pushed, so
+the "one clean moment before the first commit" that the runbook describes has already
+passed; the fix is forward, and whether history is rewritten is a judgement call recorded
+under the open items rather than a secret to contain.
 
-```
-python3 scripts/composite.py --auto      # re-forms the cluster from tighter accuracy bands
-```
+**Both dated fallbacks have fired**, and the behavioural pass is running.
 
-Then check `python3 scripts/report_figures.py` still lists `composite` as AVAILABLE and
-still labels it PROVISIONAL, which it should until a physical run exists.
+**18 August passed with no physical machine, so O-12 lapsed.** Two clauses activated on
+their own, exactly as designed, without anyone remembering to:
+
+- **9g telemetry fallback is OPEN.** `report_figures.py` now offers telemetry from
+  `20260812T072644Z_bench_all-candidates`, stamped `fallback_invoked: true` and labelled
+  FALLBACK. Submit the central estimate with its spread beside it.
+- **Latency is still BLOCKED**, and stays blocked. Latency never falls back. The report
+  carries no latency figure at all, which is the correct outcome, not a gap to fill.
+- **9f-bis degraded selection is live**: the finalist is chosen on accuracy, efficiency and
+  the behavioural pass, with throughput entering only as size-class bands.
+
+**The cluster re-run finished and did not collapse the cluster.** Limit 150, five
+candidates, `20260812T205645Z_lmeval_cluster-rerun`, ~2.5 h per candidate. The composite
+re-formed on it is `runs/20260819T163941Z_composite`, and the selection set is **still
+five**. Accuracy precision tripled and bought no discrimination, because the composite's
+width is dominated by the throughput band, not the accuracy band. That is the empirical
+version of the call already recorded here: **the physical bench collapses this set, not
+more VPS accuracy.** Do not run a third sweep.
+
+9f-pre's own answer to a set still above three after the re-run is to take the larger set
+to the qualitative pass rather than make an arbitrary cut.
+
+**The degraded path was pre-registered at 17:47:40Z and then executed** (section
+9f-bis-exec, written before the partition was computed). `composite.py --degraded` recomputes
+with throughput as size-class bands only, every member of a class handed the identical band
+so the term cannot order them in arithmetic and not merely in prose. Class A `S_perf`
+[18.51, 25.01], B [8.82, 17.61], C [5.09, 12.12].
+
+**The degraded partition is also five**, so per the registered rule the larger set runs.
+Record: `runs/20260819T174950Z_composite`, `degraded: true` with its basis stored.
+
+**Behavioural pass running since 17:50Z**, `/tmp/behavioural_pass.log`, four candidates in
+accuracy-descending order: qwen3.5-4b, phi-4-mini, qwen3.5-2b, llama-3.2-1b. Full 15-question
+probe. Roughly eight hours at these rates, so it should land overnight. **Qwen3.5-0.8B is
+excluded**: its archived A/B shows one volunteered quantity in the baked arm, which the
+amended rubric fails outright, and that stands regardless of composite membership. The
+record's own `verdict` field still reads `ship-baked`, which predates the amendment and is
+stale; the finding is what stands.
+
+**The selection rule was registered at 17:56:49Z, before a single transcript existed**
+(section 9f-bis-sel), with two clarifications registered at 18:01:46Z, still before any
+transcript: hard-fails eliminate; survivors order on **`grounded`, `refusal`, `concise`
+only**; behavioural ties break to limit-150 accuracy **on the point estimate, not the
+band**; and **throughput never breaks a tie**.
+
+**Amended 18:14:43Z, still before any transcript.** The fourth axis is back in the ordering,
+renamed **`relevance`** under its unchanged definition, *"answers what was asked"*. The
+18:01:46Z strike had argued it was per-turn timing by another name; it never was, and the
+strike argued against a definition the rubric does not contain. Both the correction and the
+original error are recorded in 9f-bis-sel rather than tidied away.
+
+The worry behind the strike was real and is now handled where it belongs: **score every
+transcript through `python3 scripts/score_view.py <run>`**, never `chat.json` directly. It
+strips every time-derived field and refuses to emit if one survives. Per-turn seconds stay
+in the archive, out of the scorer's sight. Contamination closed at the scorer, signal kept
+in the rubric, which is the sibling of unquotable-not-deleted. It handles a chat run or a
+whole A/B, rendering arms from `ab.json`'s own rows rather than guessing sibling
+directories by name, which would pick the wrong arm for a candidate that has two A/Bs.
+This one does.
+
+The point-estimate rule exists because **a tie-break orders after significance has given
+up**. By step 3 the bands have already been consulted twice and have already answered "these
+overlap". Asking a third time returns the same non-answer. The
+runner-up is the next survivor in that order and goes into `config.yaml` beside the winner,
+because the 22 Aug upstream check may need it in a hurry. All candidates eliminated is not
+a deadlock, it is the section 10 fine-tuning trigger.
+
+When the pass finishes, read **emission counts, not the `verdict` string**, for any run
+recorded before the rubric amendment. The stale label on the 0.8b A/B is annotated by
+`VERDICT_STALE.txt` **beside** the record, never inside it: editing `verdict` in place would
+make the archive disagree with the code that wrote it, and would delete the evidence that a
+rule was tightened because a measured transcript showed the old one was insufficient.
+
+**No latency from these runs enters any document**, confirmed 19 Aug. Timings stay in the
+records, quotation stays refused, no re-run.
 
 **Presenting the 150 results: no mixed limits in one table.** The five tied candidates are
 at 150; gemma-4-e2b is not, because 9f-pre re-runs tied candidates only. So every accuracy

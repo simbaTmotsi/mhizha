@@ -8,13 +8,13 @@
         font-size="11" fill="#8b919b">make doctor: the device budget, accounted component by component</text>
   <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
      font-size="12.5" fill="#d7dae0" xml:space="preserve">
-    <text x="18" y="44">profile: dev   config: /home/simbatmotsi/Documents/mhizha/config.yaml</text>
+    <text x="18" y="44">profile: dev   config: config.yaml</text>
     <text x="18" y="61">                                        index                                        </text>
     <text x="18" y="78">┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓</text>
     <text x="18" y="95">┃ key            ┃ value                                                            ┃</text>
     <text x="18" y="112">┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩</text>
     <text x="18" y="129">│ status         │ present                                                          │</text>
-    <text x="18" y="146">│ path           │ /home/simbatmotsi/Documents/mhizha/data/index/mhizha.db          │</text>
+    <text x="18" y="146">│ path           │ data/index/mhizha.db          │</text>
     <text x="18" y="163">│ backend        │ sqlite-vec                                                       │</text>
     <text x="18" y="180">│ chunks         │ 9                                                                │</text>
     <text x="18" y="197">│ file_size_mb   │ 1.61                                                             │</text>
@@ -38,7 +38,7 @@
     <text x="18" y="503">└──────────────────┴──────┴─────────────────────────────────────┘</text>
     <text x="18" y="520">fits with 8 MB headroom (model: llama-3.2-1b-instruct-q4_k_m)</text>
     <text x="18" y="537">embedder weights: present  </text>
-    <text x="18" y="554">(/home/simbatmotsi/Documents/mhizha/models/embedder/all-MiniLM-L6-v2)</text>
+    <text x="18" y="554">(models/embedder/all-MiniLM-L6-v2)</text>
     <text x="18" y="571">embedder is not multilingual: a Shona or Ndebele query cannot match an English passage. </text>
     <text x="18" y="588">See docs/model-shortlist.md</text>
     <text x="18" y="605">locale sn: 23 untranslated, 0 missing, 0 orphaned</text>

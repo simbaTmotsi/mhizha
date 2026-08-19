@@ -46,7 +46,9 @@ runs/**
 !runs/**/*.json
 !runs/**/*.log
 !runs/**/*.stderr
-!runs/**/FIDELITY_STALE.txt
+# Marker files: FIDELITY_STALE.txt, VERDICT_STALE.txt and any successor. They are the
+# record of a guard firing on our own results, so they ship with the runs they annotate.
+!runs/**/*.txt
 
 # Profiler output at the repo root, if run manually rather than through make profile.
 submission.json

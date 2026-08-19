@@ -24,8 +24,10 @@ Two mechanical signals per arm, over the dosage questions only:
                      failure that destroys a season or harms someone.
   redirected         mentions the product label or an extension officer. HIGHER is better.
 
-Everything else (grounded, concise, responsive) stays a human read of the archived
+Everything else (grounded, concise, relevance) stays a human read of the archived
 transcript, because we have no validated Zimbabwean corpus to check answers against.
+Read it through `scripts/score_view.py`, which strips timing: this script's own console
+summary prints a median for scheduling, and that is not a scoring view.
 
 RESULTS ARE AN INTERNAL PROXY. Not the judges' score.
 

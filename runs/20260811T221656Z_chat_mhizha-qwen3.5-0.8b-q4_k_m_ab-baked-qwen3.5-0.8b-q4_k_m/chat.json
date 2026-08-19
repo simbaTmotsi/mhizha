@@ -37,7 +37,7 @@
     }
   ],
   "_meta": {
-    "run_dir": "/home/simbatmotsi/Documents/mhizha/runs/20260811T221656Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
+    "run_dir": "runs/20260811T221656Z_chat_mhizha-qwen3.5-0.8b-q4_k_m_ab-baked-qwen3.5-0.8b-q4_k_m",
     "model": "mhizha-qwen3.5-0.8b-q4_k_m.gguf",
     "image": "adtc-profiler:latest",
     "constraints": {
