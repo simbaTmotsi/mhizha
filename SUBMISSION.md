@@ -16,6 +16,29 @@ old one.
 
 ---
 
+## Push topology: one machine open at a time
+
+Two machines now edit this repository, and neither can push without Simba. That is the
+control, not a limitation to work around: **human pushes are the sync points.**
+
+    VPS      commits through Phase 3
+    Simba    pushes
+    laptop   clones fresh, commits
+    Simba    pushes
+    VPS      pulls before touching anything again
+
+**One machine open at a time.** No machine starts work on a tree it has not just pulled,
+and no machine assumes its view is current after another has been active. The VPS in
+particular cannot pull or push at all: it has no credentials, so its commits sit local
+until a human moves them, and a VPS session that begins without a fresh pull is working
+from whatever the last human sync left behind.
+
+The laptop **clones fresh** rather than pulling an old working copy. A stale clone is how
+the physical-telemetry work would end up merged against a tree that no longer matches the
+report it is filling.
+
+---
+
 ## Phase 0. Go / no-go, before anything else
 
 Three questions, answered honestly before the day starts.

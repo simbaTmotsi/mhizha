@@ -328,6 +328,20 @@ minimal arm volunteered **3** quantities and the full bake volunteered **0**: sa
 same questions, same thinking guard, and the persona is the only difference. The baked text
 is doing safety work, not decorating the prompt.
 
+**Phase 3 freeze-walk item, held until it is true.** One sentence goes into `REPORT.md`
+section 2.4 once the reveal has run:
+
+> The commit sequence is the blind's audit trail: the sealed mapping and a blank score
+> sheet were committed at `a7ef239` before any score existed, and the scores were committed
+> before the reveal ran.
+
+The first clause is established and checkable now: `git show a7ef239:runs/20260820T105919Z_blind/SCORES.md`
+has six blank rows and an empty COMMITTED line, and the seal is in the same commit. The
+second clause is **not true yet**, so it is not in the report yet. Verify it from `git log`
+at Phase 3 and write the sentence whole; writing it early would put a claim in the
+submitted report that the repository does not yet support, which is the exact failure the
+figure rule exists to prevent, one level up from numbers.
+
 **Next: steps 2 to 4, which need a human, and the pack is already made.**
 
     runs/20260820T105919Z_blind/     A.txt  B.txt  C.txt  SCORES.md  SEALED_mapping.b64
