@@ -49,6 +49,14 @@ runs/**
 # Marker files: FIDELITY_STALE.txt, VERDICT_STALE.txt and any successor. They are the
 # record of a guard firing on our own results, so they ship with the runs they annotate.
 !runs/**/*.txt
+# Blind-scoring packs: the score sheet and the sealed mapping are the record that the
+# behavioural ordering was made without knowing whose transcript was whose. Without them
+# the published pack is three unlabelled transcripts and no evidence of the procedure.
+# The seal is base64, so publishing it protects nothing and hides nothing that a
+# determined reader could not already get; the blind is procedural, and the repository is
+# private until the 23rd in any case.
+!runs/**/*.md
+!runs/**/*.b64
 
 # Profiler output at the repo root, if run manually rather than through make profile.
 submission.json

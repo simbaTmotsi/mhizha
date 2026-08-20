@@ -171,6 +171,10 @@ latency are blocked on O-12, and `metadata.json` still holds `TODO_*`.
 GitHub handle `simbaTmotsi` (normalised from a URL: the template asks for a username). The
 placeholder test passes rather than xfails, so the suite is **325 passed, 0 xfailed**.
 
+**O-16 is closed: the repository is private, confirmed 20 Aug**, and stays private until the
+23rd flip (SUBMISSION.md phase 3). That retires the open question about accidental early
+publication.
+
 **The repository is already on GitHub and already pushed.** Five commits, three pushes in
 the reflog, local equal to `origin/master`. That overtakes part of phase 3: the flip is now
 "is it public, and was it scrubbed", not "does it exist". Consequences below.

@@ -1827,7 +1827,7 @@ within-cluster ordering language.
 
 | ID | Item | State |
 |---|---|---|
-| O-16 | **Repository visibility, owed.** The repo is already pushed to GitHub (five commits, three pushes, 19 Aug). Nobody has checked whether it is public. One glance; **if public, set private until the 23rd**, then public with the tag | **Needs Simba's account.** Cannot be checked from the build host. Public since the 12th by accident is not the same as public on the 23rd by intent |
+| O-16 | **Repository visibility. CLOSED 20 Aug: confirmed PRIVATE.** The repo was already pushed (five commits by 19 Aug, more since), and nobody had checked its visibility. Checked and confirmed private | **Closed.** It stays private until the **23rd**, when SUBMISSION.md phase 3 flips it public with the tag. Public since the 12th by accident was the risk; public on the 23rd by intent is the plan |
 | O-01 | Repo must be public on GitHub. `git init` done locally, **nothing committed or pushed** | **Superseded 19 Aug: committed and pushed.** See O-16 for what is actually left. Remote and first commit were the user's call. Sequenced as phase 3 of `SUBMISSION.md`: after the content freeze and the upstream gate, verified from a fresh clone rather than from this working copy, then tagged so the submitted state can be named later |
 | O-02 | `team_id`, submitter name, email, GitHub handle | **Needed from the user.** `metadata.json` holds `TODO_*` placeholders; `tests/test_competition.py::test_placeholders_are_detectable_before_submission` xfails until they are filled |
 | O-03 | Verify each candidate exists as a public GGUF at the claimed quant | **Done.** All six resolved and downloaded, 11 GB, sha256 in `competition/candidate_hashes.txt` |
