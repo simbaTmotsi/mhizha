@@ -1758,7 +1758,7 @@ holds. That is exactly why `config.yaml` carries a runner-up fallback alongside 
 On any diff: re-read the changed files, re-run `make profile` on the winner and the
 runner-up, and update `docs/BAKEOFF.md` and `REPORT.md` before submitting.
 
-**Run 22 Aug 2026 19:42Z. Result: upstream moved, and the move is measurement-neutral.**
+**Run twice on 22 Aug 2026, at 19:42Z and again at 21:44Z. Identical both times: upstream moved, and the move is measurement-neutral.**
 
 | Repo | Pinned | HEAD | Verdict |
 |---|---|---|---|
