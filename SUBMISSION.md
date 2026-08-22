@@ -100,6 +100,31 @@ What to look for, in order of how badly it would land:
 - A row that is no longer marked estimate but never became measured.
 - A figure whose run id no longer exists under `runs/`.
 
+**The list, so this is a ten-minute pass and not a hunt.** Regenerate it after the figure
+slots are filled, because filling them changes what overlaps:
+
+```bash
+python3 - <<'EOF'
+import re, pathlib
+pat = re.compile(r"(\d+(?:\.\d+)?)\s*(tok/s|MB|GB|%|minutes|min\b|seconds|points)")
+def nums(path):
+    t = re.sub(r"```.*?```", "", pathlib.Path(path).read_text(), flags=re.DOTALL)
+    out = {}
+    for n, line in enumerate(t.splitlines(), 1):
+        for m in pat.finditer(line):
+            out.setdefault(m.group(1), []).append(n)
+    return out
+r, b = nums("REPORT.md"), nums("docs/BAKEOFF.md")
+for v in sorted(set(r) & set(b), key=float):
+    print(f"{v:>8}  REPORT {r[v][:4]}  BAKEOFF {b[v][:4]}")
+EOF
+```
+
+Snapshot as of 20 Aug, before the Phase 1.1 fills, ten values overlap: `0.00`, `1.7`,
+`5.0`, `8`, `26.5`, `27.8`, `28`, `35`, `40`, `65.5`. The ones worth a second look are
+`1.7` and `5.0`, the recomputed answer times, because they were wrong in both documents
+until 12 Aug and a stale copy of either would now contradict the other.
+
 Fix `BAKEOFF.md` to match the manifest, never the reverse. If the manifest is wrong, the
 run is wrong, and that is a measurement problem rather than a documentation one.
 
