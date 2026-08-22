@@ -1,0 +1,68 @@
+{
+  "run_id": "20260822T184855Z_qwen3.5-2b-q4_k_m_20525079efb1",
+  "recorded_at": "2026-08-22T18:59:12+00:00",
+  "status": "ok",
+  "candidate": {
+    "id": "qwen3.5-2b-q4_k_m",
+    "label": "Qwen3.5 2B",
+    "repo": "unsloth/Qwen3.5-2B-GGUF",
+    "file": "Qwen3.5-2B-Q4_K_M.gguf",
+    "params_estimate": "2B",
+    "quant": "Q4_K_M",
+    "licence": "Apache-2.0"
+  },
+  "model_sha256_source": "competition/candidate_hashes.txt",
+  "git_commit_sha": "20525079efb1",
+  "docker_image": "adtc-profiler:latest",
+  "constraints": {
+    "memory": "7.5g",
+    "cpus": "4"
+  },
+  "accuracy_task": "arc_easy",
+  "accuracy_limit": 50,
+  "seed": 42,
+  "os_tuning": {
+    "vm.swappiness": "60",
+    "vm.overcommit_memory": "0",
+    "transparent_hugepage": "always [madvise] never",
+    "host_cpu_count": "12",
+    "mlock_enabled_in_profile": true,
+    "note": "The profiler drives llama-bench itself and does not read our config, so mlock and thread count here describe the product-side laptop_8gb profile, not flags passed to llama-bench. llama-bench is pinned -ngl 0 by the profiler and inherits the container's 4 CPUs."
+  },
+  "scoring_constants": {
+    "tps_reference": 15.0,
+    "ram_limit_gb": 7.0,
+    "thermal_limit_c": 85.0,
+    "source": "vendor/adtc-profiler/README.md (retrieved)"
+  },
+  "score": {
+    "tokens_per_second": 3.59,
+    "peak_rss_mb": 1433.78,
+    "peak_rss_gb": 1.4,
+    "core_temp_c_peak": null,
+    "throttled": false,
+    "s_acc": 72.0,
+    "s_perf": 23.93,
+    "s_eff": 80.0,
+    "p_thermal": 0.0,
+    "s_total": 59.18,
+    "s_total_excluding_accuracy": 23.18,
+    "accuracy_measured": true,
+    "tps_headroom_wasted": 0.0
+  },
+  "hard_fails": [],
+  "environment": {
+    "measured_on": "participant_laptop",
+    "cpu_model": "AMD EPYC Processor (with IBPB)",
+    "ram_gb": 47.0,
+    "gpu": "none",
+    "os": "Debian GNU/Linux 13 (trixie)"
+  },
+  "model_info": {
+    "params_count": 1881825088,
+    "context_length": 262144,
+    "architecture": "qwen35",
+    "claimed_params_estimate": "2B",
+    "params_match": true
+  }
+}

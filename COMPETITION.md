@@ -1758,6 +1758,28 @@ holds. That is exactly why `config.yaml` carries a runner-up fallback alongside 
 On any diff: re-read the changed files, re-run `make profile` on the winner and the
 runner-up, and update `docs/BAKEOFF.md` and `REPORT.md` before submitting.
 
+**Run 22 Aug 2026 19:42Z. Result: upstream moved, and the move is measurement-neutral.**
+
+| Repo | Pinned | HEAD | Verdict |
+|---|---|---|---|
+| `adtc-2026-submission-template` | `63ddc542` | `63ddc542` | unchanged |
+| `adtc-profiler` | `7adbe08f` | `ac2e137d` | one commit: `fix(packaging): lower minimum Python requirement to >=3.10`, touching `pyproject.toml` only |
+
+**The SIMD flags are identical**: stage 1 still `GGML_AVX/AVX2/AVX512/FMA/F16C=OFF`, stage 2
+still only `GGML_NATIVE=OFF`. The trigger this check exists for did not fire, so the model
+choice does not reopen and the runner-up stays a fallback rather than a candidate.
+
+**We did not re-run `make profile`, and that is a deliberate deviation from the rule above,
+which says to re-measure on any diff.** A change to a packaging floor in `pyproject.toml`
+cannot move a measured number: it alters which Python versions may install the profiler,
+not what the profiler measures or how llama.cpp is built. Re-measuring would consume hours
+of the remaining window to reproduce figures that cannot have changed. Recorded as a
+deviation with its reason rather than taken silently, because the rule is deliberately
+broader than its rationale and the next reader should see that the gap was noticed.
+
+**The pin stays at `7adbe08f`.** Re-vendoring to pick up a Python floor gains nothing and
+would mean re-reading a repository we have already read in full.
+
 This check is **phase 2 of `SUBMISSION.md`**, the packaging-day runbook, and it sits there
 deliberately: after the content freeze, before the repository is made public. Running it
 earlier means it can miss late drift; running it after publishing means correcting a

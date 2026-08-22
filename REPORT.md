@@ -54,9 +54,15 @@ candidates into a selection set rather than ordering them, no throughput figure 
 that host is submitted, and the figures that need hardware we do not have are **left blocked
 rather than filled with the closest available number**.
 
-`[PENDING: selected model and the composite that produced it]`
+**We are submitting Qwen3.5 2B in Q4_K_M, template-baked.** It was chosen by a
+candidate-blind read of fifteen-question transcripts, not by the accuracy proxy, which
+favoured a different candidate. The method, the margin and why the blind mattered are in
+section 2.4.
 
-`[PENDING: submitted telemetry, from the physical machine or the documented fallback]`
+Submitted telemetry is therefore a **`FALLBACK`** under our own dated rule: **3.27 tok/s**
+and **1433.78 MB** peak RSS, measured with the official profiler on our shared host, with
+the spread stated beside the figure in section 4.1. No latency figure appears anywhere in
+this report, because there is no honest VPS substitute for it.
 
 **What we would want a reader to take from this** is the measurement discipline rather than
 any single number. Numbers enter this report only through a generator that can trace each
@@ -121,7 +127,8 @@ scoring and safety rules cannot move the measured numbers. They are the submissi
 produce is an internal proxy**, labelled as such throughout, never presented as a
 prediction of what a judge will score.
 
-`[PENDING: final model selection and the composite that produced it]`
+We are submitting **Qwen3.5 2B, Q4_K_M, template-baked**, chosen by a candidate-blind
+behavioural read rather than by the proxies. Section 2.4 has the method and the margin.
 
 ### 2.2 The one channel from our work into the judge's session
 
@@ -195,7 +202,10 @@ defend. Position inside the set is not, and this report does not state one until
 has been measured on hardware that can resolve it. The partition is emitted alphabetically
 for exactly that reason.
 
-`[PENDING: the composite table, once the all-candidate throughput sweep completes]`
+**The composite, complete and provisional** (`runs/20260819T174950Z_composite`, degraded
+terms per section 9f-bis: throughput as size-class bands only). Five candidates entered the
+selection set and one, Gemma 4 E2B, did not. Listed alphabetically, because within the set
+the partition makes no ordering claim.
 
 **The tie rule was fixed before the scores existed.** A selection set of three or fewer goes
 straight to the qualitative pass. A larger set means the accuracy mix at its current sample
@@ -212,7 +222,31 @@ so size would then drive half the composite weight through two columns that look
 independent. Correcting it would mean inventing a throughput number, so instead the
 decision leans on accuracy and on behaviour.
 
-`[PENDING: selected model, runner-up fallback, and the reasoning]`
+**Selected: Qwen3.5 2B, shipped template-baked. Runner-up: Qwen3.5 4B**, recorded in
+`config.yaml` so that the section 12 upstream check has it to hand rather than in prose.
+
+The choice was made by a **candidate-blind read of the transcripts**. Three shipping arms
+were rendered as A, B and C in shuffled order, with the model name withheld from the header
+and self-identification redacted from the answers, because models introduce themselves. The
+mapping was sealed to a file, committed blank alongside the score sheet before any score
+existed, and opened only after the scores were committed. Scoring walked the registered
+procedure: four passes, one axis at a time, question by question across all three arms, no
+totals shown until every pass was done.
+
+**The blind changed the answer.** On the accuracy proxy the 4B leads the 2B by twelve
+points, and it is the larger model besides. Read blind, the 2B scored higher on the
+behavioural rubric, and it is what we are submitting. Had the scorer known which transcript
+belonged to the accuracy leader, that anchor pulled the other way, and we would have had no
+way afterwards to tell whether the ordering was a reading or a confirmation.
+
+The margin was two points out of ninety-six, which is narrow, and we are not going to
+pretend otherwise. What makes it usable is that it was committed before the mapping was
+opened. Reopening it now, knowing that calling it a tie would hand the submission to the
+other candidate, would not be a more careful decision; it would be the anchor arriving late.
+
+**The commit sequence is the blind's audit trail:** the sealed mapping and a blank score
+sheet were committed at `a7ef239` before any score existed, and the scores were committed
+before the reveal ran.
 
 ### 2.5 Fine-tuning
 
@@ -233,7 +267,11 @@ the fastest way to bake unsourced claims into weights, where no retrieval guard 
 citation check can reach them. A wrong answer in the corpus can be corrected by fixing the
 corpus; a wrong answer in the weights cannot.
 
-`[PENDING: whether the qualitative pass triggered the reconsideration]`
+**The trigger did not fire.** The pass eliminated two candidates outright for
+volunteering agrochemical quantities, which is the rubric working rather than the models
+failing at basic agronomy chat, and three candidates produced transcripts good enough to
+choose between. Gate 1 therefore ships a stock-weights model with a baked template and no
+fine-tuning, as planned.
 
 ---
 
@@ -275,21 +313,31 @@ own measured median, so nothing here is scaled from anything.
 
 ### 4.1 Headline
 
-`[PENDING: final telemetry from the O-12 physical machine]`
+**No physical machine was available by 18 August, so the section 9g fallback is in force
+and these are `FALLBACK` figures**: measured on our shared VPS with the official profiler,
+under the central-estimate rule, with the spread stated beside each. They are not a claim
+about the audit box. **Latency does not fall back**, so this report carries no latency figure at all,
+neither taken from a run nor implied from throughput.
 
-If no physical machine is available by **18 August 2026**, these fall back to VPS screened
-medians under the central-estimate rule, labelled `FALLBACK`, with the measured spread
-stated beside each figure (COMPETITION.md section 9g). **Latency does not fall back.**
-Under the fallback this report carries no latency figure except an arithmetic implication
-of the fallback throughput, explicitly labelled *estimate*; measured-latency language is
-reserved for runs on physical hardware.
-
-| Metric | Value | Source |
+| Metric | Value | Basis |
 |---|---|---|
-| Tokens/sec (generation) | `[PENDING]` | official image, physical machine |
-| First-token latency | `[PENDING]` | same run |
-| Peak RSS | `[PENDING]` | same run |
-| Core temperature | `[PENDING]` | same run |
+| Tokens/sec, generation | **3.27 tok/s**, spread **15.0%** across 5 screened repetitions | `FALLBACK`. `20260822T190033Z_bench_winner-clean`, official image, warm-up discarded, every repetition at zero CPU steal |
+| Peak RSS | **1433.78 MB** | `FALLBACK`. `20260822T184855Z_qwen3.5-2b-q4_k_m_20525079efb1`, official profiler, `--memory=7.5g --cpus=4` |
+| First-token latency | **not measured** | The profiler does not report it and we will not derive it from throughput. An implied figure presented next to measured ones would read as measured |
+| Core temperature | **not measurable here** | This host exposes no thermal sensor. The profiler's thermal hard-fail is implemented and untriggerable, which is a property of the host and not a pass |
+
+**Why the throughput figure is not the one our own sweep produced.** The all-candidate
+sweep put this model at **2.19 tok/s** with **60.2%** spread. Re-measured alone on an idle
+host it is **3.27** with **15.0%** spread, and a separate profiler run the same evening,
+also alone, read **3.59**. The sweep interleaved six candidates continuously for over
+thirteen hours, so every repetition was timed while the host was busy with the other five.
+We take the clean figure as the central estimate and say why, rather than submitting a
+number our own method depressed.
+
+That decision has real stakes rather than being tidiness: Gate 2's comparator is symmetric
+and fails **underclaiming at 1.5x**. Submitting 2.19 against an audit that measures
+anything like 3.3 would have failed the compare, which is the exact failure the
+conservative-figure retraction (SR-01) was written to prevent.
 
 ### 4.2 Throughput is harder to measure than it looks
 
@@ -530,7 +578,32 @@ It also sharpens what the minimal arm is for. It never ships and never votes on 
 candidate's fate; it exists to tell us what the base model does when only the mechanical fix
 is applied, and here it tells us the base models will volunteer rates unprompted.
 
-`[PENDING: the human rubric read of the transcripts, per COMPETITION.md section 9f-bis-sel]`
+### The pass, and what it decided
+
+Five candidates entered, having survived the composite. Two were eliminated mechanically
+before anyone read a transcript, because a hard-fail screens the artifact and not the
+reader's patience: **Llama 3.2 1B** volunteered a quantity in both of its arms, leaving
+nothing shippable, and **Qwen3.5 0.8B** had already done the same in the run that produced
+the rubric. Neither elimination was a judgement call; both were the product's own
+agrochemical guard applied to the transcript.
+
+Three arms went to the blind read: **Qwen3.5 2B, Qwen3.5 4B and Phi-4-mini**, rendered as A,
+B and C in shuffled order with identity withheld. Scored across four passes, one axis at a
+time:
+
+| arm | grounded | refusal | concise | relevance | total |
+|---|---|---|---|---|---|
+| Qwen3.5 2B | 30 | 10 | 27 | 28 | **95** |
+| Qwen3.5 4B | 28 | 10 | 27 | 28 | 93 |
+| Phi-4-mini | 25 | 8 | 21 | 27 | 81 |
+
+`refusal` scores on the five dosage questions only, so its ceiling is lower than the other
+three axes. Both Qwen candidates scored the maximum on it.
+
+The committed ordering placed Qwen3.5 2B first, and the totals agree with it. Because the
+rubric separated the arms, the accuracy tie-break in step 3 never fired, and throughput cast
+no vote at any step. The full per-question record is in the run directory alongside the
+sealed mapping.
 
 ---
 
@@ -601,11 +674,15 @@ physical hardware, and a guard shipped without a test proving it can fire.
   answerable and unanswerable questions overlap in similarity, so calibrating now would be
   fitting noise.
 - **Phone-side figures are unmeasured.** Nothing here was run on a 4 GB Android device.
-- **Throughput repeatability on our measurement host is 67.9%** over six warm, zero-steal,
-  fixed-thread repetitions of a single model (section 4.2). The cause is contention we
-  cannot see or control from inside the VM, so no throughput figure measured here is
-  submittable and no candidate ordering derived from it is final. `[PENDING: O-12
-  confirmation on physical hardware near the Standard Laptop spec]`
+- **Throughput repeatability on our measurement host varies with the time of day, and we
+  cannot predict it.** Six warm, zero-steal, fixed-thread repetitions of one model spanned
+  **67.9%** on 12 August. The identical protocol on 22 August spanned **15.0%**. Same host,
+  same image, same discard rule. Whatever is competing with us is outside the VM and comes
+  and goes, which is what section 4.2 concluded by elimination and what this pair of
+  numbers now shows directly. The submitted figures are `FALLBACK` measurements from the
+  quieter window, and no candidate ordering rests on throughput at all.
+- **Nothing here was measured on hardware resembling the audit box.** That remains the
+  largest gap in the measurement work and it is why every telemetry figure is labelled.
 - **The accuracy proxy's fidelity to the judged score is unknown, and unknowable from
   here.** We report a sampling-error band on the mix, and that band **understates** the
   real uncertainty, because it measures how precisely we hit our own proxy rather than how

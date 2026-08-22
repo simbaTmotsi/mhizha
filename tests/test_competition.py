@@ -1481,6 +1481,11 @@ def guards():
     spec = importlib.util.spec_from_file_location(
         "run_guards", REPO / "scripts" / "run_guards.py")
     module = importlib.util.module_from_spec(spec)
+    # Register before exec: run_guards defines dataclasses under postponed annotations,
+    # and dataclasses resolves them through sys.modules[cls.__module__]. Without this the
+    # fixture only works when some other test has already imported run_guards normally,
+    # so the suite passed as a whole and this test errored when run alone.
+    sys.modules.setdefault("run_guards", module)
     spec.loader.exec_module(module)
     return module
 

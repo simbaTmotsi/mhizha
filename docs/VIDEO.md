@@ -28,19 +28,27 @@ Two further rules, from the same discipline the code enforces:
 
 ---
 
-## Beat sheet
+## Beat sheet, with the narration written
 
-| # | Time | Beat | On screen | Spoken |
-|---|---|---|---|---|
-| 1 | 0:00-0:15 | The user, not the tech | A field, or a still of one. Then the terminal. | The problem: a farmer deciding what to plant, with no connectivity at the moment the decision is made. An assistant that needs a network is not available when it matters. |
-| 2 | 0:15-0:30 | What it is | `mhizha ask` running, answer appearing | One sentence on what Mhizha is: an offline agronomy co-pilot for a mid-range Android phone. Then the honest qualifier: the pipeline is real, the agronomy is not sourced yet. |
-| 3 | 0:30-0:55 | The three things agronomy forces | Capture 01, sources table highlighted | Grounded and cited: every claim carries a passage, every passage names its source and refresh date. |
-| 4 | 0:55-1:15 | Refusal is the feature | Capture 03, the safety notice | The dosage gate. A rate that is not verbatim in a validated passage is never emitted, in any phrasing. A wrong spray rate destroys a season or harms the person applying it. |
-| 5 | 1:15-1:30 | Willing to not answer | Capture 02, the abstention panel | Below the confidence threshold the model is not called at all. It says what it does not know, asks one clarifying question, and refers to a local AGRITEX officer. |
-| 6 | 1:30-1:45 | The competition finding | The profiler, or the report section | What the profiler actually scores is the bare model file, not our code, so our retrieval and safety work is the evidence rather than the measured thing. The one channel into a judge's session is the chat template we bake at download. |
-| 7 | 1:45-1:55 | Close on the discipline | `report_figures.py` output showing BLOCKED lines | Close on the honesty of the measurement work: numbers that cannot be sourced are refused by the build, and the report says what is missing and why. |
+**Status: ready to record as of 22 Aug.** Both blockers cleared: the model is selected and
+the submitter details are filled. Narration is ~280 words, which is 1:55 at an unhurried
+145 words per minute. **No figure is spoken anywhere in it**, deliberately: a number in a
+video cannot carry its caveat and cannot be corrected after upload, so the report keeps the
+numbers and the video keeps the argument.
 
----
+| # | Time | On screen | Spoken, verbatim |
+|---|---|---|---|
+| 1 | 0:00-0:15 | A field, or a still of one. Then the terminal. | "A farmer in Mashonaland is deciding what to plant this week. The nearest extension officer is a bus ride away, and there is no signal in the field. An assistant that needs a network is not there at the moment the decision gets made." |
+| 2 | 0:15-0:32 | `mhizha ask` running, answer appearing | "Mhizha runs entirely offline, on a mid-range Android phone. It answers practical agronomy questions from a curated corpus, cites what it used, and says so when it cannot help. The pipeline is real. The agronomy is not sourced yet, and we say that plainly." |
+| 3 | 0:32-0:55 | Capture 01, sources table highlighted | "Every claim carries a passage, and every passage names its source, its publisher and the date it was refreshed. Those placeholder banners are real. This corpus holds no agronomic content, and the system tells the farmer that instead of sounding authoritative." |
+| 4 | 0:55-1:18 | Capture 03. Type the question in full. | "Ask it how much to spray, and it refuses. A dose that is not written, word for word, in a passage a human has signed off is never emitted. Not as an estimate, not as a typical figure. A wrong spray rate destroys a season, or harms the person holding the sprayer." |
+| 5 | 1:18-1:34 | Capture 02, the abstention panel | "Below its confidence threshold, the model is not called at all. It says what it does not know, asks the one question that would unblock it, and sends the farmer to their local AGRITEX officer." |
+| 6 | 1:34-1:48 | The profiler, or REPORT section 2.4 | "The competition profiles a bare model file, so none of this code runs while judges are scoring. We ship Qwen three point five, two billion, chosen by reading transcripts blind, with our safety posture baked into the model's own chat template." |
+| 7 | 1:48-1:55 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
+
+**Closing card:** Mhizha. Simbarashe Timothy Motsi. team_id `mhizha`. github.com/simbaTmotsi.
+
+**On beat 6, say the model name aloud as words**, not as a filename. "Qwen three point five, two billion" is what a listener can follow; `qwen3.5-2b-q4_k_m` is not.
 
 ## What to record, and in what order
 
@@ -66,9 +74,14 @@ Record in this order so a re-take of the hardest beat does not invalidate the ot
 
 ## Open before recording
 
-- **O-02.** The closing card needs the team name and submitter details, which are still
-  `TODO_*` in `metadata.json`.
-- **Selected model.** Beat 6 currently names no candidate, and should not until the
-  selection set is resolved. If the model is chosen before recording, add one clause; if
-  not, the beat works as written.
-- **Captions.** Worth adding for accessibility and for judges watching without sound.
+Both original blockers are cleared.
+
+- **O-02, the closing card.** Filled 19 Aug. Details above.
+- **The selected model.** Decided 22 Aug: Qwen3.5 2B, template-baked. Beat 6 names it.
+
+What remains is not a blocker but is worth deciding before the take:
+
+- **Captions**, for accessibility and for judges watching without sound.
+- **Whether beat 6 mentions the blind read at all.** It is the most interesting thing in
+  the selection and it is one clause. It is also the clause most likely to need a second
+  sentence to land, and there is no room for a second sentence. Cut it rather than rush it.

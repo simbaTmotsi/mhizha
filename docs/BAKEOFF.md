@@ -217,6 +217,53 @@ unused anyway, because the native build was *slower* on identical work (127.7s a
 accuracy image gains nothing and that timing gap is host noise (SR-11). The full sweep ran
 in the official image.
 
+### Outcome: Qwen3.5 2B, shipped baked
+
+**Decided 22 Aug** by the candidate-blind behavioural read
+(`runs/20260820T105919Z_blind`), under COMPETITION.md section 9f-bis-sel.
+
+| | |
+|---|---|
+| **Winner** | `qwen3.5-2b-q4_k_m`, template-baked |
+| **Runner-up / config fallback** | `qwen3.5-4b-q4_k_m` |
+| Third | `phi-4-mini-instruct-q4_k_m` |
+| Eliminated, hard-fail | `llama-3.2-1b-instruct-q4_k_m`, `qwen3.5-0.8b-q4_k_m` |
+
+Behavioural totals: 2B **95**, 4B 93, Phi-4-mini 81. The ordering was committed before the
+mapping was opened.
+
+**The accuracy proxy pointed the other way.** At limit 150 the 4B leads on accuracy, and it
+is the larger model. The blind read chose the 2B, which is why the pass was blinded: had the
+scorer known which transcript belonged to the accuracy leader, there would be no way now to
+tell a reading from a confirmation. The margin, two points of ninety-six, is narrow and is
+reported as narrow.
+
+**Superseded rows below stay where they are, labelled.** They record how the ranking looked
+before the throughput sweep and before the blind read, and deleting them would present a
+tidier history than the one this bake-off had.
+
+### The sweep understated every candidate
+
+**Measured 22 Aug.** Re-benched alone on an idle host, the winner reads **3.27 tok/s**
+(min 3.05, max 3.54, spread **15.0%**, 5 of 5 repetitions kept). The all-candidate sweep put
+the same model at **2.19** with **60.2%** spread, and a profiler run the same evening, also
+alone, read **3.59**.
+
+The sweep interleaved six candidates continuously for over thirteen hours, so every
+repetition was timed while the host was busy with the other five. **The throughput table
+below is therefore understated, probably for all six candidates**, and it is left as
+measured rather than adjusted, because we re-benched one model and cannot honestly rescale
+the other five from that.
+
+This does not disturb the selection. The perf term carries no ordering authority (9f-bis),
+the degraded path reduced it to size-class bands, and the winner was chosen on behaviour.
+A depression that applies to every row does not move a partition.
+
+**It does not overturn O-13 either.** The same six-repetition protocol on a single candidate
+gave 67.9% spread on 12 Aug and 15.0% on 22 Aug. Whatever competes with us is outside the VM
+and comes and goes, which is exactly what O-13 concluded by elimination. Tonight was a quiet
+window; 12 August was not.
+
 ### Throughput and efficiency (official image)
 
 | Model | tok/s | S_perf | peak RSS | S_eff | Run |

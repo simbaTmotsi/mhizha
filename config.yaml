@@ -173,3 +173,18 @@ safety:
     - cup
     - matchbox
     - handful
+
+# ---- ADTC 2026 submission selection (competition path only) ----
+# Set 22 Aug 2026 by COMPETITION.md section 9f-bis-sel, from the candidate-blind
+# behavioural read in runs/20260820T105919Z_blind. The product path above is untouched:
+# the 4 GB phone profile remains the default and a test asserts it.
+#
+# The runner-up is here rather than in prose because section 12 is the case that needs it
+# in a hurry: if the 22 Aug upstream check finds the audit image has gained AVX2,
+# throughput stops being a write-off, larger candidates become viable, and the ranking is
+# re-formed against this fallback rather than from scratch.
+submission:
+  winner: qwen3.5-2b-q4_k_m
+  runner_up: qwen3.5-4b-q4_k_m
+  selected_by: "blind behavioural rubric, runs/20260820T105919Z_blind/SCORES.md"
+  ships: baked            # stock arm was degenerate; see the A/B record
