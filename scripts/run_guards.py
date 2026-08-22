@@ -192,6 +192,16 @@ def physical_runs() -> list[str]:
     return sorted(set(out))
 
 
+def list_run_files(run_dir: Path, pattern: str) -> list[Path]:
+    """Files matching a pattern inside one named run directory, sorted.
+
+    Not an archive search: the caller already knows which run it wants. It lives here so
+    that no consumer needs a glob of its own, which is the shape the door rule is written
+    against, and so a future change to how runs are laid out has one place to happen.
+    """
+    return sorted(run_dir.glob(pattern))
+
+
 def new_run_dir(stamp: str, kind: str) -> Path:
     """Where a consumer's own output is archived. Created on call."""
     out = RUNS / f"{stamp}_{kind}"
