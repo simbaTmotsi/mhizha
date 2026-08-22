@@ -459,3 +459,114 @@ writing a tenth, check first whether the thing you are worried about is already 
 `run_guards`, and whether the effort belongs on the submission artifacts instead.
 
 Gate 1 closes **24 Aug 2026 23:45 PDT**; package target 20 Aug.
+
+---
+
+## Laptop session, 22 Aug: no physical run, and what the video take actually needs
+
+Suite green at the start and the end of the session: **328 passed, exit 0**. Working tree
+clean apart from the two documents this section describes.
+
+### The laptop is not near the Standard Laptop spec, so no telemetry was taken
+
+Checked before anything was run, which is the order O-12 asks for:
+
+| | Standard Laptop | this laptop |
+|---|---|---|
+| architecture | x86-64 | **arm64, Apple M1** |
+| cores | 4 | **8, heterogeneous, 4P + 4E** |
+| RAM | 8 GB | 8 GB |
+| GPU | none | **8-core Metal GPU on unified memory** |
+
+**Architecture alone settles it.** The official profiler builds llama.cpp with
+`GGML_NATIVE/AVX/AVX2/AVX512/FMA/F16C=OFF`, and every one of those is an *x86* switch. On
+arm64 the same source builds against NEON, which none of those flags disable, so the binary
+that would run here is not the binary the audit runs. This project has already measured what
+one SIMD change is worth on a single host: **1.82 to 3.83 tok/s** (section 9e, SR-10). A
+figure from here would be wrong in the **overclaiming** direction, which is the direction
+Gate 2 punishes at 2x, and it would be wearing a `host_class: physical` stamp that says it
+can be trusted. That is strictly worse than the labelled `FALLBACK` already submitted.
+
+The core count is fixable with `--cpus=4` and the RAM already matches; neither rescues the
+architecture. Docker's daemon is not running here either, and a `linux/amd64` profiler image
+on this host would run under emulation, which is a second fidelity problem standing behind
+the first.
+
+**So nothing moved.** `REPORT.md` 4.1 and the section 0 summary keep **3.27 tok/s**, spread
+**15.0%**, peak RSS **1433.78 MB**, all still labelled `FALLBACK`. The section 9g fallback
+clause stays standing. Latency stays absent, which remains the correct outcome rather than a
+gap. **O-12 is unchanged and still open**: it needs an x86-64 machine, 4 cores, 8 GB, no GPU,
+for a day.
+
+### Recording live needs the real embedder, and nothing at the prompt tells you that
+
+`config.yaml` sets `embedder.allow_hash_fallback: true`, and a fresh clone has no
+`models/embedder/all-MiniLM-L6-v2`, so the CLI comes up on the deterministic hash embedder
+silently. It runs end to end. It also retrieves differently, and **beat 4 is where that
+shows**: measured here on the fallback, the agrochemical question **abstains** (top1 0.155,
+confidence low) instead of answering with the chemical-safety banner and no dose (top1 0.467,
+confidence medium). Beat 4 would have been visually identical to beat 5 while the narration
+said the system refuses to give a rate. The strongest beat in the video, describing something
+not on screen.
+
+Installing `sentence-transformers` and saving the weights per `README.md` restored it
+exactly: `make captures` then reproduced `01`, `02` and `03` **byte for byte** against the
+shipped assets. `doctor` reports `embedder weights: absent, hash fallback active`, so the
+check is one command, and it is now a prerequisite block in `docs/VIDEO.md`.
+
+### Do not regenerate the captures on this laptop
+
+`make captures` here rewrites `04-doctor` **worse**, and it is not a software divergence.
+`capture_cli.py` relativises the repo path *after* Rich has laid the table out, so the column
+was sized for the absolute path. This laptop's path is longer than the VPS's, so Rich
+truncates first and the shipped `data/index/mhizha.db` becomes `data/index…`, with
+`models/embedder/all-MiniLM-L6-v` and `2` split across two lines. **Reverted; the committed
+captures are the correct ones.**
+
+That is a real answer to `SUBMISSION.md` phase 1.4's "diff them, an unexpected change is a
+finding". The finding is that the check is **path-length sensitive**: run it from the machine
+whose captures ship, or read its diff for this cause before concluding anything else.
+
+For the same reason, `mhizha doctor` must not be recorded live here. It prints the absolute
+home path. It is in no beat, and it should stay out of frame; a home directory in a video
+cannot be scrubbed after upload.
+
+### Beat pacing: the total was right, three beats were not
+
+Counted rather than estimated. Narration is **279 words over 115 s**, which is exactly the
+145 wpm `docs/VIDEO.md` claims. Per beat it ranged from **107 wpm (beat 3) to 189 wpm
+(beat 7)**, and beat 7 is the closing evidence line with 22 words in seven seconds.
+
+Beat boundaries rebalanced to **140 to 154 wpm**, taking time from beat 3, which is a static
+capture with a highlight, and giving it to 1, 6 and 7. **No word of narration changed, the
+beat count did not change, and the total is still 279 words over 1:55.**
+
+### The live terminal, as measured
+
+- The embedder's loader prints `Loading weights:` tqdm bars. `capture_cli.py` strips them
+  from the saved assets afterwards, which does nothing for a live take.
+  `HF_HUB_DISABLE_PROGRESS_BARS=1` and `TRANSFORMERS_VERBOSITY=error` silence them at
+  source; both are in the `docs/VIDEO.md` prerequisites.
+- Each `mhizha ask` takes **4.7 to 6.5 s warm**, nearly all of it importing torch and loading
+  MiniLM in the dev harness, and then the whole panel appears at once because `llm.backend`
+  is `stub` and nothing streams. **Left in frame deliberately.** It is not the product's
+  latency, nothing is spoken over it, and the standing rule is that the terminal is not sped
+  up. It understates rather than flatters, which is the safe direction.
+- `report_figures.py` truncates its own AVAILABLE labels at 96 characters (`label[:96]`), so
+  two of them end mid-word at any terminal width. Beat 7 frames the BLOCKED section, which is
+  printed in full. Cosmetic, inside a frozen figure producer, left alone.
+
+### What changed, and what did not
+
+Changed: `docs/VIDEO.md` only, twice, both inside item 2 of the session's mandate — beat
+boundaries, and a prerequisites section ahead of the take. Plus this section of `HANDOFF.md`.
+
+Not changed, deliberately: `REPORT.md`, the section 9g clause, `metadata.json`,
+`config.yaml`, `docs/BAKEOFF.md`, the captures, `runs/`, any guard, any script. No run was
+produced, so `scrub_runs.py` had nothing new to scrub.
+
+### Still not done
+
+**The video is not recorded.** Everything up to the take is verified: a faithful environment,
+every beat command run live and checked against the shipped assets, pacing fixed, and the
+traps written down. The take itself needs a person with a microphone.
