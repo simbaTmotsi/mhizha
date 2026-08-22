@@ -11,11 +11,22 @@ Read HANDOFF.md first, then SUBMISSION.md. COMPETITION.md is the source of truth
 competition/superseded.yaml lists every conclusion this project has reversed; prefer both
 over any recollection.
 
+Before anything else, in this order:
+  git status              confirm you are level with origin/master with nothing local
+  make setup              installs deps AND fetches the embedder weights. Needs network
+  make test               must be green (328 tests) before you change anything
+  make doctor             check embedder_id reads all-MiniLM-L6-v2, not hash-fallback
+
+That embedder check matters. Until 22 Aug the weights were never fetched by setup and a
+clone silently used a deterministic hash embedder, which changes every retrieval result. If
+doctor shows a hash fallback, or an index built by one, run make build again before you
+trust any answer or re-record any capture.
+
 State: Gate 1 closes 24 Aug 2026 23:45 PDT. The model is selected (qwen3.5-2b, template
 baked, runner-up qwen3.5-4b in config.yaml). metadata.json and download_model.sh are
 complete and verified end to end. Submitted telemetry is currently a section 9g FALLBACK
 measured on a shared VPS: 3.27 tok/s with 15.0% spread, peak RSS 1433.78 MB. The report
-carries no latency figure at all. The suite is green at 328 tests.
+carries no latency figure at all.
 
 You may change exactly two things.
 
@@ -26,6 +37,8 @@ You may change exactly two things.
      - official profiler image only, no flags of ours (the audit-fidelity oracle in
        competition/fidelity_oracle.json binds any run feeding a submitted number)
      - several repetitions, screened, warm-up discarded, median as the central estimate
+     - measure nothing else on this machine at the same time. Two concurrent runs
+       contaminated a measurement on the VPS on 22 Aug and both had to be discarded
      - stamp the runs host_class: physical
      - then supersede the FALLBACK figures in REPORT.md 4.1 and the section 0 summary,
        drop the FALLBACK labels, and retire the section 9g fallback clause rather than
@@ -35,7 +48,8 @@ You may change exactly two things.
 
 2. THE VIDEO. docs/VIDEO.md is finished: seven beats, narration written verbatim, 279
    words, 1:55. Record the terminal live rather than showing the saved SVGs. Do not speak
-   any number aloud; the script deliberately contains none.
+   any number aloud; the script deliberately contains none. If you re-record the captures,
+   check the embedder header on them first.
 
 Everything else is frozen. If you believe something else must change, write the reason
 down in HANDOFF.md before changing it.
