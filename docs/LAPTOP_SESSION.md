@@ -17,10 +17,14 @@ Before anything else, in this order:
   make test               must be green (328 tests) before you change anything
   make doctor             check embedder_id reads all-MiniLM-L6-v2, not hash-fallback
 
-That embedder check matters. Until 22 Aug the weights were never fetched by setup and a
-clone silently used a deterministic hash embedder, which changes every retrieval result. If
-doctor shows a hash fallback, or an index built by one, run make build again before you
-trust any answer or re-record any capture.
+That embedder check matters, though it is now guarded rather than silent: the fallback
+defaults off, ask refuses without weights, and open_index raises EmbedderMismatchError if
+the index was built by a different embedder than the configured one. Run make build again
+if doctor reports a stale index.
+
+Your own earlier work is already merged (bd1c005): the video prerequisites point at the
+shipped embedder, and beat 4's dependence on real retrieval is documented. You do not need
+to redo it.
 
 State: Gate 1 closes 24 Aug 2026 23:45 PDT. The model is selected (qwen3.5-2b, template
 baked, runner-up qwen3.5-4b in config.yaml). metadata.json and download_model.sh are
