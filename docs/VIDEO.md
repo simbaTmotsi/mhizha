@@ -59,7 +59,7 @@ total is still 279 words over 1:55.
 
 ## Before you record: the machine has to be able to show beat 4
 
-**Checked on the laptop, 22 and 23 Aug. Without this the strongest beat shows the wrong
+**Checked on the laptop, 22 Aug, twice. Without this the strongest beat shows the wrong
 screen.**
 
 Beat 4 depends entirely on retrieval. On the deterministic hash embedder the agrochemical
@@ -85,7 +85,7 @@ make doctor     # embedder_id must read all-MiniLM-L6-v2, never hash-fallback:38
 If `doctor` reports a hash fallback, or an `embedder_id` on the **index** row that is not
 `all-MiniLM-L6-v2`, run `make build` before trusting a single answer on screen.
 
-Verified 23 Aug on a tree level with `origin/master`: with the weights present, `make
+Verified 22 Aug ~21:30Z on a tree level with `origin/master`: with the weights present, `make
 captures` reproduces `01`, `02` and `03` byte for byte against the shipped assets. That is
 the check that the machine in front of you shows what the submission claims.
 
@@ -123,7 +123,7 @@ relativises the path *after* Rich has sized the column, so Rich truncates the ab
 first and `data/index/mhizha.db` ships as `data/index…`, and the embedder path breaks across
 two lines. The committed captures are the correct ones.
 
-Re-checked 23 Aug against the 22 Aug embedder commit, which touched `capture_cli.py`: the
+Re-checked 22 Aug ~21:30Z against the embedder commit, which touched `capture_cli.py`: the
 column is still sized before the path is shortened, so this is unchanged. `01`, `02` and
 `03` still reproduce byte for byte here; only `04-doctor` degrades, and only on this
 machine's longer path. If a capture genuinely needs regenerating, do it where the assets
@@ -164,7 +164,31 @@ Both original blockers are cleared.
 
 What remains is not a blocker but is worth deciding before the take:
 
-- **Captions**, for accessibility and for judges watching without sound.
-- **Whether beat 6 mentions the blind read at all.** It is the most interesting thing in
-  the selection and it is one clause. It is also the clause most likely to need a second
-  sentence to land, and there is no room for a second sentence. Cut it rather than rush it.
+- **Captions: done, 22 Aug ~21:50Z.** `docs/video/captions.vtt`, WebVTT, 28 cues tiling 0:00 to
+  1:55. Upload it alongside the video; every host that takes a caption file takes this one.
+
+  It is **generated from the beat table above** by `python3 scripts/video_captions.py`, not
+  written out, because a hand-typed caption file is a second copy of the narration that can
+  drift from the first, and a caption disagreeing with the audio is worse than none: the
+  viewer without sound reads the version nobody checked. Same reasoning as the CLI captures
+  being generated rather than pasted. `--check` fails if the committed file is stale against
+  the beat sheet, and the generator refuses outright if a digit ever appears in a narration
+  cell, since a spoken number cannot carry its caveat or be corrected after upload.
+
+  **If you change a word of narration or a beat boundary, re-run it before recording.**
+
+- **Whether beat 6 mentions the blind read at all. Still open, and this document has been
+  contradicting itself about it.** The verbatim narration in the beat sheet *keeps* the
+  clause; the note here used to say cut it. Both cannot be right on the day, so here is the
+  arithmetic instead of the advice:
+
+  | beat 6 | words | over 16s |
+  |---|---|---|
+  | as written, with "chosen by reading transcripts blind" | 41 | **154 wpm**, the fastest beat in the video |
+  | with that clause cut | 36 | 135 wpm, the most relaxed |
+
+  Cutting it buys the beat almost twenty words per minute, and it is the only beat above
+  150. Keeping it says the most interesting thing about the selection in five words. It is
+  a judgement call about the take, not a correctness question, and it belongs to whoever
+  reads the script aloud. **Decide it before the take, not during**, and re-run
+  `scripts/video_captions.py` if it is cut.

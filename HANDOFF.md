@@ -573,7 +573,7 @@ traps written down. The take itself needs a person with a microphone.
 
 ---
 
-## Laptop session, 23 Aug: preflight, and the embedder fix landing
+## Laptop session, 22 Aug ~21:30Z: preflight, and the embedder fix landing
 
 Pulled first. `c684977` is in `origin/master`, and two commits sit on top of it:
 `592d2d8` (embedder fallback loud and off by default) and `4ee7df1` (laptop prompt refresh).
@@ -631,3 +631,77 @@ diffed, reverted. **Regenerate captures where the assets were made, not here.**
 `docs/VIDEO.md` (prerequisites rewritten to the shipped mechanism, capture-header check
 added, captures warning re-dated) and this section. Nothing else. No run produced, so
 `scrub_runs.py` had nothing new to scrub. The video is still not recorded.
+
+---
+
+## Laptop session, 22 Aug ~21:50Z: captions, and a date this file had wrong
+
+Level with `origin/master` at `af3e874`, tree clean. Preflight all green: `make setup`
+exit 0 (weights present, fetch skipped), `make test` exit 0 **328 passed**, `make doctor`
+reports `embedder_id: all-MiniLM-L6-v2` against an index built with it. The upstream gate
+landed clean in `af3e874`, so the SIMD flags are unchanged and the model choice stands.
+
+### Third look at the hardware, third identical answer
+
+Apple M1, arm64, 8 logical cores (4P + 4E), 8 GB, 8-core Metal GPU, Docker daemon down.
+**Does not qualify, nothing run, nothing in `REPORT.md` moved.** The submitted telemetry is
+still the labelled `FALLBACK`, the 9g clause still stands, latency is still absent.
+
+This is now settled rather than re-litigated: the answer will not change on this machine, so
+a future session should read this line and spend its time on the video instead of
+re-measuring the CPU.
+
+### Captions delivered, generated rather than typed
+
+`docs/video/captions.vtt`, WebVTT, 28 cues tiling 0:00 to 1:55, emitted by
+`scripts/video_captions.py` from the beat table in `docs/VIDEO.md`.
+
+**Why a script and not a file, given the freeze.** Captions were an open item in
+`docs/VIDEO.md` and are part of item 2, so producing them is in scope; adding a
+*generator* is the part that needs a reason. It is the same one behind `make captures`:
+a hand-typed caption file is a second copy of the narration that can drift from the first,
+and a caption disagreeing with the audio is worse than no caption, because the viewer
+without sound reads the version nobody checked. One source, emitted twice.
+
+Verified rather than eyeballed: the concatenated cues are **byte-identical to the narration**
+read back out of the beat table, the cues are contiguous and monotonic and end exactly at
+1:55, the longest is 84 characters, and none exceeds 200 wpm. `--check` fails on a stale
+file. Both of the generator's own refusals were made to fire before being trusted, per the
+section 12b habit: a digit in a narration cell, and a beat table that is not seven rows.
+
+**This is not a tenth guard.** It is a check inside a producer, like `fetch_embedder.py`
+verifying the embedding dimension before declaring success. No test was added, and
+`GUARD_POSITIVE_CONTROLS` is untouched.
+
+### Beat 6: this document was contradicting itself, and still is by design
+
+The beat sheet's verbatim narration **keeps** "chosen by reading transcripts blind". The
+open-items note said **cut it**. Both cannot be true on the day.
+
+Not resolved here, because it is a decision about the take and it belongs to whoever reads
+the script aloud. Replaced the advice with the arithmetic: 41 words in 16 s is **154 wpm**
+and the fastest beat in the video; cutting the five-word clause gives **135 wpm** and the
+most relaxed. It is the only beat above 150. **Decide before the take**, and re-run the
+caption generator if it is cut.
+
+### A date correction, because this project runs on dated clauses
+
+The previous section was headed "23 Aug" and `docs/VIDEO.md` carried three "23 Aug" stamps.
+All of that work happened on **22 August**, late evening: `bd1c005` is timestamped
+2026-08-22 23:40 CAT, and the clock at the time of writing reads 2026-08-22 21:52Z.
+
+Corrected to 22 Aug with a time, rather than left. In a project whose fallbacks fire on
+dates and whose gate closes 24 Aug 23:45 PDT, a handoff that misplaces a day corrupts the
+timeline the next reader rebuilds from it. **Future entries carry a UTC time, not a bare
+date**, because this file is written near midnight in UTC+2 and the bare date is ambiguous
+for two hours every night.
+
+### Changed this session
+
+`scripts/video_captions.py` and `docs/video/captions.vtt` (new), `docs/VIDEO.md` (captions
+item resolved, beat 6 contradiction surfaced with its arithmetic, dates corrected), and this
+section. **The narration is untouched: still 279 words, seven beats, 1:55.** No run produced,
+so `scrub_runs.py` had nothing new to scrub.
+
+**The video is still not recorded**, and it is now the only unblocked item left before the
+gate.
