@@ -570,3 +570,64 @@ produced, so `scrub_runs.py` had nothing new to scrub.
 **The video is not recorded.** Everything up to the take is verified: a faithful environment,
 every beat command run live and checked against the shipped assets, pacing fixed, and the
 traps written down. The take itself needs a person with a microphone.
+
+---
+
+## Laptop session, 23 Aug: preflight, and the embedder fix landing
+
+Pulled first. `c684977` is in `origin/master`, and two commits sit on top of it:
+`592d2d8` (embedder fallback loud and off by default) and `4ee7df1` (laptop prompt refresh).
+Fast-forwarded, tree clean, level with origin.
+
+Preflight, in the prescribed order, all green:
+
+| step | result |
+|---|---|
+| `git status` | behind 2, fast-forwarded, clean |
+| `make setup` | exit 0; weights already present, so `fetch_embedder.py` skipped |
+| `make test` | exit 0, **328 passed** |
+| `make doctor` | `embedder_id: all-MiniLM-L6-v2`, dim 384, weights present, index built 22 Aug 21:17Z |
+
+### Same machine, same answer: no physical telemetry
+
+Apple M1, arm64, 8 logical cores (4P + 4E), 8 GB, 8-core Metal GPU, Docker daemon not
+running. Unchanged from 22 Aug and unchanged in verdict: **the architecture is wrong and
+that alone settles it**, because the profiler's `GGML_AVX/AVX2/AVX512/FMA/F16C=OFF` are x86
+switches that do not disable NEON. Nothing was run, nothing in `REPORT.md` moved, the 9g
+clause stands, latency stays absent. O-12 still wants an x86-64 box, 4 cores, 8 GB, no GPU.
+
+### The 22 Aug embedder commit made my own instructions stale, so they were rewritten
+
+`docs/VIDEO.md`'s pre-recording block told the reader to `pip install sentence-transformers`
+and save the weights with a Python one-liner, which was the only path that existed when it
+was written. `592d2d8` replaced that with `make setup` and `make embedder`, defaulted
+`allow_hash_fallback` to `false`, and made `ask` refuse with the fixing command rather than
+answer differently. **A stale remedy in a runbook is the failure this project keeps a
+superseded registry for**, so the block now names the shipped mechanism and the three-command
+preflight instead.
+
+Also added there, per the refreshed prompt: **every capture carries an embedder header line**
+now, and a capture whose header does not read `all-MiniLM-L6-v2` is not the capture this
+submission describes.
+
+### No new guard is needed for a stale index, and here is why, so nobody adds one
+
+The obvious worry after `592d2d8` is an index built by the hash embedder being read by the
+real one. It is already handled: `open_index` calls `store.assert_embedder`, which raises
+`EmbedderMismatchError` naming both ids, and `open_index` is on the `ask` path
+(`cli.py:233`). Checked rather than assumed. **The guard freeze holds; there is nothing to
+demonstrate here.**
+
+### The 04-doctor capture trap survived the commit
+
+`592d2d8` touched `capture_cli.py`, so this was re-checked rather than carried forward.
+`make captures` on this laptop still degrades `04-doctor` and only `04-doctor`: `01`, `02`
+and `03` reproduce byte for byte. The column is still sized for the absolute path before the
+path is shortened, so `data/index/mhizha.db` still becomes `data/index…`. Regenerated,
+diffed, reverted. **Regenerate captures where the assets were made, not here.**
+
+### Changed this session
+
+`docs/VIDEO.md` (prerequisites rewritten to the shipped mechanism, capture-header check
+added, captures warning re-dated) and this section. Nothing else. No run produced, so
+`scrub_runs.py` had nothing new to scrub. The video is still not recorded.

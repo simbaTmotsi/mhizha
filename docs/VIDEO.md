@@ -59,36 +59,45 @@ total is still 279 words over 1:55.
 
 ## Before you record: the machine has to be able to show beat 4
 
-**Checked on the laptop, 22 Aug. Without this the strongest beat shows the wrong screen.**
+**Checked on the laptop, 22 and 23 Aug. Without this the strongest beat shows the wrong
+screen.**
 
-`config.yaml` sets `embedder.allow_hash_fallback: true`, and a fresh clone has no embedder
-weights, so the CLI comes up on the deterministic hash embedder without saying anything at
-the prompt. It runs. It also retrieves differently, and beat 4 is where that shows: on the
-fallback the agrochemical question **abstains** (top1 0.155) instead of answering with the
-chemical-safety banner and no dose (top1 0.467). Beat 4 would then be visually identical to
-beat 5, while the narration says the system refuses to give a rate.
+Beat 4 depends entirely on retrieval. On the deterministic hash embedder the agrochemical
+question **abstains** (top1 0.155) instead of answering with the chemical-safety banner and
+no dose (top1 0.467), so beat 4 becomes visually identical to beat 5 while the narration
+says the system refuses to give a rate.
 
-One command tells you which one you are on:
+**This is now guarded rather than silent**, as of 22 Aug: `allow_hash_fallback` defaults to
+`false`, `make setup` fetches the weights, and `ask` refuses with the command that fixes it
+rather than answering differently. `open_index` also raises `EmbedderMismatchError` if the
+index on disk was built by a different embedder than the configured one, so a stale index
+from before 22 Aug cannot answer quietly either. None of that removes the check; it just
+means the machine tells you instead of you having to know.
 
-```bash
-PYTHONPATH=src python3 -m mhizha doctor | grep 'embedder weights'
-# want: embedder weights: present
-# not:  embedder weights: absent, hash fallback active
-```
-
-If it is absent, install the build-time dependency and save the weights as `README.md`
-describes, then rebuild the index:
+Run the preflight and read three things:
 
 ```bash
-pip install sentence-transformers
-python3 -c "from sentence_transformers import SentenceTransformer; \
-  SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2').save('models/embedder/all-MiniLM-L6-v2')"
-PYTHONPATH=src python3 -m mhizha embed && PYTHONPATH=src python3 -m mhizha index
+make setup      # deps + embedder weights. Needs network, once.
+make test       # 328 passed, and check the exit code
+make doctor     # embedder_id must read all-MiniLM-L6-v2, never hash-fallback:384
 ```
 
-Verified on 22 Aug: with the weights present, `make captures` reproduces `01`, `02` and
-`03` byte for byte against the shipped assets, which is the check that the machine in front
-of you shows what the submission claims.
+If `doctor` reports a hash fallback, or an `embedder_id` on the **index** row that is not
+`all-MiniLM-L6-v2`, run `make build` before trusting a single answer on screen.
+
+Verified 23 Aug on a tree level with `origin/master`: with the weights present, `make
+captures` reproduces `01`, `02` and `03` byte for byte against the shipped assets. That is
+the check that the machine in front of you shows what the submission claims.
+
+**Every capture now carries its embedder in a header line.** If you re-record a capture,
+read that header before you use the footage:
+
+```
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+```
+
+A capture whose header does not say `all-MiniLM-L6-v2` is not the capture this submission
+describes, whatever else looks right about it.
 
 **Silence the loader before the take.** The embedder writes `Loading weights:` progress bars
 to the terminal. `capture_cli.py` strips them out of the saved assets afterwards, which does
@@ -111,8 +120,14 @@ directory in a video cannot be scrubbed after upload.
 **Do not run `make captures` to "refresh" anything first.** On a machine whose repo path is
 longer than the one the assets were made on, it degrades `04-doctor`: `capture_cli.py`
 relativises the path *after* Rich has sized the column, so Rich truncates the absolute path
-first and `data/index/mhizha.db` ships as `data/index…`. The committed captures are the
-correct ones.
+first and `data/index/mhizha.db` ships as `data/index…`, and the embedder path breaks across
+two lines. The committed captures are the correct ones.
+
+Re-checked 23 Aug against the 22 Aug embedder commit, which touched `capture_cli.py`: the
+column is still sized before the path is shortened, so this is unchanged. `01`, `02` and
+`03` still reproduce byte for byte here; only `04-doctor` degrades, and only on this
+machine's longer path. If a capture genuinely needs regenerating, do it where the assets
+were made.
 
 ## What to record, and in what order
 
