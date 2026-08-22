@@ -1,0 +1,31 @@
+# Measured cue windows. Written by scripts/video_narration.py.
+# seconds_start seconds_end beat text
+# The text must match docs/VIDEO.md verbatim; video_captions.py checks it.
+0.000	4.250	1	A farmer in Mashonaland is deciding what to plant this week.
+4.370	8.070	1	The nearest extension officer is a bus ride away,
+8.190	10.990	1	and there is no signal in the field.
+11.110	16.160	1	An assistant that needs a network is not there at the moment the decision gets made.
+16.510	21.210	2	Mhizha runs entirely offline, on a mid-range Android phone.
+21.330	25.805	2	It answers practical agronomy questions from a curated corpus,
+25.925	29.450	2	cites what it used, and says so when it cannot help.
+29.570	31.620	2	The pipeline is real.
+31.740	35.765	2	The agronomy is not sourced yet, and we say that plainly.
+36.115	40.565	3	Every claim carries a passage, and every passage names its source,
+40.685	43.860	3	its publisher and the date it was refreshed.
+43.980	46.830	3	Those placeholder banners are real.
+46.950	50.400	3	This corpus holds no agronomic content,
+50.520	54.845	3	and the system tells the farmer that instead of sounding authoritative.
+55.195	58.495	4	Ask it how much to spray, and it refuses.
+58.615	61.765	4	A dose that is not written, word for word,
+61.885	65.685	4	in a passage a human has signed off is never emitted.
+65.805	69.130	4	Not as an estimate, not as a typical figure.
+69.250	74.450	4	A wrong spray rate destroys a season, or harms the person holding the sprayer.
+74.800	79.150	5	Below its confidence threshold, the model is not called at all.
+79.270	83.920	5	It says what it does not know, asks the one question that would unblock it,
+84.040	87.740	5	and sends the farmer to their local AGRITEX officer.
+88.090	91.415	6	The competition profiles a bare model file,
+91.535	95.085	6	so none of this code runs while judges are scoring.
+95.205	100.705	6	We ship Qwen three point five, two billion, chosen by reading transcripts blind,
+100.825	105.175	6	with our safety posture baked into the model's own chat template.
+105.525	109.225	7	A number that cannot be traced to a run fails our build.
+109.345	112.845	7	Where we could not measure something, the report says so.

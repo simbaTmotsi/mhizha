@@ -705,3 +705,89 @@ so `scrub_runs.py` had nothing new to scrub.
 
 **The video is still not recorded**, and it is now the only unblocked item left before the
 gate.
+
+---
+
+## Laptop session, 23 Aug ~00:15Z: the narration exists, and nobody has heard it
+
+Level with `origin/master` at `a2f7f9a`, tree clean at the start. **328 tests pass, exit 0.**
+
+### Hardware, fourth look, unchanged
+
+Apple M1, arm64, 8 logical cores, 8 GB, Metal GPU. Does not qualify, nothing run, no
+submitted figure moved. Settled; see the previous section.
+
+### The narration is rendered, and the timings are now measured rather than assumed
+
+`scripts/video_narration.py` reads the same narration cells `video_captions.py` reads,
+renders them with **Kokoro-82M** (`bf_emma`, British English, speed 1.0), measures every
+clip, and writes the durations back. Output: `docs/video/narration/narration.m4a`,
+`MEASURED.txt`, and `TIMINGS.txt`.
+
+**The measurement mattered.** The beat sheet's boundaries were words divided by an assumed
+145 wpm, and per beat that was wrong by up to three seconds: beat 4 budgeted 22 s speaks in
+19.3, beat 5 budgeted 15 s speaks in 12.9, beat 2 budgeted 18 s needs 19.3. Total is
+**1:53**, comfortably inside the 2:00 cut. Both the assumed and the measured numbers are
+kept visible in `docs/VIDEO.md`; the old ones are what the beat sheet was planned against.
+
+`video_captions.py` now prefers `TIMINGS.txt` when it exists and falls back to word-count
+allocation when it does not, saying which in the file's own header. It refuses outright if
+the timings have drifted from the narration, because captioning stale words with real
+timings would look **more** trustworthy than it is. Made to fire before being trusted.
+
+### Four pronunciations patched, none of them verified by ear
+
+| word | was | now |
+|---|---|---|
+| Mhizha | `ˈɛmhˈɪʒə`, the M read as the letter "em" | `mˈhiːʒə` |
+| Mashonaland | `məʃˈQnəland`, first syllable a schwa | `mˌaʃˈQnəland` |
+| AGRITEX | spelled out letter by letter, seven syllables | `ˈaɡɹɪtɛks` |
+| Qwen | `kjˈuːwˈɛn`, the Q read as its letter name | `kwˈɛn` |
+
+Qwen was not one of the three names asked for. It is patched because beat 6 says it aloud
+and it is the model this submission ships.
+
+**QC, honestly.** Everything objective was measured and passed: no clipping in any clip,
+peaks 0.49 to 0.79, RMS within 0.001 across all seven beats, no DC offset, no truncation,
+every phoneme validated against the voice's vocabulary before rendering.
+
+**QC by ear did not happen, because I cannot hear.** That is the whole of it. Whether
+`mˈhiːʒə` is a fair rendering of a Shona word is not a question a duration check answers,
+and it belongs to someone who speaks the language the project is named in.
+`--qc` renders two candidates for Mhizha and two for Mashonaland as short clips for exactly
+that listen. **This is an open item, not a finished one.**
+
+### Beyond the two items, with reasons, as the rule requires
+
+- **`CITATIONS.md` section 7**, added on instruction. Every component of the TTS stack with
+  its licence, marked retrieved or unverified on this project's own standard. Two are worth
+  a second look: `phonemizer-fork` and `espeak-ng` are **GPL-3.0-or-later**, compatible with
+  this repository's GPL-3.0 and neither redistributed nor shipped; and the **Kokoro weights
+  are marked unverified**, because only `config.json` and the `.pth` were fetched, with no
+  LICENSE and no model card. The commit sha is recorded, the licence claim is not. SR-04 is
+  precisely this mistake made once already.
+- **`.gitignore`**, one block. The per-beat WAVs and the master WAV are ~10 MB and
+  regenerate in one command; the compressed master and the two text files are 912 KB and
+  are what the edit is cut against. `SUBMISSION.md` phase 1.5 says a repository that is
+  unexpectedly large is one about to publish something it should not, so the bulk stays out
+  the same way the run bulk does.
+
+### Not a guard, and not in requirements.txt
+
+The refusals added this session live inside producers: a phoneme outside the voice's
+vocabulary, a timings file that has drifted from the narration. No test was added and
+`GUARD_POSITIVE_CONTROLS` is untouched. The TTS stack is deliberately **not** in
+`requirements.txt`: it would put torch and spaCy in front of everyone running `make setup`
+for an asset that is generated once. It also needs Python 3.12 or older, because a spaCy
+dependency will not build on 3.13; that is written down in `docs/VIDEO.md`.
+
+### Changed this session
+
+New: `scripts/video_narration.py`, `docs/video/narration/{narration.m4a,MEASURED.txt,TIMINGS.txt}`.
+Modified: `docs/VIDEO.md` (measured boundaries, narration section, closing-card credit),
+`scripts/video_captions.py` (measured timings preferred, synthetic-voice NOTE),
+`CITATIONS.md`, `.gitignore`, and this section. **The narration is untouched: 279 words,
+seven beats.** No run produced, so `scrub_runs.py` had nothing new.
+
+**Still not recorded**, and now with a specific blocker rather than a general one: the
+terminal takes and one person's ear on four names.

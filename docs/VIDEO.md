@@ -40,20 +40,36 @@ numbers and the video keeps the argument.
 the beats ranged from 107 words per minute to 189, even though the total was exactly the
 145 the paragraph above claims. Beat 7 had 22 words in seven seconds and it is the closing
 evidence line. Time moved from beat 3, a static capture with a highlight, into beats 1, 6
-and 7. Every beat is now between 140 and 154 wpm, **no word of narration changed**, and the
-total is still 279 words over 1:55.
+and 7. Every beat came out between 140 and 154 wpm, **no word of narration changed**.
+
+**Superseded 23 Aug: the boundaries below are measured, not calculated.** The rebalance
+above was still arithmetic, words divided by an assumed rate, and the narration has now
+been rendered so there is a real duration to read instead. It runs **1:53**, and the
+per-beat error in the arithmetic was up to three seconds: beat 4 was budgeted 22 s and
+speaks in 19.3, beat 5 was budgeted 15 s and speaks in 12.9, beat 2 was budgeted 18 s and
+needs 19.3. Both figures are kept visible rather than one quietly replacing the other,
+because the assumed numbers are what the beat sheet was planned against.
+
+The table is rounded to the second, which is the resolution a person reads a beat sheet at.
+The windows the captions are actually built from are in
+`docs/video/narration/TIMINGS.txt`, to the millisecond. Adjacent beats can therefore show
+the same second on this table: they are about a third of a second apart, and the rounding
+cannot say so.
 
 | # | Time | On screen | Spoken, verbatim |
 |---|---|---|---|
-| 1 | 0:00-0:18 | A field, or a still of one. Then the terminal. | "A farmer in Mashonaland is deciding what to plant this week. The nearest extension officer is a bus ride away, and there is no signal in the field. An assistant that needs a network is not there at the moment the decision gets made." |
-| 2 | 0:18-0:36 | `mhizha ask` running, answer appearing | "Mhizha runs entirely offline, on a mid-range Android phone. It answers practical agronomy questions from a curated corpus, cites what it used, and says so when it cannot help. The pipeline is real. The agronomy is not sourced yet, and we say that plainly." |
-| 3 | 0:36-0:53 | Capture 01, sources table highlighted | "Every claim carries a passage, and every passage names its source, its publisher and the date it was refreshed. Those placeholder banners are real. This corpus holds no agronomic content, and the system tells the farmer that instead of sounding authoritative." |
-| 4 | 0:53-1:15 | Capture 03. Type the question in full. | "Ask it how much to spray, and it refuses. A dose that is not written, word for word, in a passage a human has signed off is never emitted. Not as an estimate, not as a typical figure. A wrong spray rate destroys a season, or harms the person holding the sprayer." |
-| 5 | 1:15-1:30 | Capture 02, the abstention panel | "Below its confidence threshold, the model is not called at all. It says what it does not know, asks the one question that would unblock it, and sends the farmer to their local AGRITEX officer." |
-| 6 | 1:30-1:46 | The profiler, or REPORT section 2.4 | "The competition profiles a bare model file, so none of this code runs while judges are scoring. We ship Qwen three point five, two billion, chosen by reading transcripts blind, with our safety posture baked into the model's own chat template." |
-| 7 | 1:46-1:55 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
+| 1 | 0:00-0:16 | A field, or a still of one. Then the terminal. | "A farmer in Mashonaland is deciding what to plant this week. The nearest extension officer is a bus ride away, and there is no signal in the field. An assistant that needs a network is not there at the moment the decision gets made." |
+| 2 | 0:17-0:36 | `mhizha ask` running, answer appearing | "Mhizha runs entirely offline, on a mid-range Android phone. It answers practical agronomy questions from a curated corpus, cites what it used, and says so when it cannot help. The pipeline is real. The agronomy is not sourced yet, and we say that plainly." |
+| 3 | 0:36-0:55 | Capture 01, sources table highlighted | "Every claim carries a passage, and every passage names its source, its publisher and the date it was refreshed. Those placeholder banners are real. This corpus holds no agronomic content, and the system tells the farmer that instead of sounding authoritative." |
+| 4 | 0:55-1:14 | Capture 03. Type the question in full. | "Ask it how much to spray, and it refuses. A dose that is not written, word for word, in a passage a human has signed off is never emitted. Not as an estimate, not as a typical figure. A wrong spray rate destroys a season, or harms the person holding the sprayer." |
+| 5 | 1:15-1:28 | Capture 02, the abstention panel | "Below its confidence threshold, the model is not called at all. It says what it does not know, asks the one question that would unblock it, and sends the farmer to their local AGRITEX officer." |
+| 6 | 1:28-1:45 | The profiler, or REPORT section 2.4 | "The competition profiles a bare model file, so none of this code runs while judges are scoring. We ship Qwen three point five, two billion, chosen by reading transcripts blind, with our safety posture baked into the model's own chat template." |
+| 7 | 1:46-1:53 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
 
 **Closing card:** Mhizha. Simbarashe Timothy Motsi. team_id `mhizha`. github.com/simbaTmotsi.
+Below that, smaller: **"Narration: Kokoro-82M, a synthetic voice."** A viewer who assumes a
+person read this is owed the correction, it costs one line, and the same credit is in the
+caption file's header and in `CITATIONS.md` section 7.
 
 **On beat 6, say the model name aloud as words**, not as a filename. "Qwen three point five, two billion" is what a listener can follow; `qwen3.5-2b-q4_k_m` is not.
 
@@ -143,8 +159,57 @@ Record in this order so a re-take of the hardest beat does not invalidate the ot
    the BLOCKED block, not the whole output: the script truncates its own AVAILABLE labels
    at 96 characters, so two of them end mid-word at any terminal width. BLOCKED prints in
    full.
-3. **Voiceover last**, against the cut, so the pacing follows the footage rather than
-   forcing it.
+3. **The voiceover already exists**, which inverts the old instruction here. It used to
+   say record the voice last, against the cut, so the pacing followed the footage. The
+   narration is now rendered and measured, so the footage is cut to it: every beat has a
+   known duration and `docs/video/narration/TIMINGS.txt` gives the cut points to the
+   millisecond. Lay the audio down first and fit the terminal takes into its windows.
+
+   If you would rather read it yourself, do: a human voice is better than a synthetic one
+   and the script was written to be spoken. Then re-time the beats against your own
+   recording rather than keeping these, and re-run `scripts/video_captions.py`.
+
+## The narration, and what is not checked about it
+
+**Rendered 23 Aug with Kokoro-82M**, voice `bf_emma`, British English, speed 1.0. The
+master is `docs/video/narration/narration.m4a`; per-beat WAVs and the QC samples are
+regenerated rather than committed, because ten megabytes of lossless audio in a repository
+is the kind of surprise `SUBMISSION.md` phase 1.5 tells you to find before a push and not
+after.
+
+```bash
+python3 scripts/video_narration.py --phonemes        # what each patched word becomes
+python3 scripts/video_narration.py --qc              # pronunciation variants, side by side
+python3 scripts/video_narration.py --write-timings   # render, measure, update this table
+python3 scripts/video_captions.py                    # then rebuild the cues from that
+```
+
+It needs Python 3.12 or older: a spaCy dependency of the phoneme stack does not build on
+3.13. `uv venv --python 3.12` then `uv pip install kokoro soundfile` is the whole setup,
+plus a system `espeak-ng`. None of it is in `requirements.txt` and none of it ships;
+`CITATIONS.md` section 7 records every component and its licence.
+
+**Four pronunciations are patched**, because the model has never seen Shona and reads the
+project's own name wrong:
+
+| word | unpatched | patched | what it now says |
+|---|---|---|---|
+| Mhizha | `ˈɛmhˈɪʒə` | `mˈhiːʒə` | the leading M was being read as the letter "em" |
+| Mashonaland | `məʃˈQnəland` | `mˌaʃˈQnəland` | first syllable was reducing to a schwa |
+| AGRITEX | `ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks` | `ˈaɡɹɪtɛks` | was spelled out, seven syllables, letter by letter |
+| Qwen | `kjˈuːwˈɛn` | `kwˈɛn` | the Q was being read as its letter name |
+
+**What was checked, and what was not.** Every clip was measured: no clipping anywhere,
+peaks between 0.49 and 0.79, RMS within 0.001 across all seven beats, no DC offset, no
+truncated cue. That is all objective and all of it passed.
+
+**Nobody has listened to it yet, and that is the open item.** Whether `mˈhiːʒə` is right
+is a question about a Shona word, and it belongs to someone who speaks Shona rather than to
+a duration check. `--qc` renders the two candidates for Mhizha and the two for Mashonaland
+as short clips so the choice can be made by ear in about a minute. Changing one is a
+one-line edit to `PRONUNCIATIONS` in `scripts/video_narration.py`, then re-render.
+
+**Listen to the whole thing once before it is cut**, not only the four names.
 
 ## What not to do
 

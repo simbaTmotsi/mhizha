@@ -65,3 +65,12 @@ verdict.json
 
 # lm-eval dataset cache (build time, several hundred MB)
 .cache/
+
+# Narration audio. The compressed master (narration.m4a) and the measured timings ship,
+# because the master is what the edit is cut against and TIMINGS.txt is where its cut
+# points come from. The intermediate WAVs do not: seven beats plus the master is about
+# 10 MB of lossless audio that scripts/video_narration.py regenerates in one command, and
+# SUBMISSION.md phase 1.5 warns that a repository which is unexpectedly large is a
+# repository about to publish something it should not. QC samples are working files.
+docs/video/narration/*.wav
+docs/video/narration/qc-*

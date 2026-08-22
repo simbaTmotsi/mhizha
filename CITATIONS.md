@@ -130,3 +130,41 @@ organisations is present in this repository.
 When a gap is filled, the source, publisher and refresh date become required fields on
 every chunk derived from it, a named human reviewer signs it off in
 `data/review_ledger.jsonl`, and the attribution is added here.
+
+## 7. Submission video narration
+
+**The narration is a synthetic voice, not a person reading.** It is generated from the
+verbatim narration cells of `docs/VIDEO.md` by `scripts/video_narration.py`. The credit is
+carried in three places so it cannot be missed: a `NOTE` block at the head of
+`docs/video/captions.vtt`, the closing card in `docs/VIDEO.md`, and here.
+
+Nothing in this section ships on a device or is imported by anything under `src/mhizha/`.
+It runs once, at build time, on a developer machine, and its only output is an audio file.
+
+| Component | Version | Licence | How established |
+|---|---|---|---|
+| `hexgrad/Kokoro-82M` (the weights) | commit `f3ff3571791e39611d31c381e3a41a3af07b4987` | Apache-2.0 (**unverified**) | commit **retrieved** 23 Aug 2026 from the local Hugging Face cache |
+| `kokoro` (the Python package) | 0.9.4 | Apache-2.0 | **retrieved** 23 Aug 2026 from installed distribution metadata |
+| `misaki` (grapheme to phoneme) | 0.9.4 | Apache-2.0 | **retrieved** 23 Aug 2026, same |
+| `phonemizer-fork` | 3.3.2 | **GPL-3.0-or-later** | **retrieved** 23 Aug 2026, same |
+| `espeak-ng` (system, phoneme backend) | 1.52.0 | **GPL-3.0-or-later** | **retrieved** 23 Aug 2026 from `espeak-ng --version` |
+| `num2words` | 0.5.14 | LGPL | **retrieved** 23 Aug 2026, same |
+| `spaCy` + `en_core_web_sm` | 3.8.15 / 3.8.0 | MIT | **retrieved** 23 Aug 2026, same |
+| `soundfile` | 0.14.0 | BSD-3-Clause | **retrieved** 23 Aug 2026, same |
+| `torch` | 2.13.0 | BSD-3-Clause (**unverified**) | no licence field in the installed metadata |
+
+**The weights entry is deliberately marked unverified**, and it is the one to check before
+anyone relies on it. Only `config.json` and `kokoro-v1_0.pth` were fetched into the local
+cache; no `LICENSE` file and no model card came with them, so the Apache-2.0 above is
+stated from general knowledge and has not been read off the upstream card. This project
+has already been wrong about a model licence exactly once, in exactly this way (SR-04),
+which is why the commit sha is recorded and the claim is not.
+
+**Two GPL components, and why that is not a problem here.** `phonemizer-fork` and
+`espeak-ng` are GPL-3.0-or-later. This repository is GPL-3.0 (section 1), so they are
+compatible with it; neither is redistributed by us, neither is a dependency of anything
+that ships, and neither appears in `requirements.txt`. They are a build-time toolchain on
+one developer machine, in the same category as Docker.
+
+**Kokoro is not a competition artefact.** It never touches the submitted GGUF, the
+profiler, `metadata.json`, or any measurement. It reads a script aloud.
