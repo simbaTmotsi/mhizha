@@ -15,13 +15,19 @@ When it does not have a validated source, it says so rather than guessing.
 ## Quick start
 
 ```bash
-make setup                                          # build time, needs network
+make setup                                          # deps + embedder weights. Needs network, once
 make build                                          # ingest + chunk + index
 make ask Q="when should I plant maize in Mashonaland"   # add L=sn for Shona
 make test
 make doctor                                         # device budget and health
 make eval                                           # grounding, abstention, red-team
 ```
+
+**Run them in that order.** `make setup` fetches the sentence embedder as well as the
+Python dependencies, and `make ask` refuses to run without it rather than falling back to
+the deterministic hash embedder that the test suite uses. The fallback would answer, but
+with different retrieval than every figure and capture in this repository, and nothing on
+screen would tell you that. `make embedder` fetches the weights on their own.
 
 `make ask` runs fully offline. So does everything after `make setup`.
 
@@ -82,18 +88,27 @@ then [`app/safety.py`](src/mhizha/app/safety.py), then
 ## Setup detail
 
 ```bash
-python3 -m pip install -r requirements.txt
+make setup        # both steps below
 
-# Embedder weights, build time only, stored locally and never fetched at runtime.
-python3 -c "
-from sentence_transformers import SentenceTransformer
-SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2').save('models/embedder/all-MiniLM-L6-v2')
-"
+make deps         # python3 -m pip install -r requirements.txt
+make embedder     # embedder weights, build time only, never fetched at runtime
 ```
 
-Without the weights, `embedder.allow_hash_fallback` gives you a deterministic hash
-embedder so the pipeline still runs end to end. It proves the plumbing; it does not
-produce useful retrieval, and `config.py` forbids it in the production profile.
+`make embedder` is idempotent and skips when the weights are already there.
+
+**Without the weights, `make ask` refuses and tells you how to fix it.** It does not fall
+back. There is a deterministic hash embedder in the codebase, the test suite opts into it
+explicitly so the suite never needs a download, and `embedder.allow_hash_fallback` defaults
+to **false** everywhere else.
+
+That default changed on 22 Aug 2026, and the reason is worth stating. It used to default
+on, so a fresh clone with no weights answered questions using hashed tokens: every retrieval
+result differed from ours, and nothing on screen said so. Anyone reproducing
+[`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md) would have got different passages, different
+scores and a different answer, and the reasonable conclusion from the outside is that our
+captures were invented. A silent fallback that changes results is indistinguishable from
+fabrication at a distance, so it is now loud and off by default, and every capture states
+which embedder produced it.
 
 ### Running a real model
 

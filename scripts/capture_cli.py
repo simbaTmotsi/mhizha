@@ -32,6 +32,21 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "docs" / "screenshots"
 
+sys.path.insert(0, str(REPO / "src"))
+
+
+def embedder_id() -> str:
+    """Which embedder these captures were produced with.
+
+    Stated on every asset because retrieval results depend on it entirely. A reproduction
+    that used a different embedder should diff visibly and explain itself, rather than
+    look like our captures were invented.
+    """
+    from mhizha.config import load_config
+    from mhizha.rag.embedder import active_embedder_id
+
+    return active_embedder_id(load_config().embedder)
+
 # Fixed width so a capture is stable across terminals and diffs cleanly.
 COLUMNS = 88
 
@@ -97,6 +112,8 @@ def run(argv: list[str]) -> str:
     lines = [ln for ln in (proc.stdout + proc.stderr).splitlines()
              if not NOISE.match(ln) and "it/s]" not in ln]
     text = "\n".join(lines).rstrip() + "\n"
+    text = (f"# embedder: {embedder_id()}   (retrieval depends on this; a different "
+            f"embedder gives different passages)\n\n") + text
     # `doctor` prints absolute config, index and embedder paths. These captures ship with
     # the submission, so the developer's home directory is replaced by a repo-relative
     # path, which is also what a reader running this from their own clone would see.
@@ -150,6 +167,10 @@ def main() -> int:
         print(f"  {capture['name']}: {len(text.splitlines())} lines")
 
     index = ["# CLI captures\n",
+             f"Produced with embedder **{embedder_id()}**. Retrieval results depend on it",
+             "entirely, so a reproduction using a different one will differ visibly. That is",
+             "the point: `make setup` fetches the real weights, and the hash fallback is off",
+             "by default precisely so a difference cannot pass unnoticed.\n",
              "Produced by `python3 scripts/capture_cli.py`, which runs the shipped entry",
              "point against the placeholder corpus in this repository. Re-run it to check",
              "these are current; nothing here is staged or hand-edited.\n"]

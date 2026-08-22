@@ -1,3 +1,5 @@
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 profile: dev   config: config.yaml
                                         index                                        
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

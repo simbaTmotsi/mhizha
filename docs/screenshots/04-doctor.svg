@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="757" height="657"
-     viewBox="0 0 757 657" role="img" aria-label="make doctor: the device budget, accounted component by component">
+<svg xmlns="http://www.w3.org/2000/svg" width="896" height="691"
+     viewBox="0 0 896 691" role="img" aria-label="make doctor: the device budget, accounted component by component">
   <rect width="100%" height="100%" rx="8" fill="#14161a"/>
   <circle cx="20" cy="18" r="5" fill="#3d4149"/>
   <circle cx="38" cy="18" r="5" fill="#3d4149"/>
@@ -8,40 +8,42 @@
         font-size="11" fill="#8b919b">make doctor: the device budget, accounted component by component</text>
   <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
      font-size="12.5" fill="#d7dae0" xml:space="preserve">
-    <text x="18" y="44">profile: dev   config: config.yaml</text>
-    <text x="18" y="61">                                        index                                        </text>
-    <text x="18" y="78">┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓</text>
-    <text x="18" y="95">┃ key            ┃ value                                                            ┃</text>
-    <text x="18" y="112">┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩</text>
-    <text x="18" y="129">│ status         │ present                                                          │</text>
-    <text x="18" y="146">│ path           │ data/index/mhizha.db          │</text>
-    <text x="18" y="163">│ backend        │ sqlite-vec                                                       │</text>
-    <text x="18" y="180">│ chunks         │ 9                                                                │</text>
-    <text x="18" y="197">│ file_size_mb   │ 1.61                                                             │</text>
-    <text x="18" y="214">│ embedder_id    │ all-MiniLM-L6-v2                                                 │</text>
-    <text x="18" y="231">│ embedder_dim   │ 384                                                              │</text>
-    <text x="18" y="248">│ corpus_sha256  │ cf7ef6c08950c84bb1caabdfa4463082a1877ea775743469ec47e642fc131718 │</text>
-    <text x="18" y="265">│ built_at       │ 2026-08-11T20:35:39+00:00                                        │</text>
-    <text x="18" y="282">│ schema_version │ 1                                                                │</text>
-    <text x="18" y="299">└────────────────┴──────────────────────────────────────────────────────────────────┘</text>
-    <text x="18" y="316">     memory budget: 4 GB RAM Android phone (primary target)      </text>
-    <text x="18" y="333">┏━━━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓</text>
-    <text x="18" y="350">┃ component        ┃   MB ┃ note                                ┃</text>
-    <text x="18" y="367">┡━━━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩</text>
-    <text x="18" y="384">│ LLM weights      │  900 │ llama-3.2-1b-instruct-q4_k_m Q4_K_M │</text>
-    <text x="18" y="401">│ runtime overhead │  180 │ app, interpreter, framework         │</text>
-    <text x="18" y="418">│ KV cache         │  220 │ at 2048 context tokens              │</text>
-    <text x="18" y="435">│ embedder         │   90 │ all-MiniLM-L6-v2                    │</text>
-    <text x="18" y="452">│ index            │    2 │ sqlite file, mapped where possible  │</text>
-    <text x="18" y="469">│ total            │ 1392 │                                     │</text>
-    <text x="18" y="486">│ app budget       │ 1400 │ before the LMK intervenes           │</text>
-    <text x="18" y="503">└──────────────────┴──────┴─────────────────────────────────────┘</text>
-    <text x="18" y="520">fits with 8 MB headroom (model: llama-3.2-1b-instruct-q4_k_m)</text>
-    <text x="18" y="537">embedder weights: present  </text>
-    <text x="18" y="554">(models/embedder/all-MiniLM-L6-v2)</text>
-    <text x="18" y="571">embedder is not multilingual: a Shona or Ndebele query cannot match an English passage. </text>
-    <text x="18" y="588">See docs/model-shortlist.md</text>
-    <text x="18" y="605">locale sn: 23 untranslated, 0 missing, 0 orphaned</text>
-    <text x="18" y="622">locale nd: 23 untranslated, 0 missing, 0 orphaned</text>
+    <text x="18" y="44"># embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)</text>
+    <text x="18" y="61"></text>
+    <text x="18" y="78">profile: dev   config: config.yaml</text>
+    <text x="18" y="95">                                        index                                        </text>
+    <text x="18" y="112">┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓</text>
+    <text x="18" y="129">┃ key            ┃ value                                                            ┃</text>
+    <text x="18" y="146">┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩</text>
+    <text x="18" y="163">│ status         │ present                                                          │</text>
+    <text x="18" y="180">│ path           │ data/index/mhizha.db          │</text>
+    <text x="18" y="197">│ backend        │ sqlite-vec                                                       │</text>
+    <text x="18" y="214">│ chunks         │ 9                                                                │</text>
+    <text x="18" y="231">│ file_size_mb   │ 1.61                                                             │</text>
+    <text x="18" y="248">│ embedder_id    │ all-MiniLM-L6-v2                                                 │</text>
+    <text x="18" y="265">│ embedder_dim   │ 384                                                              │</text>
+    <text x="18" y="282">│ corpus_sha256  │ cf7ef6c08950c84bb1caabdfa4463082a1877ea775743469ec47e642fc131718 │</text>
+    <text x="18" y="299">│ built_at       │ 2026-08-11T20:35:39+00:00                                        │</text>
+    <text x="18" y="316">│ schema_version │ 1                                                                │</text>
+    <text x="18" y="333">└────────────────┴──────────────────────────────────────────────────────────────────┘</text>
+    <text x="18" y="350">     memory budget: 4 GB RAM Android phone (primary target)      </text>
+    <text x="18" y="367">┏━━━━━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓</text>
+    <text x="18" y="384">┃ component        ┃   MB ┃ note                                ┃</text>
+    <text x="18" y="401">┡━━━━━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩</text>
+    <text x="18" y="418">│ LLM weights      │  900 │ llama-3.2-1b-instruct-q4_k_m Q4_K_M │</text>
+    <text x="18" y="435">│ runtime overhead │  180 │ app, interpreter, framework         │</text>
+    <text x="18" y="452">│ KV cache         │  220 │ at 2048 context tokens              │</text>
+    <text x="18" y="469">│ embedder         │   90 │ all-MiniLM-L6-v2                    │</text>
+    <text x="18" y="486">│ index            │    2 │ sqlite file, mapped where possible  │</text>
+    <text x="18" y="503">│ total            │ 1392 │                                     │</text>
+    <text x="18" y="520">│ app budget       │ 1400 │ before the LMK intervenes           │</text>
+    <text x="18" y="537">└──────────────────┴──────┴─────────────────────────────────────┘</text>
+    <text x="18" y="554">fits with 8 MB headroom (model: llama-3.2-1b-instruct-q4_k_m)</text>
+    <text x="18" y="571">embedder weights: present  </text>
+    <text x="18" y="588">(models/embedder/all-MiniLM-L6-v2)</text>
+    <text x="18" y="605">embedder is not multilingual: a Shona or Ndebele query cannot match an English passage. </text>
+    <text x="18" y="622">See docs/model-shortlist.md</text>
+    <text x="18" y="639">locale sn: 23 untranslated, 0 missing, 0 orphaned</text>
+    <text x="18" y="656">locale nd: 23 untranslated, 0 missing, 0 orphaned</text>
   </g>
 </svg>

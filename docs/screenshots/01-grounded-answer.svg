@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="757" height="572"
-     viewBox="0 0 757 572" role="img" aria-label="A grounded answer, with its sources and confidence">
+<svg xmlns="http://www.w3.org/2000/svg" width="896" height="606"
+     viewBox="0 0 896 606" role="img" aria-label="A grounded answer, with its sources and confidence">
   <rect width="100%" height="100%" rx="8" fill="#14161a"/>
   <circle cx="20" cy="18" r="5" fill="#3d4149"/>
   <circle cx="38" cy="18" r="5" fill="#3d4149"/>
@@ -8,35 +8,37 @@
         font-size="11" fill="#8b919b">A grounded answer, with its sources and confidence</text>
   <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
      font-size="12.5" fill="#d7dae0" xml:space="preserve">
-    <text x="18" y="44">╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮</text>
-    <text x="18" y="61">│ The planting window for maize in Mashonaland Central, expressed as a date range tied │</text>
-    <text x="18" y="78">│ to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  │</text>
-    <text x="18" y="95">│ it, cite it, and tell the farmer plainly that it holds no real planting information  │</text>
-    <text x="18" y="112">│ for maize in Mashonaland, and that their local AGRITEX extension officer is the      │</text>
-    <text x="18" y="129">│ correct source until real content is validated into the corpus. [P2] For each        │</text>
-    <text x="18" y="146">│ agro-ecological region the real document will record: the region, the maize variety  │</text>
-    <text x="18" y="163">│ maturity class, the trigger condition for planting, the planting window, the         │</text>
-    <text x="18" y="180">│ expected risk if planted outside that window, and the source and date of the         │</text>
-    <text x="18" y="197">│ recommendation. [P3]                                                                 │</text>
-    <text x="18" y="214">╰──────────────────────────────────────────────────────────────────────────────────────╯</text>
-    <text x="18" y="231">PLACEHOLDER CORPUS. This answer came from sample documents that contain no real </text>
-    <text x="18" y="248">agronomic information. It must not be used for farming decisions.</text>
-    <text x="18" y="265">                                        Based on                                        </text>
-    <text x="18" y="282">┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓</text>
-    <text x="18" y="299">┃ id ┃ source                                                                  ┃ score ┃</text>
-    <text x="18" y="316">┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩</text>
-    <text x="18" y="333">│ P1 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.749 │</text>
-    <text x="18" y="350">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
-    <text x="18" y="367">│    │ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │</text>
-    <text x="18" y="384">│    │ [PLACEHOLDER, unvalidated]                                              │       │</text>
-    <text x="18" y="401">│ P2 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.744 │</text>
-    <text x="18" y="418">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
-    <text x="18" y="435">│    │ 2026-08-11) What Mhizha should do with this document today              │       │</text>
-    <text x="18" y="452">│    │ [PLACEHOLDER, unvalidated]                                              │       │</text>
-    <text x="18" y="469">│ P3 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.716 │</text>
-    <text x="18" y="486">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
-    <text x="18" y="503">│    │ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │</text>
-    <text x="18" y="520">└────┴─────────────────────────────────────────────────────────────────────────┴───────┘</text>
-    <text x="18" y="537">Confidence: medium (0.699, top1=0.749, margin=0.137)</text>
+    <text x="18" y="44"># embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)</text>
+    <text x="18" y="61"></text>
+    <text x="18" y="78">╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮</text>
+    <text x="18" y="95">│ The planting window for maize in Mashonaland Central, expressed as a date range tied │</text>
+    <text x="18" y="112">│ to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  │</text>
+    <text x="18" y="129">│ it, cite it, and tell the farmer plainly that it holds no real planting information  │</text>
+    <text x="18" y="146">│ for maize in Mashonaland, and that their local AGRITEX extension officer is the      │</text>
+    <text x="18" y="163">│ correct source until real content is validated into the corpus. [P2] For each        │</text>
+    <text x="18" y="180">│ agro-ecological region the real document will record: the region, the maize variety  │</text>
+    <text x="18" y="197">│ maturity class, the trigger condition for planting, the planting window, the         │</text>
+    <text x="18" y="214">│ expected risk if planted outside that window, and the source and date of the         │</text>
+    <text x="18" y="231">│ recommendation. [P3]                                                                 │</text>
+    <text x="18" y="248">╰──────────────────────────────────────────────────────────────────────────────────────╯</text>
+    <text x="18" y="265">PLACEHOLDER CORPUS. This answer came from sample documents that contain no real </text>
+    <text x="18" y="282">agronomic information. It must not be used for farming decisions.</text>
+    <text x="18" y="299">                                        Based on                                        </text>
+    <text x="18" y="316">┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓</text>
+    <text x="18" y="333">┃ id ┃ source                                                                  ┃ score ┃</text>
+    <text x="18" y="350">┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩</text>
+    <text x="18" y="367">│ P1 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.749 │</text>
+    <text x="18" y="384">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
+    <text x="18" y="401">│    │ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │</text>
+    <text x="18" y="418">│    │ [PLACEHOLDER, unvalidated]                                              │       │</text>
+    <text x="18" y="435">│ P2 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.744 │</text>
+    <text x="18" y="452">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
+    <text x="18" y="469">│    │ 2026-08-11) What Mhizha should do with this document today              │       │</text>
+    <text x="18" y="486">│    │ [PLACEHOLDER, unvalidated]                                              │       │</text>
+    <text x="18" y="503">│ P3 │ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.716 │</text>
+    <text x="18" y="520">│    │ project (placeholder, not an agronomic authority), refreshed            │       │</text>
+    <text x="18" y="537">│    │ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │</text>
+    <text x="18" y="554">└────┴─────────────────────────────────────────────────────────────────────────┴───────┘</text>
+    <text x="18" y="571">Confidence: medium (0.699, top1=0.749, margin=0.137)</text>
   </g>
 </svg>

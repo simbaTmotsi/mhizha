@@ -56,9 +56,17 @@ embedder:
   # passage. See docs/model-shortlist.md for the multilingual swap and its size cost.
   multilingual: false
   est_size_mb: 90
-  # Deterministic hash embedder, used only when weights are absent. Tests rely on it so
-  # the suite never depends on a download. Never acceptable in production.
-  allow_hash_fallback: true
+  # Deterministic hash embedder, used only when weights are absent.
+  #
+  # DEFAULTS OFF as of 22 Aug 2026. It used to default on, so a fresh clone with no weights
+  # silently embedded with hashes: every retrieval result differed from ours, nothing on
+  # screen said so, and anyone reproducing docs/SCREENSHOTS.md would reasonably have
+  # concluded the captures were invented. A silent fallback that changes results is
+  # indistinguishable from fabrication at a distance.
+  #
+  # The test suite opts in explicitly (tests/conftest.py) so the suite still needs no
+  # download. Nothing else should: run `make embedder`.
+  allow_hash_fallback: false
 
 llm:
   backend: stub          # stub | llamacpp

@@ -71,6 +71,17 @@ class SentenceTransformerEmbedder:
         return np.asarray(vectors, dtype=np.float32)
 
 
+def active_embedder_id(cfg: EmbedderConfig) -> str:
+    """Which embedder `load_embedder` would use, without loading it.
+
+    Exists so a capture or a report can state its own provenance. Duplicating the
+    weights-present check at each call site is how the answer drifts from the truth.
+    """
+    if cfg.path.is_dir() and any(cfg.path.iterdir()):
+        return cfg.id
+    return f"hash-fallback:{cfg.dim}" if cfg.allow_hash_fallback else "unavailable"
+
+
 def load_embedder(cfg: EmbedderConfig) -> Embedder:
     """Load the configured embedder, or the hash fallback when weights are absent."""
     weights_present = cfg.path.is_dir() and any(cfg.path.iterdir())
@@ -84,8 +95,12 @@ def load_embedder(cfg: EmbedderConfig) -> Embedder:
         from ..errors import BackendUnavailableError
 
         raise BackendUnavailableError(
-            f"embedder weights not found at {cfg.path} and hash fallback is disabled. "
-            "Download the model at build time: see README setup."
+            f"embedder weights not found at {cfg.path}.\n"
+            f"  Fetch them once, at build time:  make embedder\n"
+            f"  (or `make setup`, which now does it for you)\n"
+            f"  Refusing rather than falling back to the hash embedder: it would answer, "
+            f"but with different retrieval than every figure and capture in this "
+            f"repository, and nothing on screen would say so."
         )
     return HashEmbedder(cfg.dim, model_id=f"hash-fallback:{cfg.dim}")
 

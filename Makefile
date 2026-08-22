@@ -1,4 +1,4 @@
-.PHONY: help setup ingest embed index build ask eval test doctor models clean \
+.PHONY: help setup deps embedder ingest embed index build ask eval test doctor models clean \
         profile profile-image profile-smoke candidates chunk \
         bake bake-minimal chat-probe apply-template upstream simd-compare native-image bench \
         native-acc-image spot-check lmeval composite captures
@@ -13,7 +13,8 @@ L ?= en
 help:
 	@echo "Mhizha: offline on-device agronomy co-pilot"
 	@echo ""
-	@echo "  make setup                 install dependencies (build time, needs network)"
+	@echo "  make setup                 dependencies + embedder weights (needs network, once)"
+	@echo "  make embedder              fetch just the embedder weights"
 	@echo "  make ingest                ingest data/raw/ into data/corpus/"
 	@echo "  make embed                 chunk and embed the corpus"
 	@echo "  make index                 build the single-file sqlite index"
@@ -40,8 +41,16 @@ help:
 	@echo "  make composite                      ranking table with uncertainty bands"
 	@echo "  make upstream                   diff upstream repos vs pinned commits"
 
-setup:
+# Dependencies AND the embedder weights. Both, because a setup that stops at pip leaves a
+# fresh clone silently on the hash fallback, which changes every retrieval result.
+setup: deps embedder
+
+deps:
 	$(PY) -m pip install -r requirements.txt
+
+# Build time, needs network. Idempotent: skips when the weights are already there.
+embedder:
+	$(PY) scripts/fetch_embedder.py
 
 ingest:
 	$(MHIZHA) ingest

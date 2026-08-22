@@ -1,3 +1,5 @@
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 ╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮
 │ The planting window for maize in Mashonaland Central, expressed as a date range tied │
 │ to the onset of effective rains rather than to a fixed calendar date. [P4] The real  │

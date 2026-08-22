@@ -1,5 +1,10 @@
 # CLI captures
 
+Produced with embedder **all-MiniLM-L6-v2**. Retrieval results depend on it
+entirely, so a reproduction using a different one will differ visibly. That is
+the point: `make setup` fetches the real weights, and the hash fallback is off
+by default precisely so a difference cannot pass unnoticed.
+
 Produced by `python3 scripts/capture_cli.py`, which runs the shipped entry
 point against the placeholder corpus in this repository. Re-run it to check
 these are current; nothing here is staged or hand-edited.
@@ -15,6 +20,8 @@ Every claim carries a passage id, and every passage names its source, publisher 
 <details><summary>as text</summary>
 
 ```
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 ╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮
 │ The planting window for maize in Mashonaland Central, expressed as a date range tied │
 │ to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  │
@@ -60,6 +67,8 @@ An out-of-corpus question. Mhizha says what it does not know, asks the one clari
 <details><summary>as text</summary>
 
 ```
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 ╭───────────────────────────────── Mhizha (abstained) ─────────────────────────────────╮
 │ I found some related material but not enough to answer this safely.                  │
 │                                                                                      │
@@ -106,6 +115,8 @@ A dosage that is not verbatim in a validated passage is never emitted, in any ph
 <details><summary>as text</summary>
 
 ```
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 ╭─────────────────────────────────────── Mhizha ───────────────────────────────────────╮
 │ The planting window for maize in Mashonaland Central, expressed as a date range tied │
 │ to the onset of effective rains rather than to a fixed calendar date. [P4] The real  │
@@ -149,6 +160,8 @@ The 4 GB phone profile is the default and stays the default. Every runtime compo
 <details><summary>as text</summary>
 
 ```
+# embedder: all-MiniLM-L6-v2   (retrieval depends on this; a different embedder gives different passages)
+
 profile: dev   config: config.yaml
                                         index                                        
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
