@@ -201,6 +201,39 @@ fault rather than as an edit.
 waits are real machine timings and vary by a few tenths between runs, which is the point of
 them. Re-rendering gives the same video with slightly different pauses.
 
+## Two renderers, one set of material
+
+There are two videos, same length, same audio, same captions, same beat boundaries:
+
+| | file | drawn by |
+|---|---|---|
+| **A** | `docs/video/mhizha.mp4` | `scripts/video_render.py`, Pillow, monospace throughout |
+| **B** | `docs/video/mhizha-remotion.mp4` | `video/`, Remotion, React and CSS in headless Chrome |
+
+**Neither invents anything.** The terminal sessions are captured once by
+`python3 scripts/video_render.py --export` into
+`docs/video/narration/SESSIONS.txt`, and both renderers read that file. Two renderers
+capturing independently would drift apart on wait times and then disagree about what the
+machine did, which is the failure this arrangement exists to prevent.
+
+**What B buys.** Real typography on everything that is not a terminal: the cards are set in
+a proper sans at a display size, where A can only draw monospace at a fixed advance. And
+beat 6 becomes motion that carries meaning rather than decorating it, which is the one place
+in this video where that is true: the stack builds while the narration describes it, then
+**dims to thirty percent on "none of this code runs while judges are scoring"** as the model
+file below it lights up. A static diagram can state that. It cannot show it happening.
+
+**What B does not buy.** The terminal beats are identical in content and timing, because
+they are the same capture with nicer chrome. Beat 1 still has no field photograph.
+
+**What B costs.** A Node toolchain, 303 MB of `node_modules`, a headless Chrome render pass,
+and a licence that is not open source. `CITATIONS.md` section 7 has the terms, retrieved
+from the installed package: the free tier covers an individual, which this submission is.
+**A has no such condition**, which is a reason to keep it working even if B ships.
+
+Rebuild B with `cd video && npm install && npm run render`, then mux the narration and
+captions the same way A does.
+
 ## Re-shooting it instead
 
 Nothing above is binding. If you would rather film a real terminal and read the script

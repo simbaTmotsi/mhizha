@@ -80,3 +80,10 @@ docs/video/narration/qc-*
 # carry folder view state and sometimes the names of files that have since been deleted,
 # and the repository goes public on the 23rd.
 .DS_Store
+
+# Remotion build. The composition source under video/src ships, because it is the second
+# renderer and a reader should be able to see how the comparison was made. node_modules is
+# a quarter of a gigabyte of dependencies and video/out is an intermediate mux input; both
+# rebuild from `npm install` and `npm run render`.
+video/node_modules/
+video/out/

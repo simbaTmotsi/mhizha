@@ -186,6 +186,25 @@ stated from general knowledge and has not been read off the upstream card. This 
 has already been wrong about a model licence exactly once, in exactly this way (SR-04),
 which is why the commit sha is recorded and the claim is not.
 
+**The Remotion comparison build.** A second renderer under `video/` produces
+`docs/video/mhizha-remotion.mp4` from the same captured sessions, so the two videos differ
+in drawing and never in what the machine did. Only the composition source is committed;
+`node_modules` is not.
+
+| Component | Version | Licence | How established |
+|---|---|---|---|
+| `remotion`, `@remotion/cli` | 4.0.290 | **Remotion License** (source-available, two-tier) | **retrieved** 23 Aug 2026 from `video/node_modules/remotion/LICENSE.md` |
+| `react`, `react-dom` | 19.0.0 | MIT | **retrieved** 23 Aug 2026 from installed distribution metadata |
+
+**Remotion is not open source and its terms are worth stating rather than assuming.** Its
+free tier covers "an individual", "a for-profit organization with up to 3 employees", and
+non-profits, and it permits commercial video creation under those terms; a company licence
+is required above that size. **This submission is an individual entrant, so it falls inside
+the free tier.** Read off the licence file shipped in the installed package, not from
+memory. If this project ever becomes an organisation of four or more people, the Remotion
+build needs a licence or needs dropping, and the Pillow renderer in
+`scripts/video_render.py` exists partly so that dropping it costs nothing.
+
 **Three GPL components, and why that is not a problem here.** `phonemizer-fork` and
 `espeak-ng` are GPL-3.0-or-later, and the bundled `ffmpeg` is GPL-2.0-or-later. This repository is GPL-3.0 (section 1), so they are
 compatible with it; neither is redistributed by us, neither is a dependency of anything

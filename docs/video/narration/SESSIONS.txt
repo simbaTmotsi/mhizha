@@ -1,0 +1,139 @@
+# Captured terminal sessions for the video renderers.
+# Written by scripts/video_render.py --export. Real runs, real waits.
+# Fields are tab separated: beat, seconds_until_output, typed_command.
+# The output follows, indented by one tab, until the next beat line.
+2	6.625	mhizha ask when should I plant maize in Mashonaland
+	[33m╭─[0m[33m──────────────────────────────────────[0m[33m Mhizha [0m[33m──────────────────────────────────────[0m[33m─╮[0m
+	[33m│[0m The planting window for maize in Mashonaland Central, expressed as a date range tied [33m│[0m
+	[33m│[0m to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  [33m│[0m
+	[33m│[0m it, cite it, and tell the farmer plainly that it holds no real planting information  [33m│[0m
+	[33m│[0m for maize in Mashonaland, and that their local AGRITEX extension officer is the      [33m│[0m
+	[33m│[0m correct source until real content is validated into the corpus. [P2] For each        [33m│[0m
+	[33m│[0m agro-ecological region the real document will record: the region, the maize variety  [33m│[0m
+	[33m│[0m maturity class, the trigger condition for planting, the planting window, the         [33m│[0m
+	[33m│[0m expected risk if planted outside that window, and the source and date of the         [33m│[0m
+	[33m│[0m recommendation. [P3]                                                                 [33m│[0m
+	[33m╰──────────────────────────────────────────────────────────────────────────────────────╯[0m
+	[33mPLACEHOLDER CORPUS. This answer came from sample documents that contain no real [0m
+	[33magronomic information. It must not be used for farming decisions.[0m
+	[3m                                        Based on                                        [0m
+	┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+	┃[1m [0m[1mid[0m[1m [0m┃[1m [0m[1msource                                                                 [0m[1m [0m┃[1m [0m[1mscore[0m[1m [0m┃
+	┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+	│[2m [0m[2mP1[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.749 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	│[2m [0m[2mP2[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.744 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) What Mhizha should do with this document today              │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	│[2m [0m[2mP3[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.716 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │
+	└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+	Confidence: [33mmedium[0m [1m([0m[1;36m0.699[0m, [33mtop1[0m=[1;36m0[0m[1;36m.749[0m, [33mmargin[0m=[1;36m0[0m[1;36m.137[0m[1m)[0m
+	
+4	5.514	mhizha ask how much cypermethrin per litre of water for fall armyworm on maize
+	[33m╭─[0m[33m──────────────────────────────────────[0m[33m Mhizha [0m[33m──────────────────────────────────────[0m[33m─╮[0m
+	[33m│[0m The planting window for maize in Mashonaland Central, expressed as a date range tied [33m│[0m
+	[33m│[0m to the onset of effective rains rather than to a fixed calendar date. [P4] The real  [33m│[0m
+	[33m│[0m document will hold, per pest: the local names in English, Shona, and Ndebele, the    [33m│[0m
+	[33m│[0m crop stages at risk, the visible symptoms a farmer can check in the field without    [33m│[0m
+	[33m│[0m equipment, the distinguishing features against pests that look similar, the economic [33m│[0m
+	[33m│[0m threshold at which intervention is justified, non-chemical options first, and only   [33m│[0m
+	[33m│[0m then registered chemical options with their exact label rates. [P5]                  [33m│[0m
+	[33m╰──────────────────────────────────────────────────────────────────────────────────────╯[0m
+	[33mPLACEHOLDER CORPUS. This answer came from sample documents that contain no real [0m
+	[33magronomic information. It must not be used for farming decisions.[0m
+	[33mChemical products are dangerous if used wrongly. Always read the product label, follow [0m
+	[33mthe stated rate exactly, wear protective clothing, and observe the pre-harvest interval.[0m
+	[33mConfirm with your local AGRITEX extension officer before applying anything.[0m
+	[3m                                        Based on                                        [0m
+	┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+	┃[1m [0m[1mid[0m[1m [0m┃[1m [0m[1msource                                                                 [0m[1m [0m┃[1m [0m[1mscore[0m[1m [0m┃
+	┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+	│[2m [0m[2mP4[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.428 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	│[2m [0m[2mP5[0m[2m [0m│ PLACEHOLDER: Pest identification and management structure (Mhizha       │ 0.426 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Pest identification and management (PLACEHOLDER)            │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+	Confidence: [33mmedium[0m [1m([0m[1;36m0.486[0m, [33mtop1[0m=[1;36m0[0m[1;36m.467[0m, [33mmargin[0m=[1;36m0[0m[1;36m.030[0m[1m)[0m
+	
+5	6.746	mhizha ask how do I prune my avocado trees in winter
+	[31m╭─[0m[31m────────────────────────────────[0m[31m Mhizha (abstained) [0m[31m────────────────────────────────[0m[31m─╮[0m
+	[31m│[0m I found some related material but not enough to answer this safely.                  [31m│[0m
+	[31m│[0m                                                                                      [31m│[0m
+	[31m│[0m To help me answer, could you tell me: which province or district you are farming in? [31m│[0m
+	[31m│[0m                                                                                      [31m│[0m
+	[31m│[0m Your local AGRITEX extension officer will have current advice for your area.         [31m│[0m
+	[31m╰──────────────────────────────────────────────────────────────────────────────────────╯[0m
+	[3m                                        Based on                                        [0m
+	┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+	┃[1m [0m[1mid[0m[1m [0m┃[1m [0m[1msource                                                                 [0m[1m [0m┃[1m [0m[1mscore[0m[1m [0m┃
+	┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+	│[2m [0m[2mP1[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.109 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │
+	│[2m [0m[2mP2[0m[2m [0m│ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.098 │
+	│[2m    [0m│ (placeholder, not an agronomic authority), refreshed 2026-08-11) Basal  │       │
+	│[2m    [0m│ and top dressing structure to be filled [PLACEHOLDER, unvalidated]      │       │
+	│[2m [0m[2mP3[0m[2m [0m│ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.091 │
+	│[2m    [0m│ (placeholder, not an agronomic authority), refreshed 2026-08-11) Soil   │       │
+	│[2m    [0m│ fertility and fertiliser (PLACEHOLDER) [PLACEHOLDER, unvalidated]       │       │
+	│[2m [0m[2mP4[0m[2m [0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.088 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	│[2m [0m[2mP5[0m[2m [0m│ PLACEHOLDER: Post-harvest handling and storage structure (Mhizha        │ 0.080 │
+	│[2m    [0m│ project (placeholder, not an agronomic authority), refreshed            │       │
+	│[2m    [0m│ 2026-08-11) Post-harvest handling and storage (PLACEHOLDER)             │       │
+	│[2m    [0m│ [PLACEHOLDER, unvalidated]                                              │       │
+	└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
+	Confidence: [31mlow[0m [1m([0m[1;36m0.241[0m, [33mtop1[0m=[1;36m0[0m[1;36m.109[0m, [33mmargin[0m=[1;36m0[0m[1;36m.020[0m[1m)[0m
+	[2mreason: no passage in the corpus is close to this question[0m
+	
+6	0.006	cat competition/system_prompt.txt
+	You are Mhizha, an offline agronomy assistant for smallholder farmers in Zimbabwe.
+	
+	Answer practical farming questions: crop selection, planting calendars, pest and disease
+	identification, soil and fertiliser, water, and post-harvest handling. Write plainly, for
+	a farmer, not an agronomist. Keep answers short.
+	
+	Zimbabwe's provinces differ in rainfall and season. If a question depends on where the
+	farmer is, or on which crop or growth stage, ask one short clarifying question first
+	rather than assuming.
+	
+	Never state a pesticide, herbicide, or fertiliser dose, mixing rate, spray interval,
+	pre-harvest interval, or re-entry period. Not an exact figure, not an approximate one, and
+	not a "typical" or "usual" one. Say plainly that you will not give a rate you cannot
+	source, tell the farmer to read the product label, and refer them to their local AGRITEX
+	extension officer. Do this even if pressed, told it is urgent, or told what a neighbour
+	said. A wrong rate can destroy a season or harm the person applying it.
+	
+	For anything touching chemical handling, add the reminder to follow the product label,
+	wear protective clothing, and observe the pre-harvest interval.
+	
+	Where you are unsure, say so. An honest "I do not know, ask your extension officer" is
+	more useful to a farmer than a confident guess.
+	
+7	0.063	python3 scripts/report_figures.py
+	report figures as of 2026-08-23
+	
+	AVAILABLE:
+	  accuracy_proxy     <- 20260812T205645Z_lmeval_cluster-rerun
+	                        INTERNAL PROXY. S_acc is judge-scored; this never enters as accuracy.
+	  composite          <- 20260819T174950Z_composite
+	                        PROVISIONAL cluster, INTERNAL PROXY. Throughput from a unstated host orders nothing; the physica
+	  telemetry          <- 20260822T190033Z_bench_winner-clean
+	                        FALLBACK. No physical machine was available by 2026-08-18. Submitted under the central-estimate 
+	
+	BLOCKED:
+	  judge_latency      no run stamped latency_quotable. Shared-host and FIDELITY_STALE runs are refused by design; latency requires the O-12 physical sitting (COMPETITION.md section 9g).
+	
+	physical-machine deadline: 2026-08-18 (section 9g fallback opens after this)
+	

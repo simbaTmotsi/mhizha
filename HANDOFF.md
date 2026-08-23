@@ -1060,6 +1060,57 @@ nothing in honesty. A generated one would cost everything, and is refused.
 
 1:57, 3.9 MB, 328 tests pass.
 
+---
+
+## A second renderer, 23 Aug ~19:55Z: Remotion, for comparison
+
+Asked for a second video built with Remotion so the two can be judged side by side. Built.
+
+| | file | drawn by | size |
+|---|---|---|---|
+| **A** | `docs/video/mhizha.mp4` | `scripts/video_render.py`, Pillow | 3.9 MB |
+| **B** | `docs/video/mhizha-remotion.mp4` | `video/`, Remotion in headless Chrome | 4.5 MB |
+
+Same length, same audio, same captions, same beat boundaries. **Both read the same captured
+sessions**, exported once by `video_render.py --export` into
+`docs/video/narration/SESSIONS.txt`. That is the load-bearing part of the arrangement: two
+renderers capturing independently would drift apart on wait times and then disagree about
+what the machine did.
+
+### What the second renderer actually buys
+
+- **Typography on everything that is not a terminal.** A can only draw monospace at a fixed
+  advance; B sets the cards in a proper sans at display size. The difference on the title
+  and closing cards is large.
+- **Beat 6 becomes motion that carries meaning.** The stack builds while the narration
+  describes it, then dims to thirty percent on *"none of this code runs while judges are
+  scoring"* while the model file lights up. That is the one place in this video where
+  animation says something a static frame cannot.
+- Nothing else. The terminal beats are the same capture with nicer chrome, and beat 1 still
+  has no field photograph.
+
+### What it costs, and why A stays
+
+303 MB of `node_modules`, a headless Chrome render pass, and **a licence that is not open
+source**. Retrieved from `video/node_modules/remotion/LICENSE.md` rather than assumed: the
+free tier covers an individual, a for-profit with up to three employees, and non-profits,
+and permits commercial video creation on those terms. **This submission is an individual
+entrant and falls inside it.**
+
+**A has no such condition.** If this ever becomes an organisation of four or more, B needs a
+licence or needs dropping, and A existing is what makes dropping it cost nothing. Keep both
+working. `CITATIONS.md` section 7 carries the terms.
+
+### Committed and not
+
+`video/src`, `video/scripts`, `package.json`, `tsconfig.json` ship, because the second
+renderer is part of how the comparison was made and a reader should be able to see it.
+`video/node_modules` and `video/out` are ignored. That is a Node project inside a Python
+repository, which is a real structural addition and is recorded here for that reason.
+
+**The choice is Simba's and it is a taste question, not a correctness one.** Both are
+honest, both are 1:57, both carry the same narration and the same real waits.
+
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the

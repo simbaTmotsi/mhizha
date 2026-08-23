@@ -497,11 +497,42 @@ def encode(states, probe_only: bool) -> int:
     return 0
 
 
+def export_material() -> int:
+    """Write the captured sessions where a second renderer can read them.
+
+    There are two renderers now, this one and the Remotion build under `video/`, and both
+    have to show the same real runs with the same real waits. The capture happens once,
+    here, and the material is written out rather than each renderer running the commands
+    for itself: two renderers capturing independently would drift apart on wait times and
+    then disagree about what the machine did.
+    """
+    lines = ["# Captured terminal sessions for the video renderers.",
+             "# Written by scripts/video_render.py --export. Real runs, real waits.",
+             "# Fields are tab separated: beat, seconds_until_output, typed_command.",
+             "# The output follows, indented by one tab, until the next beat line."]
+    for number in sorted(BEATS):
+        kind, argv, typed = BEATS[number]
+        if kind != "run":
+            continue
+        wait, raw = capture(argv)
+        lines.append(f"{number}\t{wait:.3f}\t{typed}")
+        for row in raw.replace("\r\n", "\n").replace("\r", "").split("\n"):
+            lines.append("\t" + row)
+    target = REPO / "docs" / "video" / "narration" / "SESSIONS.txt"
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"wrote {target.relative_to(REPO)}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render the submission video.")
     parser.add_argument("--probe", action="store_true",
                         help="capture the real runs and print their timings, encode nothing")
+    parser.add_argument("--export", action="store_true",
+                        help="write the captured sessions for the Remotion renderer")
     args = parser.parse_args()
+    if args.export:
+        return export_material()
     try:
         if not NARRATION.exists():
             raise RenderError(f"{NARRATION.name} is missing. "

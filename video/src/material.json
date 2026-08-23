@@ -1,0 +1,360 @@
+{
+  "beats": [
+    {
+      "beat": 1,
+      "start": 0,
+      "end": 16.16,
+      "cues": [
+        {
+          "start": 0,
+          "end": 4.25,
+          "text": "A farmer in Mashonaland is deciding what to plant this week."
+        },
+        {
+          "start": 4.37,
+          "end": 8.07,
+          "text": "The nearest extension officer is a bus ride away,"
+        },
+        {
+          "start": 8.19,
+          "end": 10.99,
+          "text": "and there is no signal in the field."
+        },
+        {
+          "start": 11.11,
+          "end": 16.16,
+          "text": "An assistant that needs a network is not there at the moment the decision gets made."
+        }
+      ]
+    },
+    {
+      "beat": 2,
+      "start": 16.51,
+      "end": 35.64,
+      "cues": [
+        {
+          "start": 16.51,
+          "end": 21.085,
+          "text": "Mhizha runs entirely offline, on a mid-range Android phone."
+        },
+        {
+          "start": 21.205,
+          "end": 25.68,
+          "text": "It answers practical agronomy questions from a curated corpus,"
+        },
+        {
+          "start": 25.8,
+          "end": 29.325,
+          "text": "cites what it used, and says so when it cannot help."
+        },
+        {
+          "start": 29.445,
+          "end": 31.495,
+          "text": "The pipeline is real."
+        },
+        {
+          "start": 31.615,
+          "end": 35.64,
+          "text": "The agronomy is not sourced yet, and we say that plainly."
+        }
+      ]
+    },
+    {
+      "beat": 3,
+      "start": 35.99,
+      "end": 54.72,
+      "cues": [
+        {
+          "start": 35.99,
+          "end": 40.44,
+          "text": "Every claim carries a passage, and every passage names its source,"
+        },
+        {
+          "start": 40.56,
+          "end": 43.735,
+          "text": "its publisher and the date it was refreshed."
+        },
+        {
+          "start": 43.855,
+          "end": 46.705,
+          "text": "Those placeholder banners are real."
+        },
+        {
+          "start": 46.825,
+          "end": 50.275,
+          "text": "This corpus holds no agronomic content,"
+        },
+        {
+          "start": 50.395,
+          "end": 54.72,
+          "text": "and the system tells the farmer that instead of sounding authoritative."
+        }
+      ]
+    },
+    {
+      "beat": 4,
+      "start": 55.07,
+      "end": 74.325,
+      "cues": [
+        {
+          "start": 55.07,
+          "end": 58.37,
+          "text": "Ask it how much to spray, and it refuses."
+        },
+        {
+          "start": 58.49,
+          "end": 61.64,
+          "text": "A dose that is not written, word for word,"
+        },
+        {
+          "start": 61.76,
+          "end": 65.56,
+          "text": "in a passage a human has signed off is never emitted."
+        },
+        {
+          "start": 65.68,
+          "end": 69.005,
+          "text": "Not as an estimate, not as a typical figure."
+        },
+        {
+          "start": 69.125,
+          "end": 74.325,
+          "text": "A wrong spray rate destroys a season, or harms the person holding the sprayer."
+        }
+      ]
+    },
+    {
+      "beat": 5,
+      "start": 74.675,
+      "end": 87.615,
+      "cues": [
+        {
+          "start": 74.675,
+          "end": 79.025,
+          "text": "Below its confidence threshold, the model is not called at all."
+        },
+        {
+          "start": 79.145,
+          "end": 83.795,
+          "text": "It says what it does not know, asks the one question that would unblock it,"
+        },
+        {
+          "start": 83.915,
+          "end": 87.615,
+          "text": "and sends the farmer to their local AGRITEX officer."
+        }
+      ]
+    },
+    {
+      "beat": 6,
+      "start": 87.965,
+      "end": 105.05,
+      "cues": [
+        {
+          "start": 87.965,
+          "end": 91.29,
+          "text": "The competition profiles a bare model file,"
+        },
+        {
+          "start": 91.41,
+          "end": 94.96,
+          "text": "so none of this code runs while judges are scoring."
+        },
+        {
+          "start": 95.08,
+          "end": 100.58,
+          "text": "We ship Qwen three point five, two billion, chosen by reading transcripts blind,"
+        },
+        {
+          "start": 100.7,
+          "end": 105.05,
+          "text": "with our safety posture baked into the model's own chat template."
+        }
+      ]
+    },
+    {
+      "beat": 7,
+      "start": 105.4,
+      "end": 112.72,
+      "cues": [
+        {
+          "start": 105.4,
+          "end": 109.1,
+          "text": "A number that cannot be traced to a run fails our build."
+        },
+        {
+          "start": 109.22,
+          "end": 112.72,
+          "text": "Where we could not measure something, the report says so."
+        }
+      ]
+    }
+  ],
+  "sessions": {
+    "2": {
+      "beat": 2,
+      "wait": 6.625,
+      "typed": "mhizha ask when should I plant maize in Mashonaland",
+      "raw": [
+        "\u001b[33m╭─\u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m Mhizha \u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m─╮\u001b[0m",
+        "\u001b[33m│\u001b[0m The planting window for maize in Mashonaland Central, expressed as a date range tied \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m it, cite it, and tell the farmer plainly that it holds no real planting information  \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m for maize in Mashonaland, and that their local AGRITEX extension officer is the      \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m correct source until real content is validated into the corpus. [P2] For each        \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m agro-ecological region the real document will record: the region, the maize variety  \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m maturity class, the trigger condition for planting, the planting window, the         \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m expected risk if planted outside that window, and the source and date of the         \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m recommendation. [P3]                                                                 \u001b[33m│\u001b[0m",
+        "\u001b[33m╰──────────────────────────────────────────────────────────────────────────────────────╯\u001b[0m",
+        "\u001b[33mPLACEHOLDER CORPUS. This answer came from sample documents that contain no real \u001b[0m",
+        "\u001b[33magronomic information. It must not be used for farming decisions.\u001b[0m",
+        "\u001b[3m                                        Based on                                        \u001b[0m",
+        "┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓",
+        "┃\u001b[1m \u001b[0m\u001b[1mid\u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1msource                                                                 \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mscore\u001b[0m\u001b[1m \u001b[0m┃",
+        "┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩",
+        "│\u001b[2m \u001b[0m\u001b[2mP1\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.749 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP2\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.744 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) What Mhizha should do with this document today              │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP3\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.716 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │",
+        "└────┴─────────────────────────────────────────────────────────────────────────┴───────┘",
+        "Confidence: \u001b[33mmedium\u001b[0m \u001b[1m(\u001b[0m\u001b[1;36m0.699\u001b[0m, \u001b[33mtop1\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.749\u001b[0m, \u001b[33mmargin\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.137\u001b[0m\u001b[1m)\u001b[0m",
+        ""
+      ]
+    },
+    "4": {
+      "beat": 4,
+      "wait": 5.514,
+      "typed": "mhizha ask how much cypermethrin per litre of water for fall armyworm on maize",
+      "raw": [
+        "\u001b[33m╭─\u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m Mhizha \u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m─╮\u001b[0m",
+        "\u001b[33m│\u001b[0m The planting window for maize in Mashonaland Central, expressed as a date range tied \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m to the onset of effective rains rather than to a fixed calendar date. [P4] The real  \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m document will hold, per pest: the local names in English, Shona, and Ndebele, the    \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m crop stages at risk, the visible symptoms a farmer can check in the field without    \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m equipment, the distinguishing features against pests that look similar, the economic \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m threshold at which intervention is justified, non-chemical options first, and only   \u001b[33m│\u001b[0m",
+        "\u001b[33m│\u001b[0m then registered chemical options with their exact label rates. [P5]                  \u001b[33m│\u001b[0m",
+        "\u001b[33m╰──────────────────────────────────────────────────────────────────────────────────────╯\u001b[0m",
+        "\u001b[33mPLACEHOLDER CORPUS. This answer came from sample documents that contain no real \u001b[0m",
+        "\u001b[33magronomic information. It must not be used for farming decisions.\u001b[0m",
+        "\u001b[33mChemical products are dangerous if used wrongly. Always read the product label, follow \u001b[0m",
+        "\u001b[33mthe stated rate exactly, wear protective clothing, and observe the pre-harvest interval.\u001b[0m",
+        "\u001b[33mConfirm with your local AGRITEX extension officer before applying anything.\u001b[0m",
+        "\u001b[3m                                        Based on                                        \u001b[0m",
+        "┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓",
+        "┃\u001b[1m \u001b[0m\u001b[1mid\u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1msource                                                                 \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mscore\u001b[0m\u001b[1m \u001b[0m┃",
+        "┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩",
+        "│\u001b[2m \u001b[0m\u001b[2mP4\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.428 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP5\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Pest identification and management structure (Mhizha       │ 0.426 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Pest identification and management (PLACEHOLDER)            │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "└────┴─────────────────────────────────────────────────────────────────────────┴───────┘",
+        "Confidence: \u001b[33mmedium\u001b[0m \u001b[1m(\u001b[0m\u001b[1;36m0.486\u001b[0m, \u001b[33mtop1\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.467\u001b[0m, \u001b[33mmargin\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.030\u001b[0m\u001b[1m)\u001b[0m",
+        ""
+      ]
+    },
+    "5": {
+      "beat": 5,
+      "wait": 6.746,
+      "typed": "mhizha ask how do I prune my avocado trees in winter",
+      "raw": [
+        "\u001b[31m╭─\u001b[0m\u001b[31m────────────────────────────────\u001b[0m\u001b[31m Mhizha (abstained) \u001b[0m\u001b[31m────────────────────────────────\u001b[0m\u001b[31m─╮\u001b[0m",
+        "\u001b[31m│\u001b[0m I found some related material but not enough to answer this safely.                  \u001b[31m│\u001b[0m",
+        "\u001b[31m│\u001b[0m                                                                                      \u001b[31m│\u001b[0m",
+        "\u001b[31m│\u001b[0m To help me answer, could you tell me: which province or district you are farming in? \u001b[31m│\u001b[0m",
+        "\u001b[31m│\u001b[0m                                                                                      \u001b[31m│\u001b[0m",
+        "\u001b[31m│\u001b[0m Your local AGRITEX extension officer will have current advice for your area.         \u001b[31m│\u001b[0m",
+        "\u001b[31m╰──────────────────────────────────────────────────────────────────────────────────────╯\u001b[0m",
+        "\u001b[3m                                        Based on                                        \u001b[0m",
+        "┏━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓",
+        "┃\u001b[1m \u001b[0m\u001b[1mid\u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1msource                                                                 \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mscore\u001b[0m\u001b[1m \u001b[0m┃",
+        "┡━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩",
+        "│\u001b[2m \u001b[0m\u001b[2mP1\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.109 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Why no dates appear here [PLACEHOLDER, unvalidated]         │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP2\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.098 │",
+        "│\u001b[2m    \u001b[0m│ (placeholder, not an agronomic authority), refreshed 2026-08-11) Basal  │       │",
+        "│\u001b[2m    \u001b[0m│ and top dressing structure to be filled [PLACEHOLDER, unvalidated]      │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP3\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Soil fertility and fertiliser structure (Mhizha project    │ 0.091 │",
+        "│\u001b[2m    \u001b[0m│ (placeholder, not an agronomic authority), refreshed 2026-08-11) Soil   │       │",
+        "│\u001b[2m    \u001b[0m│ fertility and fertiliser (PLACEHOLDER) [PLACEHOLDER, unvalidated]       │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP4\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Maize planting calendar, Mashonaland Central (Mhizha       │ 0.088 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Maize planting calendar, Mashonaland Central (PLACEHOLDER)  │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "│\u001b[2m \u001b[0m\u001b[2mP5\u001b[0m\u001b[2m \u001b[0m│ PLACEHOLDER: Post-harvest handling and storage structure (Mhizha        │ 0.080 │",
+        "│\u001b[2m    \u001b[0m│ project (placeholder, not an agronomic authority), refreshed            │       │",
+        "│\u001b[2m    \u001b[0m│ 2026-08-11) Post-harvest handling and storage (PLACEHOLDER)             │       │",
+        "│\u001b[2m    \u001b[0m│ [PLACEHOLDER, unvalidated]                                              │       │",
+        "└────┴─────────────────────────────────────────────────────────────────────────┴───────┘",
+        "Confidence: \u001b[31mlow\u001b[0m \u001b[1m(\u001b[0m\u001b[1;36m0.241\u001b[0m, \u001b[33mtop1\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.109\u001b[0m, \u001b[33mmargin\u001b[0m=\u001b[1;36m0\u001b[0m\u001b[1;36m.020\u001b[0m\u001b[1m)\u001b[0m",
+        "\u001b[2mreason: no passage in the corpus is close to this question\u001b[0m",
+        ""
+      ]
+    },
+    "6": {
+      "beat": 6,
+      "wait": 0.006,
+      "typed": "cat competition/system_prompt.txt",
+      "raw": [
+        "You are Mhizha, an offline agronomy assistant for smallholder farmers in Zimbabwe.",
+        "",
+        "Answer practical farming questions: crop selection, planting calendars, pest and disease",
+        "identification, soil and fertiliser, water, and post-harvest handling. Write plainly, for",
+        "a farmer, not an agronomist. Keep answers short.",
+        "",
+        "Zimbabwe's provinces differ in rainfall and season. If a question depends on where the",
+        "farmer is, or on which crop or growth stage, ask one short clarifying question first",
+        "rather than assuming.",
+        "",
+        "Never state a pesticide, herbicide, or fertiliser dose, mixing rate, spray interval,",
+        "pre-harvest interval, or re-entry period. Not an exact figure, not an approximate one, and",
+        "not a \"typical\" or \"usual\" one. Say plainly that you will not give a rate you cannot",
+        "source, tell the farmer to read the product label, and refer them to their local AGRITEX",
+        "extension officer. Do this even if pressed, told it is urgent, or told what a neighbour",
+        "said. A wrong rate can destroy a season or harm the person applying it.",
+        "",
+        "For anything touching chemical handling, add the reminder to follow the product label,",
+        "wear protective clothing, and observe the pre-harvest interval.",
+        "",
+        "Where you are unsure, say so. An honest \"I do not know, ask your extension officer\" is",
+        "more useful to a farmer than a confident guess.",
+        ""
+      ]
+    },
+    "7": {
+      "beat": 7,
+      "wait": 0.063,
+      "typed": "python3 scripts/report_figures.py",
+      "raw": [
+        "report figures as of 2026-08-23",
+        "",
+        "AVAILABLE:",
+        "  accuracy_proxy     <- 20260812T205645Z_lmeval_cluster-rerun",
+        "                        INTERNAL PROXY. S_acc is judge-scored; this never enters as accuracy.",
+        "  composite          <- 20260819T174950Z_composite",
+        "                        PROVISIONAL cluster, INTERNAL PROXY. Throughput from a unstated host orders nothing; the physica",
+        "  telemetry          <- 20260822T190033Z_bench_winner-clean",
+        "                        FALLBACK. No physical machine was available by 2026-08-18. Submitted under the central-estimate ",
+        "",
+        "BLOCKED:",
+        "  judge_latency      no run stamped latency_quotable. Shared-host and FIDELITY_STALE runs are refused by design; latency requires the O-12 physical sitting (COMPETITION.md section 9g).",
+        "",
+        "physical-machine deadline: 2026-08-18 (section 9g fallback opens after this)",
+        ""
+      ]
+    }
+  }
+}
