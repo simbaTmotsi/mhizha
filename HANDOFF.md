@@ -1142,3 +1142,30 @@ One line added to `.gitignore`, outside the two items and so recorded here: **`.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the
 names of files that have since been deleted, and the repository goes public on the 23rd.
+
+---
+
+## REPORT.md edited outside the freeze, 23 Aug
+
+**What changed:** one limitation added, saying the submitted model cannot answer in Shona or
+Ndebele, and a quick-start comment softened from `L=sn for Shona` to `L=sn selects Shona
+copy`. Prose only. **No figure was touched.**
+
+**Why it was allowed to change.** The README had just been corrected on this point, and
+REPORT.md still implied the opposite, so the two documents disagreed about what Mhizha can
+do in a language it declares in `metadata.json`. `SUBMISSION.md` phase 1.2 names that as the
+disagreement that matters most: *two documents in one repository disagreeing is worse than
+either being wrong alone.* Leaving the submitted document as the wrong one of the pair was
+not a defensible way to honour a freeze.
+
+**The evidence was already archived and nobody had read it back.** `chat_probe.yaml`
+question 15 is Shona, *"Ndinodyara chibage rini?"*. In `runs/20260820T105919Z_blind/` the
+selected 2B reads the verb as a personal name and answers in English; phi-4-mini loops for
+several hundred tokens; the 4B produces nonsense Shona. None of the three can handle it.
+
+**A process note worth keeping.** The commit that made this change, `1d556aa`, says in its
+message that HANDOFF records the reason. At the time it said that, this section did not
+exist: the edit script asserted on a stale anchor and died *after* writing REPORT.md but
+*before* writing HANDOFF, and the commit ran anyway. The message was true of the intent and
+false of the tree. Written up here in the following commit rather than by rewriting the
+first, because the archive should show what happened.
