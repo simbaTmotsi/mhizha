@@ -968,6 +968,62 @@ Menlo is rendered from the system and no font file is copied into the repository
 it with a camera and a human voice, which is a taste decision and is now a choice rather
 than a blocker.
 
+---
+
+## Readiness sweep, 23 Aug ~11:15Z
+
+Ran the `SUBMISSION.md` gates rather than asserting readiness. Findings first.
+
+### REPORT.md's status header was stale, and it was the first thing a judge reads
+
+It said **STATUS: DRAFT**, and that "model selection waits on the all-candidate throughput
+sweep, and telemetry and latency wait on a physical machine". By 23 August all three
+clauses were wrong: the model was selected on the 22nd, telemetry fell back on the 18th and
+is submitted and labelled, and only latency still waits.
+
+The body of the report was right the whole time. Sections 0, 2 and 4 all name Qwen3.5 2B as
+selected; the header alone contradicted them, which is the worst place for it to happen.
+**Changed, and recorded here because `REPORT.md` is otherwise frozen.** No number was
+touched; the replacement states what is absent and why, which is what phase 1.1 asks of a
+gap that survives into the submitted report.
+
+The one surviving `[PENDING]`, in section 4.3, now says **why** the thing it waits for does
+not exist rather than only what it waits for. Same rule.
+
+### What passed, checked rather than assumed
+
+| gate | result |
+|---|---|
+| 1.1 figure slots | one `[PENDING]`, deliberate, explained; `report_figures.py` shows one BLOCKED figure, latency, by design |
+| 1.2 BAKEOFF vs REPORT | 14 numbers overlap, **all agree**: 3.27, 15.0, 1.7, 5.0, 67.9, 60.2 and the rest. No contradiction, which is the failure phase 1.2 exists to catch |
+| 1.3 metadata.json | every field present, no `TODO_`, domain `agriculture`, runtime `llama.cpp`, model path matches `download_model.sh`, two test prompts, one of which is a dosage probe we expect to be refused |
+| 1.5 runs/ | 107 records, 1.1 MB. Records not bulk, as ruled |
+| stale candidate names | none. The report names the winner in sections 0, 2 and 4; the other candidates appear only in comparison tables where they belong |
+| suite | 328 passed, exit 0 |
+| scrub | clean |
+| phase 2 upstream gate | ran clean 22 Aug, `af3e874` |
+| 1.6 video | rendered, 1:57 |
+
+**`REPORT.md` is about 7,300 words**, against a template that asks for one to three pages.
+That is the known risk in `SUBMISSION.md` and the mitigation is section 0, which stands
+alone. **Only its inclusion is open, and it is Simba's call, not a defect.**
+
+### What cannot be checked from here, and is therefore what is left
+
+Phase 3 and 4 both need his account and his machine:
+
+1. **Repository visibility.** Nobody has looked at the repository page. It should be private
+   now and public today with the tag.
+2. **The fresh-clone verification.** Clone the public URL to a new directory, run
+   `bash download_model.sh` twice with no credentials, confirm the file lands at
+   `_runtime.model_path` and matches the recorded sha256, then `make test` in that clone.
+   The script was verified end to end earlier; **it has not been verified from a clone**,
+   which is the thing a judge actually does.
+3. **The tag.** Gate 2 compares against a named state.
+4. **Upload the video, then the Devpost form.** In that order: the form wants the URL.
+
+None of those is blocked on anything. They are a person with credentials and about an hour.
+
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the

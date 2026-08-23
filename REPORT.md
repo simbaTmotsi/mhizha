@@ -2,10 +2,15 @@
 
 **ADTC 2026 Laptop LLM track. Domain: agriculture.**
 
-> **STATUS: DRAFT.** Measurement sections are filled where the evidence is archived.
-> Numbers marked `[PENDING …]` are the ones still genuinely blocked: model selection waits
-> on the all-candidate throughput sweep, and telemetry and latency wait on a physical
-> machine (COMPETITION.md O-12). Each marker says what it waits for.
+> **STATUS: SUBMITTED, 23 August 2026.** The model is selected (section 2), the telemetry
+> is measured and labelled, and every measurement section is filled from an archived run.
+>
+> **One figure is absent and stays absent: judge-experienced latency.** It is quotable only
+> from a physical machine near the Standard Laptop spec, no such machine was available
+> before our own 18 August cut-off, and latency does not fall back to a shared host because
+> there is no honest substitute for it. The one surviving `[PENDING]` marker, in section
+> 4.3, is that gap. Submitted telemetry did fall back on the same date and is labelled
+> `FALLBACK` wherever it appears, with its measured spread beside it.
 >
 > **Figure rule (enforced by the test suite, COMPETITION.md section 9h):** every numeric
 > figure here is **measured** (emitted by `scripts/report_figures.py` from a run under
@@ -463,8 +468,10 @@ problem above, because the gap is far wider than the noise.
 machine. Physical hardware near the Standard Laptop spec should do materially better, and
 section 4.2 gives the reason to expect it: the spread here is contention from neighbours we
 share memory bandwidth with, which a dedicated laptop does not have. `[PENDING: O-12
-confirmation on physical hardware]` We do not claim the reference is unreachable in
-general, only that nothing on this host approaches it.
+confirmation on physical hardware. No machine near the Standard Laptop spec was available
+to us before submission, so this expectation is reasoned rather than measured and is
+reported as an expectation.]` We do not claim the reference is unreachable in general, only
+that nothing on this host approaches it.
 
 ### 4.5 Accuracy (internal proxy)
 
