@@ -164,6 +164,21 @@ transcript to a terminal.
 | `openai/whisper-small.en` (the weights) | as fetched by the above | MIT (**unverified**) | no licence file accompanies the cached checkpoint |
 | `scipy` | 1.18.1 | BSD-3-Clause | **retrieved** 23 Aug 2026, same |
 
+**Rendering the video.** `scripts/video_render.py` draws the terminal sessions and encodes
+the result. Nothing it produces is a measurement; the timings it shows are captured from
+real runs and the drawing is presentation.
+
+| Component | Version | Licence | How established |
+|---|---|---|---|
+| `imageio-ffmpeg` (the Python wrapper) | 0.6.0 | BSD-2-Clause | **retrieved** 23 Aug 2026 from installed distribution metadata |
+| `ffmpeg` (the binary it bundles) | 7.1 | **GPL-2.0-or-later** | **retrieved** 23 Aug 2026 from `ffmpeg -version`: the build is `--enable-gpl --enable-libx264`, so it is GPL and not the LGPL configuration |
+| `Pillow` | 12.3.0 | MIT-CMU (**unverified**) | no licence field in the installed metadata |
+| Menlo (the typeface in the video) | system | Apple system font, not redistributed | rendered from `/System/Library/Fonts`; no font file is copied into this repository |
+
+That makes **three** GPL build-time tools rather than two. The paragraph below covers all of
+them: compatible with this repository's GPL-3.0, none redistributed by us, none in
+`requirements.txt`, none shipping to a device.
+
 **The weights entry is deliberately marked unverified**, and it is the one to check before
 anyone relies on it. Only `config.json` and `kokoro-v1_0.pth` were fetched into the local
 cache; no `LICENSE` file and no model card came with them, so the Apache-2.0 above is
@@ -171,11 +186,12 @@ stated from general knowledge and has not been read off the upstream card. This 
 has already been wrong about a model licence exactly once, in exactly this way (SR-04),
 which is why the commit sha is recorded and the claim is not.
 
-**Two GPL components, and why that is not a problem here.** `phonemizer-fork` and
-`espeak-ng` are GPL-3.0-or-later. This repository is GPL-3.0 (section 1), so they are
+**Three GPL components, and why that is not a problem here.** `phonemizer-fork` and
+`espeak-ng` are GPL-3.0-or-later, and the bundled `ffmpeg` is GPL-2.0-or-later. This repository is GPL-3.0 (section 1), so they are
 compatible with it; neither is redistributed by us, neither is a dependency of anything
 that ships, and neither appears in `requirements.txt`. They are a build-time toolchain on
 one developer machine, in the same category as Docker.
 
-**Kokoro is not a competition artefact.** It never touches the submitted GGUF, the
-profiler, `metadata.json`, or any measurement. It reads a script aloud.
+**None of this is a competition artefact.** Nothing here touches the submitted GGUF, the
+profiler, `metadata.json`, or any measurement. One reads a script aloud and the others draw
+a terminal.

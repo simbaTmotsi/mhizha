@@ -145,7 +145,48 @@ column is still sized before the path is shortened, so this is unchanged. `01`, 
 machine's longer path. If a capture genuinely needs regenerating, do it where the assets
 were made.
 
-## What to record, and in what order
+## The video exists: docs/video/mhizha.mp4
+
+**Rendered 23 Aug, 1:57, 3.6 MB, 1920x1080.** Video, narration and a soft caption track in
+one file. `python3 scripts/video_render.py` rebuilds it.
+
+**Every terminal beat is a real execution.** The commands run in a pseudo-terminal, the
+output is captured as it arrives, and the pause before it arrives is the pause the machine
+actually took: 7.2 s for the first `ask`, 4.6 s and 4.4 s for the next two. Nothing is
+mocked and nothing is sped up, which is the rule further down this page and the reason the
+waits are on screen at all. Beat 4's output matches `docs/screenshots/03` to the third
+decimal, so what the video shows is what the repository claims.
+
+**It is not a screen capture**, and two things in it are presentation rather than
+measurement. Both are stated in the script's own docstring as well as here:
+
+1. **The typing cadence is synthetic**, a fixed 14 characters per second. Nothing about the
+   system's behaviour is represented by it. It is a person typing, and no person types at a
+   constant rate.
+2. **Beat 1 has no field footage.** The beat sheet asks for a field or a still of one.
+   There is none, and inventing an image of Zimbabwean farmland to sit behind a claim about
+   Zimbabwean farmers is the thing this project refuses to do everywhere else. A title card
+   stands in until the terminal appears.
+
+Drawing the terminal rather than filming it is also what keeps a developer's desktop, home
+directory and notifications out of frame permanently.
+
+**What is on screen, beat by beat:** 1 title card, 2 the maize question and its cited
+answer, 3 the same answer with the sources table lifted and the rest dimmed, 4 the
+agrochemical question typed in full and refused with the safety banner and no dose, 5 the
+abstention, 6 `cat competition/system_prompt.txt`, which is the safety posture beat 6
+narrates, 7 `report_figures.py` with the BLOCKED line readable in full.
+
+**The audio is bit-reproducible; the video is not.** The narration is seeded. The terminal
+waits are real machine timings and vary by a few tenths between runs, which is the point of
+them. Re-rendering gives the same video with slightly different pauses.
+
+## Re-shooting it instead
+
+Nothing above is binding. If you would rather film a real terminal and read the script
+yourself, the audio, the captions and the beat boundaries are all regenerable and the order
+below still applies. Re-time the beats against your own recording and re-run
+`scripts/video_captions.py`.
 
 Record in this order so a re-take of the hardest beat does not invalidate the others.
 

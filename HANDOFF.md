@@ -903,6 +903,71 @@ is one line plus a re-render.
 takes, the edit against `TIMINGS.txt`, and beat 6's blind clause, which is a wording call
 and not an audio one.
 
+---
+
+## Laptop session, 23 Aug ~10:45Z: the video exists
+
+**`docs/video/mhizha.mp4`, 1:57, 3.6 MB, 1920x1080**, video plus narration plus a soft
+caption track. `python3 scripts/video_render.py` rebuilds it. 328 tests pass.
+
+### What kind of recording this is, precisely
+
+**Every terminal beat is a real execution.** Commands run in a pseudo-terminal, output is
+captured as it arrives, and the pause before it arrives is the pause the machine took:
+7.2 s for the first `ask`, then 4.6 s and 4.4 s. Nothing is sped up, which is the standing
+rule, and beat 4's output matches `docs/screenshots/03` to the third decimal, so what the
+video shows is what the repository claims.
+
+**It is not a screen capture, and two things in it are presentation rather than
+measurement.** Both are in the script's docstring and in `docs/VIDEO.md`, because a viewer
+cannot tell by looking:
+
+1. **The typing cadence is synthetic**, 14 characters per second, fixed. It represents
+   nothing about the system. No person types at a constant rate.
+2. **Beat 1 has no field footage.** The beat sheet asks for a field or a still of one.
+   There is none, and inventing an image of Zimbabwean farmland to sit behind a claim about
+   Zimbabwean farmers is the thing this project refuses to do everywhere else. A title card
+   stands in.
+
+`docs/VIDEO.md` now says the beat sheet's "record it live" instruction is satisfied by a
+real timed run rather than a filmed screen, and keeps the re-shoot path intact.
+
+Drawing rather than filming also keeps a desktop, a home directory and notifications out of
+frame permanently, which the `04-doctor` finding says is not a theoretical concern here.
+
+### Two things caught by looking at frames rather than trusting the code
+
+- **Beat 7 ran off the right edge.** The renderer was not wrapping, where a terminal
+  emulator would. That beat is the BLOCKED line, the strongest thirty seconds in the video,
+  and half of it was off-screen. Fixed by wrapping at the terminal width and by setting the
+  pty window size so programs see the geometry rather than guessing from the environment.
+- **`-shortest` trimmed the closing card.** The narration ends before the video does on
+  purpose, and `-shortest` cut to the audio, losing four seconds of closing card. Removed,
+  with the reason written next to it so it does not come back.
+
+### Beat 6 got a better answer than the beat sheet had
+
+The sheet said "the profiler, or REPORT section 2.4", which was never decided. It is now
+`cat competition/system_prompt.txt`: a real file, real content, and literally the "safety
+posture baked into the model's own chat template" the narration names. It also avoids
+`metadata.json`, which was the other candidate and which carries the submitter's email.
+**An email on a public video is not recoverable.**
+
+### Toolchain, cited
+
+`CITATIONS.md` section 7 now covers rendering as well as narration. One fact worth knowing
+rather than assuming: **the ffmpeg that `imageio-ffmpeg` bundles is GPL-2.0-or-later**, not
+the LGPL configuration, because the build is `--enable-gpl --enable-libx264`. Retrieved from
+`ffmpeg -version` rather than taken on trust. That makes three GPL build-time tools, all
+compatible with this repository's GPL-3.0, none redistributed, none in `requirements.txt`.
+Menlo is rendered from the system and no font file is copied into the repository.
+
+### Still open
+
+**Beat 6's blind clause**, still a wording call. And whether to ship this render or re-shoot
+it with a camera and a human voice, which is a taste decision and is now a choice rather
+than a blocker.
+
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the
