@@ -262,6 +262,16 @@ Honest ones, all tracked in [`data/SOURCES.md`](data/SOURCES.md):
 - **Shona and Ndebele are entirely untranslated** (G-10). Every locale value is
   `TODO_TRANSLATE` and falls back to English with the fallback recorded. Safety copy is
   flagged priority and must not be machine translated.
+- **And the model itself cannot answer in Shona or Ndebele.** This is the limitation that
+  bites hardest, because the competition profiles a bare GGUF and none of the layer above
+  runs while judges score. Asked the Shona probe *"Ndinodyara chibage rini?"* ("when do I
+  plant maize?"), the shipped 2B read the verb as a personal name and replied in English:
+  *"Hello Ndinodyara. To give you the best advice, could you tell me where you are located
+  in Zimbabwe…"*. It at least fell back to English and still asked the province question
+  the baked template instructs; the two candidates we did not ship did worse, one looping
+  and one producing nonsense Shona. Transcripts: `runs/20260820T105919Z_blind/`.
+  **`language_scope` in `metadata.json` describes the system we are building, not a
+  capability the submitted artefact has today.**
 - **Region mapping is province-level only** (G-13). A farmer naming their district gets no
   region filter. That fails safe, but it does not protect them from the region near-miss.
 - **All model sizes are estimates** (G-09). Nothing has been measured on a real handset,
