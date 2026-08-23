@@ -25,97 +25,97 @@ and there is no signal in the field.
 An assistant that needs a network is not there at the moment the decision gets made.
 
 5
-00:00:16.510 --> 00:00:21.210
+00:00:16.510 --> 00:00:21.085
 Mhizha runs entirely offline, on a mid-range Android phone.
 
 6
-00:00:21.330 --> 00:00:25.805
+00:00:21.205 --> 00:00:25.680
 It answers practical agronomy questions from a curated corpus,
 
 7
-00:00:25.925 --> 00:00:29.450
+00:00:25.800 --> 00:00:29.325
 cites what it used, and says so when it cannot help.
 
 8
-00:00:29.570 --> 00:00:31.620
+00:00:29.445 --> 00:00:31.495
 The pipeline is real.
 
 9
-00:00:31.740 --> 00:00:35.765
+00:00:31.615 --> 00:00:35.640
 The agronomy is not sourced yet, and we say that plainly.
 
 10
-00:00:36.115 --> 00:00:40.565
+00:00:35.990 --> 00:00:40.440
 Every claim carries a passage, and every passage names its source,
 
 11
-00:00:40.685 --> 00:00:43.860
+00:00:40.560 --> 00:00:43.735
 its publisher and the date it was refreshed.
 
 12
-00:00:43.980 --> 00:00:46.830
+00:00:43.855 --> 00:00:46.705
 Those placeholder banners are real.
 
 13
-00:00:46.950 --> 00:00:50.400
+00:00:46.825 --> 00:00:50.275
 This corpus holds no agronomic content,
 
 14
-00:00:50.520 --> 00:00:54.845
+00:00:50.395 --> 00:00:54.720
 and the system tells the farmer that instead of sounding authoritative.
 
 15
-00:00:55.195 --> 00:00:58.495
+00:00:55.070 --> 00:00:58.370
 Ask it how much to spray, and it refuses.
 
 16
-00:00:58.615 --> 00:01:01.765
+00:00:58.490 --> 00:01:01.640
 A dose that is not written, word for word,
 
 17
-00:01:01.885 --> 00:01:05.685
+00:01:01.760 --> 00:01:05.560
 in a passage a human has signed off is never emitted.
 
 18
-00:01:05.805 --> 00:01:09.130
+00:01:05.680 --> 00:01:09.005
 Not as an estimate, not as a typical figure.
 
 19
-00:01:09.250 --> 00:01:14.450
+00:01:09.125 --> 00:01:14.325
 A wrong spray rate destroys a season, or harms the person holding the sprayer.
 
 20
-00:01:14.800 --> 00:01:19.150
+00:01:14.675 --> 00:01:19.025
 Below its confidence threshold, the model is not called at all.
 
 21
-00:01:19.270 --> 00:01:23.920
+00:01:19.145 --> 00:01:23.795
 It says what it does not know, asks the one question that would unblock it,
 
 22
-00:01:24.040 --> 00:01:27.740
+00:01:23.915 --> 00:01:27.615
 and sends the farmer to their local AGRITEX officer.
 
 23
-00:01:28.090 --> 00:01:31.415
+00:01:27.965 --> 00:01:31.290
 The competition profiles a bare model file,
 
 24
-00:01:31.535 --> 00:01:35.085
+00:01:31.410 --> 00:01:34.960
 so none of this code runs while judges are scoring.
 
 25
-00:01:35.205 --> 00:01:40.705
+00:01:35.080 --> 00:01:40.580
 We ship Qwen three point five, two billion, chosen by reading transcripts blind,
 
 26
-00:01:40.825 --> 00:01:45.175
+00:01:40.700 --> 00:01:45.050
 with our safety posture baked into the model's own chat template.
 
 27
-00:01:45.525 --> 00:01:49.225
+00:01:45.400 --> 00:01:49.100
 A number that cannot be traced to a run fails our build.
 
 28
-00:01:49.345 --> 00:01:52.845
+00:01:49.220 --> 00:01:52.720
 Where we could not measure something, the report says so.

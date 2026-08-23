@@ -92,12 +92,22 @@ SEED = 1729
 VOWELS = set("AIQWYaɑɒɔəɛɜɪʊʌiu")
 
 PRONUNCIATIONS = {
-    # Shona, "craftsman" or "one who is skilled". The Shona <mh> is a breathy-voiced m,
-    # one sound and not two. Unpatched the G2P inserts a vowel before it and says
-    # "EM-hizha" in three syllables, which is wrong in a way that would be obvious to
-    # anyone the project is named for.
+    # Shona, "craftsman" or "one who is skilled". Unpatched the G2P inserts a vowel before
+    # the m and says "EM-hizha" in three syllables, which is wrong in a way that would be
+    # obvious to anyone the project is named for.
+    #
+    # CHOSEN BY EAR, 23 Aug, by the person the project is named by. An earlier version of
+    # this entry used mˈhiːʒə, argued from the fact that Shona <mh> is a breathy-voiced m
+    # rather than an m followed by an h. That reasoning was not wrong about Shona and was
+    # wrong about this: rendered, it puts an audible vowel between the m and the h. The
+    # plain m is the one that sounds like the word.
+    #
+    # Worth keeping because of what it says about the checks below: the syllable count
+    # passes BOTH candidates at two, and the ASR pass returned "Mahisya" for one and
+    # "Miese" for the other, neither of which is the word. Nothing here could separate
+    # them. A person listening could, immediately.
     "mhizha": {
-        "phonemes": "mˈhiːʒə",
+        "phonemes": "mˈiːʒə",
         "was": "ˈɛmhˈɪʒə",
         "syllables": 2,
         "why": "leading m was read as the letter name, adding a syllable",
@@ -146,10 +156,14 @@ PRONUNCIATIONS = {
 # Also tried and dropped, so nobody re-runs them: ˈmiːʒə was transcribed "Amnesia", and
 # mhˈiːʒə lost the m entirely and came back as "He's a".
 QC_VARIANTS = {
+    # Settled 23 Aug by ear. Kept renderable so the choice can be re-heard rather than
+    # taken on trust, and because the rejected candidate is the argument for why the
+    # by-ear step is not optional.
     "mhizha": [
-        ("mˈhiːʒə", 'in use. breathy m, nearest the Shona <mh>. heard "Mahisya"'),
-        ("mˈiːʒə", 'plain m, the anglicised "MEE-zha". heard "Miese"'),
-        ("mˈɪʒə", 'short i, "MIH-zha". heard "Mijo"'),
+        ("mˈiːʒə", 'in use, chosen by ear 23 Aug. plain m, "MEE-zha". heard "Miese"'),
+        ("mˈhiːʒə", 'rejected. breathy m, argued from Shona <mh>; renders with a vowel '
+                    'between the m and the h. heard "Mahisya"'),
+        ("mˈɪʒə", 'rejected. short i, "MIH-zha". heard "Mijo"'),
     ],
     # This pair is the real question, and it is patched versus not patched. The count says
     # the patch fixes nothing; the ASR mildly prefers the unpatched form because the fuller

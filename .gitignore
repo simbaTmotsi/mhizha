@@ -74,3 +74,9 @@ verdict.json
 # repository about to publish something it should not. QC samples are working files.
 docs/video/narration/*.wav
 docs/video/narration/qc-*
+
+# macOS Finder metadata. One appeared under docs/video/ the moment that folder was opened
+# to listen to the narration clips, which is now a normal part of the video workflow. They
+# carry folder view state and sometimes the names of files that have since been deleted,
+# and the repository goes public on the 23rd.
+.DS_Store

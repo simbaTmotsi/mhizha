@@ -857,3 +857,39 @@ beats, 1:53.** No new guard, no test added; both refusals live inside the produc
 **Open, and now precisely stated:** listen to `qc-mashonaland-1` against `qc-mashonaland-2`
 and pick one, listen to the three `qc-mhizha` clips and pick one, then listen to
 `narration.m4a` once end to end. Everything else about the audio has been checked.
+
+### Mhizha settled by ear, 23 Aug, and it went against the analysis
+
+**`mˈiːʒə`, the plain m.** Chosen by listening, by the person the project is named by.
+
+The rejected candidate was `mˈhiːʒə`, and the argument for it was that Shona <mh> is a
+breathy-voiced m rather than an m followed by an h. That is correct about Shona and was
+wrong about this: rendered, it puts an audible vowel between the m and the h.
+
+**Keep this one, because it is the case for the listening step.** Every automatic check
+passed both candidates and none of them could separate the two:
+
+- the syllable count scores both at two, which is the target
+- the ASR round-trip returned "Mahisya" for the rejected one and "Miese" for the chosen
+  one. Neither is the word. A third candidate came back "Amnesia"
+- levels, duration, clipping and phoneme validity are identical concerns for both
+
+So the boundary drawn in the previous section held exactly where it was drawn: the counts
+prove a patch changed what it claimed to change, and say nothing about whether the result
+sounds like the word. **A person decided this in seconds and no amount of measurement was
+going to.**
+
+Beat 2 shortened by 0.13 s, so the total is now **1:52.7**. Re-rendered, re-measured,
+re-captioned, master rebuilt. The rejected candidates stay in `QC_VARIANTS` and stay
+renderable, so the choice can be re-heard rather than taken on trust.
+
+**Watch the qc file numbering**: it follows list order, so it moved when the choice was
+made. `qc-mhizha-1` is now the chosen one, where it was `qc-mhizha-2` before. Read the
+label `--qc` prints, never the number.
+
+**Still open: Mashonaland**, the preference-not-defect one, and the terminal takes.
+
+One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
+One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
+which is now a normal part of this workflow. They carry folder view state and sometimes the
+names of files that have since been deleted, and the repository goes public on the 23rd.

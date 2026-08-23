@@ -3,12 +3,12 @@
 #
 # beat  seconds  cues
   1      16.160     4
-  2      19.255     5
+  2      19.130     5
   3      18.730     5
   4      19.255     5
   5      12.940     3
   6      17.085     4
   7       7.320     2
 #
-# total 112.845 s including 0.35 s between beats
+# total 112.720 s including 0.35 s between beats
 # peak 0.78, clipped samples 0.0000%: PASS

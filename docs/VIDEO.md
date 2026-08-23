@@ -64,7 +64,7 @@ cannot say so.
 | 4 | 0:55-1:14 | Capture 03. Type the question in full. | "Ask it how much to spray, and it refuses. A dose that is not written, word for word, in a passage a human has signed off is never emitted. Not as an estimate, not as a typical figure. A wrong spray rate destroys a season, or harms the person holding the sprayer." |
 | 5 | 1:15-1:28 | Capture 02, the abstention panel | "Below its confidence threshold, the model is not called at all. It says what it does not know, asks the one question that would unblock it, and sends the farmer to their local AGRITEX officer." |
 | 6 | 1:28-1:45 | The profiler, or REPORT section 2.4 | "The competition profiles a bare model file, so none of this code runs while judges are scoring. We ship Qwen three point five, two billion, chosen by reading transcripts blind, with our safety posture baked into the model's own chat template." |
-| 7 | 1:46-1:53 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
+| 7 | 1:45-1:53 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
 
 **Closing card:** Mhizha. Simbarashe Timothy Motsi. team_id `mhizha`. github.com/simbaTmotsi.
 Below that, smaller: **"Narration: Kokoro-82M, a synthetic voice."** A viewer who assumes a
@@ -200,7 +200,7 @@ project's own name wrong:
 
 | word | unpatched | patched | syllables, want / was / now | verdict |
 |---|---|---|---|---|
-| Mhizha | `ˈɛmhˈɪʒə` | `mˈhiːʒə` | 2 / **3** / 2 | fixes a defect: a vowel was inserted before the m |
+| Mhizha | `ˈɛmhˈɪʒə` | `mˈiːʒə` | 2 / **3** / 2 | fixes a defect: a vowel was inserted before the m |
 | AGRITEX | `ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks` | `ˈaɡɹɪtɛks` | 3 / **7** / 3 | fixes a defect: spelled out letter by letter |
 | Qwen | `kjˈuːwˈɛn` | `kwˈɛn` | 1 / **2** / 1 | fixes a defect: Q read as its letter name |
 | Mashonaland | `məʃˈQnəland` | `mˌaʃˈQnəland` | 4 / 4 / 4 | **preference, not a defect** |
@@ -225,13 +225,25 @@ speech-recognition model was asked what it heard, unpatched against patched, and
 confirms AGRITEX went from seven spelled-out letters to a word and Qwen from a letter name
 to "kwen".
 
-**None of that is hearing it.** Whether `mˈhiːʒə` is a fair rendering of a Shona word is
-not a question a syllable count answers, and an ASR model spells an unfamiliar proper noun
-by analogy with words it knows: asked to transcribe one rejected candidate it returned
-"Amnesia". It is competent to tell an acronym from seven letters and not competent to
-judge this. **That call belongs to someone who speaks the language the project is named
-in.** `--qc` renders three candidates for Mhizha and two for Mashonaland, about a minute of
-listening, and changing one is a one-line edit to `PRONUNCIATIONS` then a re-render.
+**None of that is hearing it, and Mhizha is the proof.** The name was settled on 23 Aug by
+listening, and it went against the analysis. The earlier `mˈhiːʒə` was argued from Shona
+phonology, where <mh> is a breathy-voiced m rather than an m followed by an h. That is true
+about Shona and was wrong about this: rendered, it puts an audible vowel between the two.
+**`mˈiːʒə`, the plain m, is the one that sounds like the word.**
+
+Nothing automatic could have caught that. The syllable count passes both candidates at two.
+The ASR pass returned "Mahisya" for one and "Miese" for the other, and neither is the word;
+asked to transcribe a third candidate it returned "Amnesia". An ASR model spells an
+unfamiliar proper noun by analogy with words it knows, so it is competent to tell an acronym
+from seven spelled-out letters and not competent to judge a Shona name. The listening step
+is not a formality on top of the checks. It is the only thing that decided this one.
+
+**Still open: Mashonaland.** `--qc` renders both forms. Changing it is a one-line edit to
+`PRONUNCIATIONS` then a re-render. The rejected Mhizha candidates stay renderable too, so
+the choice can be re-heard rather than taken on trust.
+
+**Note the qc file numbering follows the list order**, so it moves when a choice is made:
+`qc-mhizha-1` is now the one in use. Read the label `--qc` prints, not the number.
 
 **Listen to the whole thing once before it is cut**, not only the four names.
 
