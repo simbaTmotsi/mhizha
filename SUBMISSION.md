@@ -381,6 +381,38 @@ uploaded first, and the form wants a repository URL, so the flip is already done
      no manifest. A "Built with" tag asserts a thing was used. The story says what the
      target is; a tag would say we shipped to it. Add them when there is an APK.
    - ***Try it out*** is the repository URL.
+   - ***Self-reported profiler scores.*** **S_perf `21.79`, S_eff `80.0`.**
+
+     Both use the profiler's own formulas, retrieved from
+     `vendor/adtc-profiler/README.md`: `min(TPS / 15.0, 1) * 100` and
+     `max(0, (7.0 - peak_rss_gb) / 7.0) * 100`.
+
+     **S_eff is not in question**: peak RSS 1.4 GB, from the same profiler run REPORT.md
+     4.1 already cites, and the profiler printed `80.0` itself.
+
+     **S_perf needed a decision, and it is worth understanding before anyone changes it.**
+     Two measurements of the selected model exist from the same evening:
+
+     | source | tok/s | S_perf |
+     |---|---|---|
+     | screened bench, median of 5 kept reps, **what REPORT.md submits** | 3.268 | **21.79** |
+     | the profiler's single run, `..._20525079efb1` | 3.590 | 23.93 |
+
+     The profiler printed `23.93` and it is tempting, being both higher and literally "from
+     the profiler". **It is one repetition on a host measured at 15.0% spread**, and
+     section 9g fixed the rule in advance: the submitted figure is *the median of screened,
+     warm, zero-steal repetitions, not the fastest*. Taking the higher sample at
+     form-filling time, because it flatters, is the late anchor the blind-scoring
+     discipline exists to prevent. Two points of S_perf is not worth telling a second story.
+
+     It is also the sourcing REPORT.md 4.1 already uses: throughput from the screened
+     bench, RSS from the profiler run. The form matches the report, and the report matches
+     the video and the Devpost page.
+
+     **Neither number is from audit hardware.** Both are our shared host under the section
+     9g `FALLBACK`, and the audit box should do better. Gate 2 normalises by the submitted
+     value and underclaiming fails at 1.5x error (SR-01), so if asked, say the figure is a
+     labelled fallback and point at REPORT.md 4.1.
    - ***Image gallery***, ten images in `docs/gallery/`, 3:2, well under the 5 MB cap.
      `python3 scripts/gallery.py` rebuilds them from material the repository already holds,
      so a stale image is a rebuild away rather than a re-shoot away. **Upload in order; the
