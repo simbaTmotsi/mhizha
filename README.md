@@ -28,7 +28,7 @@ unhelpfulness, it is confidence.*
 ```bash
 make setup                                          # deps + embedder weights. Needs network, once
 make build                                          # ingest + chunk + index
-make ask Q="when should I plant maize in Mashonaland"   # add L=sn for Shona
+make ask Q="when should I plant maize in Mashonaland"   # L=sn selects Shona copy, see below
 make test
 make doctor                                         # device budget and health
 make eval                                           # grounding, abstention, red-team
@@ -79,8 +79,11 @@ These are in [`CLAUDE.md`](CLAUDE.md) in full and they override any convenient d
    verbatim in a validated passage.
 4. **The corpus is authoritative and human-validated.** We build the pipeline. We do not
    author agronomic content. Gaps get registered, not filled with plausible text.
-5. **Local languages are a design seam.** English, Shona, Ndebele. No hardcoded strings,
-   and untranslated keys fall back to English visibly, never silently.
+5. **Local languages are a design seam, and the seam is still empty.** English, Shona,
+   Ndebele carried through the locale layer and the retrieval path, with no hardcoded
+   strings and untranslated keys falling back to English visibly rather than silently.
+   **Nothing is translated yet and the model cannot answer in Shona or Ndebele**; see the
+   limitations below before repeating the language claim anywhere.
 
 ## How it works
 
@@ -101,6 +104,36 @@ question
 Read the code in this order: [`app/answer.py`](src/mhizha/app/answer.py) top to bottom,
 then [`app/safety.py`](src/mhizha/app/safety.py), then
 [`rag/retrieve.py`](src/mhizha/rag/retrieve.py).
+
+## Languages, stated exactly
+
+`metadata.json` declares `language_scope: ["en", "sn", "nd"]`. That is **the system being
+built, not a capability the submitted artefact has today**, and the difference is worth
+being precise about because it is the easiest claim here to overread.
+
+| | today |
+|---|---|
+| the locale layer | works. `--lang sn` is carried through retrieval and rendering, no string is hardcoded, and an untranslated key falls back to English *visibly* |
+| the Shona and Ndebele copy | **23 of 30 keys are `TODO_TRANSLATE`.** `make doctor` prints the count every run |
+| cross-language retrieval | **does not work.** The embedder is English-only, so a Shona query cannot match an English passage and the system abstains |
+| the shipped model | **cannot answer in Shona or Ndebele** |
+
+That last row is measured, not assumed. The behavioural probe includes one Shona question,
+*"Ndinodyara chibage rini?"* — "when do I plant maize?". The 2B we ship read the verb as a
+personal name and answered in English: *"Hello Ndinodyara. To give you the best advice,
+could you tell me where you are located in Zimbabwe…"*. The two candidates we did not ship
+did worse: one looped for several hundred tokens, the other produced nonsense Shona.
+Transcripts are in [`runs/20260820T105919Z_blind/`](runs/20260820T105919Z_blind/).
+
+The shipped model at least failed into English while still asking the province question its
+baked template instructs, which is the safety posture holding where comprehension did not.
+That is damage control, not coverage.
+
+**So: say "Shona and Ndebele are a seam in the architecture, carried through the locale
+layer and the retrieval path". Do not say "it speaks Shona".** Closing the gap needs a
+multilingual embedder ([`docs/model-shortlist.md`](docs/model-shortlist.md) has the swap and
+its size cost), human translation of the safety copy, and a model that handles the
+languages, in that order.
 
 ## Setup detail
 

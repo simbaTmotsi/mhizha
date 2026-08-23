@@ -628,7 +628,7 @@ To reproduce the product rather than the measurement:
 
 ```bash
 make setup && make build        # ingest, chunk, embed, index. Build time, needs network
-make ask Q="when should I plant maize in Mashonaland"    # fully offline; L=sn for Shona
+make ask Q="when should I plant maize in Mashonaland"    # fully offline; L=sn selects Shona copy
 make eval                       # grounding, abstention, red-team, per category
 ```
 
@@ -677,6 +677,16 @@ physical hardware, and a guard shipped without a test proving it can fire.
   visibly English.
 - **The embedder is English-only**, so a Shona query cannot match an English passage. This
   is a known architectural gap, not an oversight.
+- **And the submitted model cannot answer in Shona or Ndebele.** This is the language
+  limitation that matters most, because the profiler runs the bare GGUF and none of the
+  layer above it executes while judges score. The behavioural probe includes one Shona
+  question, *"Ndinodyara chibage rini?"*; the selected 2B read the verb as a personal name
+  and replied in English, and the two candidates not selected did worse, one looping and
+  one producing nonsense Shona (`runs/20260820T105919Z_blind/`). It failed into English
+  while still asking the province question its baked template instructs, which is the
+  safety posture holding where comprehension did not, but it is damage control rather than
+  coverage. `language_scope` in `metadata.json` describes the system being built, not a
+  capability the submitted artefact has today.
 - **The retrieval abstention threshold is uncalibrated.** On the placeholder corpus,
   answerable and unanswerable questions overlap in similarity, so calibrating now would be
   fitting noise.
