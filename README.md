@@ -105,9 +105,9 @@ Read the code in this order: [`app/answer.py`](src/mhizha/app/answer.py) top to 
 then [`app/safety.py`](src/mhizha/app/safety.py), then
 [`rag/retrieve.py`](src/mhizha/rag/retrieve.py).
 
-## Languages, stated exactly
+## Languages
 
-**The codes, since they are used throughout and expanded nowhere else:**
+**The codes, since they are used throughout:**
 
 | code | language | endonym |
 |---|---|---|
@@ -115,44 +115,65 @@ then [`app/safety.py`](src/mhizha/app/safety.py), then
 | `sn` | Shona | chiShona |
 | `nd` | Northern Ndebele, the Zimbabwean one | isiNdebele |
 
-These are ISO 639-1, which is what BCP-47 uses where a two-letter code exists, and what the
-submission template asks for. South Ndebele, spoken in South Africa, is a different language
-with a different code (`nr`) and is not in scope here.
+ISO 639-1, which is what BCP-47 uses where a two-letter code exists, and what the submission
+template asks for. South Ndebele, spoken in South Africa, is a different language with a
+different code (`nr`) and is not in scope here.
 
-`metadata.json` declares `language_scope: ["en", "sn", "nd"]`. That is **the system being
-built, not a capability the submitted artefact has today**, and the difference is worth
-being precise about because it is the easiest claim here to overread.
+### Switching language
 
-| | today |
-|---|---|
-| the locale layer | works. `--lang sn` is carried through retrieval and rendering, no string is hardcoded, and an untranslated key falls back to English *visibly* |
-| the Shona and Ndebele copy | **does not exist. 23 of 23 strings are `TODO_TRANSLATE`, in both locales.** `make doctor` prints the count every run |
-| cross-language retrieval | **does not work.** The embedder is English-only, so a Shona query cannot match an English passage and the system abstains |
-| the shipped model | **cannot answer in Shona or Ndebele** |
+```bash
+make ask Q="when should I plant maize in Mashonaland"          # L defaults to en
+make ask Q="when should I plant maize in Mashonaland" L=sn
+make ask Q="when should I plant maize in Mashonaland" L=nd
 
-What `--lang sn` does today is therefore worth stating exactly, because it is easy to read
-as more than it is. Run the same question at `L=en` and `L=sn` and diff the output: they are
-byte-identical English apart from **one added line**, `language fallback to English for 1
-string(s): translation not available yet`. The flag selects a locale, the locale is empty,
-and the system tells you so rather than pretending. That visible fallback is the standing
-rule working; it is not Shona output.
+PYTHONPATH=src python3 -m mhizha ask "..." --lang sn           # the same thing, directly
+```
 
-The bottom row is measured, not assumed. The behavioural probe includes one Shona question,
-*"Ndinodyara chibage rini?"* — "when do I plant maize?". The 2B we ship read the verb as a
-personal name and answered in English: *"Hello Ndinodyara. To give you the best advice,
-could you tell me where you are located in Zimbabwe…"*. The two candidates we did not ship
-did worse: one looped for several hundred tokens, the other produced nonsense Shona.
-Transcripts are in [`runs/20260820T105919Z_blind/`](runs/20260820T105919Z_blind/).
+The locale is chosen at the call, carried through retrieval and rendering, and every
+user-facing string is resolved through `i18n` rather than written into the code. Adding a
+fourth language is a new `locales/<code>.yaml` and nothing else.
 
-The shipped model at least failed into English while still asking the province question its
-baked template instructs, which is the safety posture holding where comprehension did not.
-That is damage control, not coverage.
+### What each code gives you today
 
-**So: say "Shona and Ndebele are a seam in the architecture, carried through the locale
-layer and the retrieval path". Do not say "it speaks Shona".** Closing the gap needs a
-multilingual embedder ([`docs/model-shortlist.md`](docs/model-shortlist.md) has the swap and
-its size cost), human translation of the safety copy, and a model that handles the
-languages, in that order.
+**`en` is complete.** Answers, citations, confidence bands, the abstention path, the
+agrochemical refusal and every notice are English and finished. Nothing about the English
+path is provisional.
+
+**`sn` and `nd` select an empty locale.** All 23 strings in each file are `TODO_TRANSLATE`,
+so what you get is English plus one extra line: `language fallback to English for 1
+string(s): translation not available yet`. Diff `L=en` against `L=sn` and that line is the
+only difference. **That is the mechanism working, not failing** — standing rule 5 says a
+fallback is recorded visibly and never silently, and a machine-translated pesticide warning
+is worse than one that is honestly still in English. The translations are a content job for
+a human, tracked as G-10.
+
+### Answering *in* Shona is a different thing, and it rides on the model
+
+The locale layer decides what *our* copy is written in. What language an *answer* comes back
+in is the model's business, and for the competition the submitted artefact is a bare GGUF:
+the profiler loads it directly, so none of the layer above runs while judges score. That
+makes this question entirely about **Qwen3.5 2B**, and we measured it rather than assuming.
+
+The behavioural probe includes one Shona question, *"Ndinodyara chibage rini?"* — "when do I
+plant maize?". The 2B read the verb as a personal name and replied in English: *"Hello
+Ndinodyara. To give you the best advice, could you tell me where you are located in
+Zimbabwe…"*. The two candidates we did not ship did worse: phi-4-mini looped for several
+hundred tokens, the 4B produced nonsense Shona. Transcripts:
+[`runs/20260820T105919Z_blind/`](runs/20260820T105919Z_blind/).
+
+It failed *into English* while still asking the province question its baked template
+instructs, which is the safety posture holding where comprehension did not. Useful, and not
+the same as speaking Shona.
+
+Retrieval has the matching limit: the embedder is English-only (G-12), so a Shona query
+cannot match an English passage and the system abstains rather than guessing.
+
+**So `language_scope: ["en", "sn", "nd"]` in `metadata.json` describes the system being
+built.** The accurate sentence is *"Shona and Ndebele are a seam in the architecture,
+carried through the locale layer and the retrieval path"* — not *"it speaks Shona"*. Closing
+the gap needs three separate things, in order: human translation of the copy, a multilingual
+embedder ([`docs/model-shortlist.md`](docs/model-shortlist.md) has the swap and its size
+cost), and a base model that handles the languages.
 
 ## Setup detail
 
