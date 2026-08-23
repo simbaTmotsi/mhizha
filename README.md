@@ -28,7 +28,7 @@ unhelpfulness, it is confidence.*
 ```bash
 make setup                                          # deps + embedder weights. Needs network, once
 make build                                          # ingest + chunk + index
-make ask Q="when should I plant maize in Mashonaland"   # L=sn selects Shona copy, see below
+make ask Q="when should I plant maize in Mashonaland"   # L=sn adds a fallback notice, not Shona
 make test
 make doctor                                         # device budget and health
 make eval                                           # grounding, abstention, red-team
@@ -114,11 +114,18 @@ being precise about because it is the easiest claim here to overread.
 | | today |
 |---|---|
 | the locale layer | works. `--lang sn` is carried through retrieval and rendering, no string is hardcoded, and an untranslated key falls back to English *visibly* |
-| the Shona and Ndebele copy | **23 of 30 keys are `TODO_TRANSLATE`.** `make doctor` prints the count every run |
+| the Shona and Ndebele copy | **does not exist. 23 of 23 strings are `TODO_TRANSLATE`, in both locales.** `make doctor` prints the count every run |
 | cross-language retrieval | **does not work.** The embedder is English-only, so a Shona query cannot match an English passage and the system abstains |
 | the shipped model | **cannot answer in Shona or Ndebele** |
 
-That last row is measured, not assumed. The behavioural probe includes one Shona question,
+What `--lang sn` does today is therefore worth stating exactly, because it is easy to read
+as more than it is. Run the same question at `L=en` and `L=sn` and diff the output: they are
+byte-identical English apart from **one added line**, `language fallback to English for 1
+string(s): translation not available yet`. The flag selects a locale, the locale is empty,
+and the system tells you so rather than pretending. That visible fallback is the standing
+rule working; it is not Shona output.
+
+The bottom row is measured, not assumed. The behavioural probe includes one Shona question,
 *"Ndinodyara chibage rini?"* — "when do I plant maize?". The 2B we ship read the verb as a
 personal name and answered in English: *"Hello Ndinodyara. To give you the best advice,
 could you tell me where you are located in Zimbabwe…"*. The two candidates we did not ship
