@@ -356,6 +356,27 @@ uploaded first, and the form wants a repository URL, so the flip is already done
      no manifest. A "Built with" tag asserts a thing was used. The story says what the
      target is; a tag would say we shipped to it. Add them when there is an APK.
    - ***Try it out*** is the repository URL.
+   - ***Image gallery***, ten images in `docs/gallery/`, 3:2, well under the 5 MB cap.
+     `python3 scripts/gallery.py` rebuilds them from material the repository already holds,
+     so a stale image is a rebuild away rather than a re-shoot away. **Upload in order; the
+     order is the argument.** Captions, if the form offers them:
+
+     | # | file | caption |
+     |---|---|---|
+     | 1 | `01-mhizha` | Offline agronomy for Zimbabwean smallholders. It cites what it used, and refuses what it cannot source. |
+     | 2 | `02-cited-answer` | Every answer names its passages, their publisher, and the date each was refreshed. |
+     | 3 | `03-refuses-a-dose` | Asked for a spray rate, it gives none. A dose not written verbatim in a signed-off passage is never emitted. |
+     | 4 | `04-abstains` | Below its confidence threshold the model is never called. It says what it does not know and asks one question. |
+     | 5 | `05-what-is-profiled` | The competition profiles a bare model file, so our safety posture ships baked into the model's own chat template. |
+     | 6 | `06-untraceable-numbers-fail-the-build` | A number that cannot be traced to a run fails our build. Latency is BLOCKED because we never had the hardware to measure it honestly. |
+     | 7 | `07-fits-a-4gb-phone` | Every runtime component costed against the headroom an app actually gets on a 4 GB phone. |
+     | 8 | `08-chosen-blind` | Transcripts were scored candidate-blind, mapping sealed beforehand. The blind changed the answer. |
+     | 9 | `09-what-we-got-wrong` | Thirteen reversed conclusions, each with the evidence that overturned it. The build fails if one comes back. |
+     | 10 | `10-no-number-by-hand` | A missing measurement is Absent, never zero. We published the absence and the reason. |
+
+     **Every image is checked for an absolute home path before it is written.** `doctor`
+     prints one and the committed capture has it relativised; the generator refuses rather
+     than relying on someone remembering the difference.
    - **Two things worth saying if anyone asks in person**: the corpus is placeholder, and
      the dosage refusal is the point.
 3. **Submit early enough to fail once.** The deadline is 23:45 PDT on 24 August. Aim to
