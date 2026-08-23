@@ -49,7 +49,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 NARRATION = REPO / "docs" / "video" / "narration" / "narration.m4a"
 TIMINGS = REPO / "docs" / "video" / "narration" / "TIMINGS.txt"
 CAPTIONS = REPO / "docs" / "video" / "captions.vtt"
-OUT = REPO / "docs" / "video" / "mhizha.mp4"
+# The submitted video is the Remotion build (docs/VIDEO.md, chosen 23 Aug). This renderer
+# writes the alternate under its own name so the obvious filename is never the wrong file
+# on upload day.
+SUBMITTED = REPO / "docs" / "video" / "mhizha.mp4"
+OUT = REPO / "docs" / "video" / "mhizha-pillow.mp4"
 
 FPS = 30
 WIDTH, HEIGHT = 1920, 1080
@@ -482,19 +486,36 @@ def encode(states, probe_only: bool) -> int:
     if process.wait() != 0:
         raise RenderError("ffmpeg failed to encode the video track")
 
-    muxed = subprocess.run(
-        [ffmpeg, "-y", "-loglevel", "error", "-i", str(silent), "-i", str(NARRATION),
-         "-i", str(CAPTIONS), "-map", "0:v", "-map", "1:a", "-map", "2",
-         "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-c:s", "mov_text",
-         "-metadata:s:s:0", "language=eng", str(OUT)])
-    # No -shortest here. The narration ends before the video does, on purpose: the closing
-    # card is held in silence, and -shortest would trim the card off rather than pad the
-    # audio.
+    mux(silent, OUT)
     silent.unlink(missing_ok=True)
+    return 0
+
+
+def mux(silent: Path, target: Path) -> None:
+    """Attach the narration and the caption track to a silent video track.
+
+    One implementation, used by both renderers. The Remotion build produces a silent track
+    too, and a second copy of this would be a second chance to get the caption language tag
+    or the audio codec subtly different between two files that are supposed to differ only
+    in how they were drawn.
+    """
+    import imageio_ffmpeg
+
+    for needed in (NARRATION, CAPTIONS):
+        if not needed.exists():
+            raise RenderError(f"{needed.name} is missing")
+    # No -shortest. The narration ends before the video does, on purpose: the closing card
+    # is held in silence, and -shortest would trim the card off rather than pad the audio.
+    muxed = subprocess.run(
+        [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error",
+         "-i", str(silent), "-i", str(NARRATION), "-i", str(CAPTIONS),
+         "-map", "0:v", "-map", "1:a", "-map", "2",
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-c:s", "mov_text",
+         "-metadata:s:s:0", "language=eng", str(target)])
     if muxed.returncode != 0:
         raise RenderError("ffmpeg failed to mux narration and captions")
-    print(f"wrote {OUT.relative_to(REPO)} ({OUT.stat().st_size / 1_000_000:.1f} MB)")
-    return 0
+    print(f"wrote {target.relative_to(REPO)} "
+          f"({target.stat().st_size / 1_000_000:.1f} MB)")
 
 
 def export_material() -> int:
@@ -530,9 +551,19 @@ def main() -> int:
                         help="capture the real runs and print their timings, encode nothing")
     parser.add_argument("--export", action="store_true",
                         help="write the captured sessions for the Remotion renderer")
+    parser.add_argument("--mux", metavar="SILENT_MP4",
+                        help="attach narration and captions to an existing silent video "
+                             "and write docs/video/mhizha.mp4, the submitted file")
     args = parser.parse_args()
     if args.export:
         return export_material()
+    if args.mux:
+        try:
+            mux(Path(args.mux).resolve(), SUBMITTED)
+        except RenderError as problem:
+            print(f"error: {problem}", file=sys.stderr)
+            return 1
+        return 0
     try:
         if not NARRATION.exists():
             raise RenderError(f"{NARRATION.name} is missing. "

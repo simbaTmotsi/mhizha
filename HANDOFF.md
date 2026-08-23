@@ -1111,6 +1111,33 @@ repository, which is a real structural addition and is recorded here for that re
 **The choice is Simba's and it is a taste question, not a correctness one.** Both are
 honest, both are 1:57, both carry the same narration and the same real waits.
 
+### CHOSEN 23 Aug: B, the Remotion build
+
+**The filenames now carry the decision**, because the alternative was leaving the obvious
+name attached to the wrong file on upload day:
+
+| file | renderer | |
+|---|---|---|
+| `docs/video/mhizha.mp4` | Remotion, `video/` | **SUBMITTED** |
+| `docs/video/mhizha-pillow.mp4` | Pillow, `scripts/video_render.py` | alternate |
+
+Two things were tightened rather than left as they were.
+
+**B's build is one command.** It was an ffmpeg invocation typed by hand, which is not a
+build. `cd video && npm run build` now regenerates the material, renders, and muxes.
+
+**The mux has one implementation**, `mux()` in `scripts/video_render.py`, called by both
+renderers and exposed as `--mux`. A second copy would be a second chance to get the caption
+language tag or the audio codec subtly different between two files whose entire point is
+that they differ only in how they were drawn.
+
+**A stays, and stays working.** Not sentiment: B's licence is free for an individual and
+this submission is one, but a company licence is required above three employees. A carries
+no such condition, so keeping it working is what would make dropping B cost nothing later.
+`python3 scripts/video_render.py` still rebuilds it, into its own name.
+
+**Upload `docs/video/mhizha.mp4`.**
+
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the

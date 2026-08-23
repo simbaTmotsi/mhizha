@@ -147,8 +147,9 @@ were made.
 
 ## The video exists: docs/video/mhizha.mp4
 
-**Rendered 23 Aug, 1:57, 3.6 MB, 1920x1080.** Video, narration and a soft caption track in
-one file. `python3 scripts/video_render.py` rebuilds it.
+**Rendered 23 Aug, 1:57, 1920x1080.** Video, narration and a soft caption track in one
+file. Two renderers produce it; the section below says which one ships and how to rebuild
+it. Everything in this section is true of both.
 
 **Every terminal beat is a real execution.** The commands run in a pseudo-terminal, the
 output is captured as it arrives, and the pause before it arrives is the pause the machine
@@ -201,14 +202,23 @@ fault rather than as an edit.
 waits are real machine timings and vary by a few tenths between runs, which is the point of
 them. Re-rendering gives the same video with slightly different pauses.
 
-## Two renderers, one set of material
+## Two renderers, one set of material. B is the one that ships.
 
-There are two videos, same length, same audio, same captions, same beat boundaries:
+**Chosen 23 Aug: the Remotion build.** The filenames carry the decision, so the obvious file
+is never the wrong file on upload day:
 
-| | file | drawn by |
-|---|---|---|
-| **A** | `docs/video/mhizha.mp4` | `scripts/video_render.py`, Pillow, monospace throughout |
-| **B** | `docs/video/mhizha-remotion.mp4` | `video/`, Remotion, React and CSS in headless Chrome |
+| | file | drawn by | |
+|---|---|---|---|
+| **B** | `docs/video/mhizha.mp4` | `video/`, Remotion, React and CSS in headless Chrome | **SUBMITTED** |
+| **A** | `docs/video/mhizha-pillow.mp4` | `scripts/video_render.py`, Pillow, monospace throughout | alternate, kept working |
+
+Rebuild the submitted video with **`cd video && npm run build`**, which regenerates the
+material, renders, and muxes in one step. **The mux has one implementation**, in
+`scripts/video_render.py`, used by both renderers: a second copy of it would be a second
+chance to get the caption language tag or the audio codec subtly different between two
+files that are supposed to differ only in how they were drawn.
+
+Same length, same audio, same captions, same beat boundaries.
 
 **Neither invents anything.** The terminal sessions are captured once by
 `python3 scripts/video_render.py --export` into
@@ -226,13 +236,14 @@ file below it lights up. A static diagram can state that. It cannot show it happ
 **What B does not buy.** The terminal beats are identical in content and timing, because
 they are the same capture with nicer chrome. Beat 1 still has no field photograph.
 
-**What B costs.** A Node toolchain, 303 MB of `node_modules`, a headless Chrome render pass,
-and a licence that is not open source. `CITATIONS.md` section 7 has the terms, retrieved
-from the installed package: the free tier covers an individual, which this submission is.
-**A has no such condition**, which is a reason to keep it working even if B ships.
+**What B costs, and why A is kept.** A Node toolchain, 303 MB of `node_modules`, a headless
+Chrome render pass, and a licence that is not open source. `CITATIONS.md` section 7 has the
+terms, retrieved from the installed package: the free tier covers an individual, which this
+submission is.
 
-Rebuild B with `cd video && npm install && npm run render`, then mux the narration and
-captions the same way A does.
+**A carries no such condition.** It stays in the repository and stays working, because that
+is what would make dropping B cost nothing if this ever became an organisation of four or
+more people. `python3 scripts/video_render.py` still rebuilds it.
 
 ## Re-shooting it instead
 

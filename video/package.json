@@ -2,10 +2,13 @@
   "name": "mhizha-video",
   "version": "0.0.0",
   "private": true,
-  "description": "Remotion rendering of the Mhizha submission video. Comparison build; the Pillow renderer in scripts/video_render.py is the other one.",
+  "description": "Remotion rendering of the Mhizha submission video. This is the SUBMITTED build; scripts/video_render.py renders the alternate.",
   "scripts": {
+    "material": "node scripts/material.mjs",
     "studio": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts Mhizha out/remotion.mp4"
+    "render": "remotion render src/index.ts Mhizha out/remotion.mp4",
+    "build": "npm run material && npm run render && npm run mux",
+    "mux": "../.venv/bin/python ../scripts/video_render.py --mux out/remotion.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.290",
