@@ -28,7 +28,7 @@ unhelpfulness, it is confidence.*
 ```bash
 make setup                                          # deps + embedder weights. Needs network, once
 make build                                          # ingest + chunk + index
-make ask Q="when should I plant maize in Mashonaland"   # L=sn adds a fallback notice, not Shona
+make ask Q="when should I plant maize in Mashonaland"   # L=en|sn|nd. sn adds a notice, not Shona
 make test
 make doctor                                         # device budget and health
 make eval                                           # grounding, abstention, red-team
@@ -106,6 +106,18 @@ then [`app/safety.py`](src/mhizha/app/safety.py), then
 [`rag/retrieve.py`](src/mhizha/rag/retrieve.py).
 
 ## Languages, stated exactly
+
+**The codes, since they are used throughout and expanded nowhere else:**
+
+| code | language | endonym |
+|---|---|---|
+| `en` | English | |
+| `sn` | Shona | chiShona |
+| `nd` | Northern Ndebele, the Zimbabwean one | isiNdebele |
+
+These are ISO 639-1, which is what BCP-47 uses where a two-letter code exists, and what the
+submission template asks for. South Ndebele, spoken in South Africa, is a different language
+with a different code (`nr`) and is not in scope here.
 
 `metadata.json` declares `language_scope: ["en", "sn", "nd"]`. That is **the system being
 built, not a capability the submitted artefact has today**, and the difference is worth

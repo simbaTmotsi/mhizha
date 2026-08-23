@@ -106,6 +106,8 @@ index:
 
 i18n:
   default_lang: en
+  # ISO 639-1: en English, sn Shona (chiShona), nd Northern Ndebele (isiNdebele).
+  # nd is the Zimbabwean Ndebele; South Ndebele is a different language, code nr.
   languages: [en, sn, nd]
   locales_dir: src/mhizha/i18n/locales
 
