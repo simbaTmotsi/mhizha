@@ -22,7 +22,37 @@ python-docx>=1.1            # BUILD TIME  DOCX ingestion adapter
 # ---- TEST ----
 pytest>=7.0
 
+# ---- BUILD TIME, submission artefacts ----
+# Rebuild the gallery images and the alternate video renderer. Never shipped, never
+# imported by anything under src/mhizha/, and irrelevant to the on-device budget.
+#   scripts/gallery.py        -> Pillow
+#   scripts/video_render.py   -> Pillow, imageio-ffmpeg, numpy
+#   scripts/video_captions.py -> standard library only
+Pillow>=10.0                # BUILD TIME  draws the gallery images and the terminal frames
+imageio-ffmpeg>=0.5         # BUILD TIME  bundles the ffmpeg binary that encodes and muxes
+
 # ---- OPTIONAL, dev harness generation backend ----
 # Install to run a real GGUF locally instead of the stub backend:
 #   pip install llama-cpp-python
 # llama-cpp-python>=0.2.70
+
+# ---- OPTIONAL, video narration. NOT INSTALLED BY make setup, ON PURPOSE ----
+#
+# scripts/video_narration.py renders the narration with Kokoro and verifies the
+# pronunciation patches. It is left out of the install above for one hard reason rather
+# than a preference: **the dependency chain does not build on Python 3.13**, which is the
+# interpreter `python3 -m venv` gives on current macOS. A spaCy dependency of the phoneme
+# stack fails to cythonize. Putting these on the line above would break `make setup`, which
+# is the first command in this project's own preflight.
+#
+# So it gets its own interpreter, and the narration is committed already built:
+#   uv venv --python 3.12 .venv-tts
+#   VIRTUAL_ENV=.venv-tts uv pip install kokoro soundfile
+#   VIRTUAL_ENV=.venv-tts uv pip install openai-whisper scipy   # only for --verify
+# It also needs a system espeak-ng. See docs/VIDEO.md for the whole path, and
+# CITATIONS.md section 7 for every component and its licence.
+#
+# kokoro>=0.9              # BUILD TIME  narration. Python <= 3.12 only
+# soundfile>=0.12          # BUILD TIME  writes the narration WAVs
+# openai-whisper>=20250625 # BUILD TIME  --verify only: what an ASR model hears back
+# scipy>=1.11              # BUILD TIME  --verify only: resampling for the above

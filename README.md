@@ -295,12 +295,20 @@ python3 scripts/video_captions.py      # WebVTT, cue windows measured from the a
 cd video && npm run build              # the submitted video
 ```
 
-**Those five need build-time tooling that is deliberately not in `requirements.txt`**:
-Pillow, Kokoro for the narration, Remotion and Node for the video. They run once, on a
-developer machine, and putting them in front of everyone running `make setup` would cost a
-few hundred megabytes for an asset that is already committed. `docs/VIDEO.md` has the setup;
-`CITATIONS.md` section 7 has every component and its licence, including three GPL build-time
-tools and one that is not open source at all.
+**The first three work straight after `make setup`.** Pillow and imageio-ffmpeg are in
+`requirements.txt`, labelled build time, never shipped.
+
+**The last two need tooling that is deliberately not there.** The narration needs Kokoro,
+and its dependency chain **does not build on Python 3.13**, which is the interpreter
+`python3 -m venv` gives on current macOS: a spaCy dependency of the phoneme stack fails to
+cythonize. Adding it would break `make setup`, which is the first command in this project's
+own preflight, so it gets its own 3.12 interpreter instead. The video needs Node and
+Remotion, which are not Python at all. `requirements.txt` carries the exact commands,
+`docs/VIDEO.md` has the whole path, and `CITATIONS.md` section 7 lists every component with
+its licence, including three GPL build-time tools and one that is not open source at all.
+
+**Both are one-off**: the narration and the video are committed, so this is how to rebuild
+them, not something anyone has to run to use the project.
 
 The terminal beats in the video are **real executions**: the commands run in a pseudo-terminal
 and the pause before output is the pause the machine actually took. Both video renderers read
