@@ -153,6 +153,17 @@ It runs once, at build time, on a developer machine, and its only output is an a
 | `soundfile` | 0.14.0 | BSD-3-Clause | **retrieved** 23 Aug 2026, same |
 | `torch` | 2.13.0 | BSD-3-Clause (**unverified**) | no licence field in the installed metadata |
 
+**Verification only, not part of the narration.** `--verify` asks an independent speech
+recognition model what it heard, so a pronunciation patch can be checked against the defect
+it claims to fix rather than asserted. Nothing it produces reaches the video; it prints a
+transcript to a terminal.
+
+| Component | Version | Licence | How established |
+|---|---|---|---|
+| `openai-whisper` | 20250625 | MIT | **retrieved** 23 Aug 2026 from installed distribution metadata |
+| `openai/whisper-small.en` (the weights) | as fetched by the above | MIT (**unverified**) | no licence file accompanies the cached checkpoint |
+| `scipy` | 1.18.1 | BSD-3-Clause | **retrieved** 23 Aug 2026, same |
+
 **The weights entry is deliberately marked unverified**, and it is the one to check before
 anyone relies on it. Only `config.json` and `kokoro-v1_0.pth` were fetched into the local
 cache; no `LICENSE` file and no model card came with them, so the Apache-2.0 above is

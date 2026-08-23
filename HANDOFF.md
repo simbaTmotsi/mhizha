@@ -791,3 +791,69 @@ seven beats.** No run produced, so `scrub_runs.py` had nothing new.
 
 **Still not recorded**, and now with a specific blocker rather than a general one: the
 terminal takes and one person's ear on four names.
+
+---
+
+## Laptop session, 23 Aug ~08:00Z: taking the pronunciation QC as far as it goes without ears
+
+The open item from the last section was "nobody has listened to it". That cannot be closed
+here. It can be **narrowed from four unknowns to one**, and it was.
+
+### The check that does not need ears
+
+A syllable count off the phoneme string is exact, needs no audio, and happens to be the
+precise shape of the defect this patching exists for: **a word gains syllables when letters
+get spelled out or a vowel gets inserted.** `--verify` counts it.
+
+| word | want | unpatched | patched | verdict |
+|---|---|---|---|---|
+| Mhizha | 2 | **3** | 2 | fixes a defect: a vowel was inserted before the m |
+| AGRITEX | 3 | **7** | 3 | fixes a defect: spelled out letter by letter |
+| Qwen | 1 | **2** | 1 | fixes a defect: Q read as its letter name |
+| Mashonaland | 4 | 4 | 4 | **preference, not a defect** |
+
+Three of the four patches remove a countable defect, and `--verify` exits non-zero if one
+stops doing so. Proved it fires by reverting the Qwen patch to the broken form.
+
+**The fourth is the one that matters now.** Both forms of Mashonaland are four syllables:
+the patch changes vowel quality only. It stays, because the name is Zimbabwean and the
+schwa is the anglicisation, but that is a judgement and not a correction, and the evidence
+is mildly against it. **It is the first thing to listen to.** Reverting is deleting one line.
+
+### The ASR round-trip, and its limits
+
+`--verify` also asks whisper small.en what it heard, unpatched against patched. It confirms
+the two clear cases: AGRITEX goes from seven spelled-out letters to a word, Qwen from a
+letter name to "kwen".
+
+**It is not competent to judge the other two**, and the sweep that established this is worth
+not repeating. Candidates for Mhizha came back as "M-Hizha", "Mahisya", "Miese", "Mijo",
+"Amhija" and, for `ˈmiːʒə`, **"Amnesia"**; `mhˈiːʒə` lost the m entirely and returned
+"He's a". An ASR model spells an unfamiliar proper noun by analogy with words it knows.
+The two dead ends are recorded in `QC_VARIANTS` so nobody re-runs them, and the three live
+candidates for Mhizha now render side by side with what each was heard as.
+
+**This is the honest boundary.** The count proves a patch changed what it claimed to
+change. It says nothing about whether the result sounds like the word.
+
+### The render is now bit-identical
+
+Kokoro samples. Unseeded it gave the same durations to the millisecond and a different
+waveform every run, which made `MEASURED.txt` churn on every regeneration for no meaning.
+Seeded on **1729**, the seed `config.yaml` already uses, a re-render reproduces the file
+exactly; verified by rendering twice and comparing. `MEASURED.txt` now carries the stable
+durations and a pass/fail on levels rather than amplitudes that wobble in the second
+decimal, because a generated asset that cannot be diffed is the thing `make captures`
+exists to avoid.
+
+### Changed this session
+
+`scripts/video_narration.py` (`--verify`, exact syllable counting, seeded rendering,
+evidence-bearing `QC_VARIANTS`, restructured `PRONUNCIATIONS` carrying the unpatched form
+and expected syllables), `docs/VIDEO.md`, `CITATIONS.md` (whisper and scipy, verification
+only), and the regenerated narration assets. **Narration untouched: 279 words, seven
+beats, 1:53.** No new guard, no test added; both refusals live inside the producer.
+
+**Open, and now precisely stated:** listen to `qc-mashonaland-1` against `qc-mashonaland-2`
+and pick one, listen to the three `qc-mhizha` clips and pick one, then listen to
+`narration.m4a` once end to end. Everything else about the audio has been checked.

@@ -179,10 +179,16 @@ after.
 
 ```bash
 python3 scripts/video_narration.py --phonemes        # what each patched word becomes
+python3 scripts/video_narration.py --verify          # check each patch against its defect
 python3 scripts/video_narration.py --qc              # pronunciation variants, side by side
 python3 scripts/video_narration.py --write-timings   # render, measure, update this table
 python3 scripts/video_captions.py                    # then rebuild the cues from that
 ```
+
+**The render is seeded and bit-identical.** Kokoro samples, so an unseeded render gives the
+same durations to the millisecond and a different waveform every time. Seeded on 1729, the
+seed `config.yaml` already uses, re-rendering reproduces the committed file exactly, which
+is what makes it diffable rather than noise.
 
 It needs Python 3.12 or older: a spaCy dependency of the phoneme stack does not build on
 3.13. `uv venv --python 3.12` then `uv pip install kokoro soundfile` is the whole setup,
@@ -192,22 +198,40 @@ plus a system `espeak-ng`. None of it is in `requirements.txt` and none of it sh
 **Four pronunciations are patched**, because the model has never seen Shona and reads the
 project's own name wrong:
 
-| word | unpatched | patched | what it now says |
-|---|---|---|---|
-| Mhizha | `ˈɛmhˈɪʒə` | `mˈhiːʒə` | the leading M was being read as the letter "em" |
-| Mashonaland | `məʃˈQnəland` | `mˌaʃˈQnəland` | first syllable was reducing to a schwa |
-| AGRITEX | `ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks` | `ˈaɡɹɪtɛks` | was spelled out, seven syllables, letter by letter |
-| Qwen | `kjˈuːwˈɛn` | `kwˈɛn` | the Q was being read as its letter name |
+| word | unpatched | patched | syllables, want / was / now | verdict |
+|---|---|---|---|---|
+| Mhizha | `ˈɛmhˈɪʒə` | `mˈhiːʒə` | 2 / **3** / 2 | fixes a defect: a vowel was inserted before the m |
+| AGRITEX | `ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks` | `ˈaɡɹɪtɛks` | 3 / **7** / 3 | fixes a defect: spelled out letter by letter |
+| Qwen | `kjˈuːwˈɛn` | `kwˈɛn` | 1 / **2** / 1 | fixes a defect: Q read as its letter name |
+| Mashonaland | `məʃˈQnəland` | `mˌaʃˈQnəland` | 4 / 4 / 4 | **preference, not a defect** |
 
-**What was checked, and what was not.** Every clip was measured: no clipping anywhere,
-peaks between 0.49 and 0.79, RMS within 0.001 across all seven beats, no DC offset, no
-truncated cue. That is all objective and all of it passed.
+`--verify` produces that table. The syllable count is exact rather than estimated, because
+it is counted off the phoneme string and not off the waveform, and it happens to be the
+precise shape of the failure this block exists for: a word gains syllables when letters get
+spelled out or a vowel gets inserted. Three of the four patches remove a countable defect
+and the check would fail the build if one stopped doing so.
 
-**Nobody has listened to it yet, and that is the open item.** Whether `mˈhiːʒə` is right
-is a question about a Shona word, and it belongs to someone who speaks Shona rather than to
-a duration check. `--qc` renders the two candidates for Mhizha and the two for Mashonaland
-as short clips so the choice can be made by ear in about a minute. Changing one is a
-one-line edit to `PRONUNCIATIONS` in `scripts/video_narration.py`, then re-render.
+**The fourth does not, and it is the one to listen to first.** Both forms of Mashonaland
+are four syllables; the patch changes vowel quality only. It is kept because the name is
+Zimbabwean and the schwa is the anglicisation, but that is a judgement rather than a
+correction, and the evidence is mildly against it: read back by an ASR model the patched
+form comes out as two words, "Mashona land", where the unpatched one stays a single word.
+`--qc` renders both. Reverting is deleting one line.
+
+**What was checked, and what was not.** Measured: no clipping anywhere, peak 0.78, no DC
+offset, no truncated cue, every phoneme validated against the voice's vocabulary before
+rendering, and every patch checked against the defect it claims to fix. An independent
+speech-recognition model was asked what it heard, unpatched against patched, and it
+confirms AGRITEX went from seven spelled-out letters to a word and Qwen from a letter name
+to "kwen".
+
+**None of that is hearing it.** Whether `mˈhiːʒə` is a fair rendering of a Shona word is
+not a question a syllable count answers, and an ASR model spells an unfamiliar proper noun
+by analogy with words it knows: asked to transcribe one rejected candidate it returned
+"Amnesia". It is competent to tell an acronym from seven letters and not competent to
+judge this. **That call belongs to someone who speaks the language the project is named
+in.** `--qc` renders three candidates for Mhizha and two for Mashonaland, about a minute of
+listening, and changing one is a one-line edit to `PRONUNCIATIONS` then a re-render.
 
 **Listen to the whole thing once before it is cut**, not only the four names.
 

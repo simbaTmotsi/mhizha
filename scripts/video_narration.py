@@ -70,48 +70,95 @@ DEFAULT_VOICE = "bf_emma"
 GAP_WITHIN_BEAT = 0.12
 GAP_BETWEEN_BEATS = 0.35
 
+# Kokoro samples, so an unseeded render gives the same durations to the millisecond and a
+# different waveform every time. Seeded it is bit-identical, which is what a generated
+# asset has to be if regenerating it is going to be diffable rather than noise. 1729 is
+# the seed config.yaml already uses; there is no reason for this project to have two.
+# Set per clip, not once per run, so a single beat can be re-rendered on its own.
+SEED = 1729
+
 # ---------------------------------------------------------------- pronunciation patches
 #
 # Phonemes are misaki's British set. The vowel letters are its own shorthand:
 #   A = /eɪ/    I = /aɪ/    Q = /əʊ/    W = /aʊ/    Y = /ɔɪ/
-# Stress marks are ˈ primary and ˌ secondary. Every entry is checked against GB_VOCAB at
-# load time.
+# Stress marks are ˈ primary and ˌ secondary. Every entry is checked against GB_VOCAB
+# before anything renders.
 #
-# The "was" column is what Kokoro produces unpatched, recorded so a future reader can tell
-# a deliberate patch from a default.
+# Each entry records what the G2P produces UNPATCHED and how many syllables the word
+# actually has, because those two together are a check rather than an opinion: counting
+# vowels in a phoneme string is exact, and the failure this whole block exists to fix is a
+# word coming out with the wrong number of syllables because letters were spelled out or a
+# vowel was inserted. `--verify` runs that count. See VOWELS and verify().
+VOWELS = set("AIQWYaɑɒɔəɛɜɪʊʌiu")
+
 PRONUNCIATIONS = {
     # Shona, "craftsman" or "one who is skilled". The Shona <mh> is a breathy-voiced m,
-    # one sound and not two. Unpatched, the G2P treats the leading M as a spelled-out
-    # letter and says "EM-hizha", which is wrong in a way that would be obvious to anyone
-    # the project is named for.
-    #   was: ˈɛmhˈɪʒə          this: m + long ee + zh + schwa, "MHEE-zha"
-    "mhizha": "mˈhiːʒə",
-
+    # one sound and not two. Unpatched the G2P inserts a vowel before it and says
+    # "EM-hizha" in three syllables, which is wrong in a way that would be obvious to
+    # anyone the project is named for.
+    "mhizha": {
+        "phonemes": "mˈhiːʒə",
+        "was": "ˈɛmhˈɪʒə",
+        "syllables": 2,
+        "why": "leading m was read as the letter name, adding a syllable",
+    },
     # The province, and the first word a listener hears in beat 1. Unpatched the first
-    # syllable reduces to a schwa, "muh-SHOW-na-land". It is "mash-OH-na-land".
-    #   was: məʃˈQnəland
-    "mashonaland": "mˌaʃˈQnəland",
-
+    # syllable reduces to a schwa, "muh-SHOW-na-land"; a Zimbabwean says "mash-OH-na-land"
+    # with the vowel intact.
+    #
+    # THIS ONE FIXES NO COUNTABLE DEFECT and is the weakest of the four. Both forms are
+    # four syllables; the patch changes vowel quality only, which is a preference rather
+    # than a correction, and the ASR round-trip in --verify mildly prefers the unpatched
+    # form because the fuller vowel reads as a word boundary ("Mashona land"). Kept
+    # because the name is Zimbabwean and the reduced vowel is the anglicisation. It is
+    # the first thing to listen to, and reverting it is deleting one line.
+    "mashonaland": {
+        "phonemes": "mˌaʃˈQnəland",
+        "was": "məʃˈQnəland",
+        "syllables": 4,
+        "why": "PREFERENCE, not a defect: first vowel reduced to a schwa",
+    },
     # Agricultural, Technical and Extension Services. An acronym said as a word by every
-    # farmer and officer who deals with it. Unpatched it is spelled out, letter by letter,
-    # for seven syllables inside a fourteen-second beat.
-    #   was: ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks
-    "agritex": "ˈaɡɹɪtɛks",
-
-    # The selected model. Unpatched it becomes "cue-wen", reading the Q as its letter name.
-    # English technical usage is "kwen". Not one of the three names asked for, patched
-    # because beat 6 says it aloud and it is the model this submission ships.
-    #   was: kjˈuːwˈɛn
-    "qwen": "kwˈɛn",
+    # farmer and officer who deals with it. Unpatched it is spelled out letter by letter,
+    # seven syllables where the word has three, inside a fourteen-second beat.
+    "agritex": {
+        "phonemes": "ˈaɡɹɪtɛks",
+        "was": "ˌAʤˌiːˌɑːˌItˌiːˌiːˈɛks",
+        "syllables": 3,
+        "why": "acronym was spelled out, seven syllables instead of three",
+    },
+    # The selected model. Unpatched it becomes "cue-wen", reading the Q as its letter
+    # name. English technical usage is "kwen". Not one of the three names asked for,
+    # patched because beat 6 says it aloud and it is the model this submission ships.
+    "qwen": {
+        "phonemes": "kwˈɛn",
+        "was": "kjˈuːwˈɛn",
+        "syllables": 1,
+        "why": "Q was read as the letter name, two syllables instead of one",
+    },
 }
 
-# Rendered by --qc so the call can be made by ear rather than by argument. The first entry
-# of each pair is what PRONUNCIATIONS uses.
+# Rendered by --qc so the two calls a count cannot make get made by ear. The first entry
+# of each list is what PRONUNCIATIONS uses. The "heard" note is what whisper small.en made
+# of it in --verify, recorded because it is evidence and not because it is a verdict:
+# Whisper spells an unfamiliar proper noun by analogy with words it knows.
+#
+# Also tried and dropped, so nobody re-runs them: ˈmiːʒə was transcribed "Amnesia", and
+# mhˈiːʒə lost the m entirely and came back as "He's a".
 QC_VARIANTS = {
-    "mhizha": [("mˈhiːʒə", "breathy m, closer to the Shona <mh>"),
-               ("mˈiːʒə", "plain m, 'MEE-zha', the anglicised form")],
-    "mashonaland": [("mˌaʃˈQnəland", "mash-OH-na-land"),
-                    ("mˌaʃˈQnəlˌand", "same, with the final syllable stressed")],
+    "mhizha": [
+        ("mˈhiːʒə", 'in use. breathy m, nearest the Shona <mh>. heard "Mahisya"'),
+        ("mˈiːʒə", 'plain m, the anglicised "MEE-zha". heard "Miese"'),
+        ("mˈɪʒə", 'short i, "MIH-zha". heard "Mijo"'),
+    ],
+    # This pair is the real question, and it is patched versus not patched. The count says
+    # the patch fixes nothing; the ASR mildly prefers the unpatched form because the fuller
+    # first vowel reads as a word boundary. Neither settles whether a Zimbabwean place name
+    # should carry the anglicised schwa.
+    "mashonaland": [
+        ("mˌaʃˈQnəland", 'in use. full first vowel, "mash-OH-na-land". heard "Mashona land"'),
+        ("məʃˈQnəland", 'unpatched. reduced first vowel, "muh-SHOW-na-land". heard "Machonaland"'),
+    ],
 }
 
 
@@ -150,7 +197,7 @@ def build_pipeline(voice: str, extra: dict[str, str] | None = None):
     from kokoro import KPipeline
     from misaki.en import GB_VOCAB
 
-    patches = dict(PRONUNCIATIONS)
+    patches = {word: entry["phonemes"] for word, entry in PRONUNCIATIONS.items()}
     patches.update(extra or {})
     for word, phonemes in patches.items():
         unknown = sorted({c for c in phonemes if c not in GB_VOCAB})
@@ -173,6 +220,9 @@ def say(pipeline, text: str, voice: str, speed: float):
     """One contiguous clip for one cue, plus the phonemes it was actually read from."""
     import numpy as np
 
+    import torch
+
+    torch.manual_seed(SEED)
     chunks, phonemes = [], []
     for result in pipeline(text, voice=voice, speed=speed, split_pattern=None):
         if result.audio is None:
@@ -264,16 +314,21 @@ def write_audio(rendered, voice: str, speed: float) -> None:
         full.append(np.zeros(int(GAP_BETWEEN_BEATS * SAMPLE_RATE), dtype=np.float32))
     sf.write(OUT / "narration.wav", np.concatenate(full[:-1]), SAMPLE_RATE)
 
-    lines = [f"# Kokoro narration, voice {voice}, speed {speed}, {SAMPLE_RATE} Hz mono",
+    lines = [f"# Kokoro narration, voice {voice}, speed {speed}, {SAMPLE_RATE} Hz mono, "
+             f"seed {SEED}",
              "# Generated by scripts/video_narration.py. Durations are measured, not set.",
-             "#", "# beat  seconds  peak  lead_silence  tail_silence  cues"]
+             "#", "# beat  seconds  cues"]
     for beat in rendered:
-        peak = max(c["peak"] for c in beat["cues"])
-        lines.append(f"  {beat['number']}      {beat['seconds']:6.3f}  {peak:4.2f}  "
-                     f"{beat['cues'][0]['lead_silence']:12.3f}  "
-                     f"{beat['cues'][-1]['tail_silence']:12.3f}  {len(beat['cues']):4d}")
+        lines.append(f"  {beat['number']}      {beat['seconds']:6.3f}  {len(beat['cues']):4d}")
     total = sum(b["seconds"] for b in rendered) + GAP_BETWEEN_BEATS * (len(rendered) - 1)
+    peak = max(c["peak"] for b in rendered for c in b["cues"])
+    clipped = max(c["clipped"] for b in rendered for c in b["cues"])
     lines += ["#", f"# total {total:.3f} s including {GAP_BETWEEN_BEATS} s between beats"]
+    # Levels are a threshold, not a figure. Printing peak to two decimals per beat made
+    # this file churn on every render for no meaning; what matters is that nothing clips
+    # and there is headroom, and both are pass or fail.
+    lines += [f"# peak {peak:.2f}, clipped samples {clipped:.4%}: "
+              f"{'PASS' if peak < 0.99 and clipped == 0 else 'FAIL'}"]
     (OUT / "MEASURED.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -298,12 +353,99 @@ def write_timings(rendered) -> None:
     beats_source.SOURCE.write_text(text, encoding="utf-8")
 
 
+def syllables(phonemes: str) -> int:
+    """Syllable count from a phoneme string: one per vowel nucleus.
+
+    Exact, not estimated. Length marks and stress marks are not nuclei, and a doubled
+    vowel letter inside a long vowel (iː, uː) is one nucleus because the ː follows it.
+    """
+    count, previous = 0, ""
+    for character in phonemes:
+        if character in VOWELS and previous not in VOWELS:
+            count += 1
+        previous = character
+    return count
+
+
+def transcribe_available() -> bool:
+    try:
+        import scipy.signal  # noqa: F401
+        import whisper  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def transcribe(audio):
+    """What an independent listener model hears. Corroboration, never the verdict.
+
+    Whisper spells a proper noun it has never seen by analogy with words it has, so it is
+    competent to tell an acronym from seven spelled-out letters and incompetent to judge
+    a Shona name. Read it that way.
+    """
+    import numpy as np
+    import whisper
+    from scipy.signal import resample_poly
+
+    resampled = resample_poly(audio.astype(np.float64), 16_000, SAMPLE_RATE)
+    model = whisper.load_model("small.en")
+    said = model.transcribe(resampled.astype(np.float32), language="en",
+                            fp16=False, temperature=0.0)
+    return said["text"].strip()
+
+
+def verify(voice: str, speed: float) -> int:
+    """Check every patch against the defect it claims to fix.
+
+    The syllable count is the real test and it needs no audio: the failure mode here is a
+    word gaining syllables because letters were spelled out or a vowel was inserted, and
+    that is countable in the phoneme string. The ASR pass is corroboration for the cases
+    where a count cannot see the difference.
+    """
+    failures = []
+    print(f"{'word':13} {'expected':>8} {'unpatched':>10} {'patched':>8}   verdict")
+    for word, entry in PRONUNCIATIONS.items():
+        want = entry["syllables"]
+        before, after = syllables(entry["was"]), syllables(entry["phonemes"])
+        if after != want:
+            verdict = "FAILS: patched count is wrong"
+            failures.append(word)
+        elif before == want:
+            verdict = "preference only, no countable defect"
+        else:
+            verdict = f"fixes {before - want:+d} syllable defect"
+        print(f"{word:13} {want:>8} {before:>10} {after:>8}   {verdict}")
+
+    if not transcribe_available():
+        print("\nASR corroboration skipped: pip install openai-whisper scipy to run it.")
+    else:
+        print("\nHeard back by whisper small.en, unpatched vs patched:")
+        for word, entry in PRONUNCIATIONS.items():
+            sentence = next((c for beat in beats_source.read_beats(beats_source.SOURCE)
+                             for c in beats_source.split_cue(beat["spoken"])
+                             if word in c.lower()), word.capitalize() + ".")
+            off = build_pipeline(voice, {word: entry["was"]})
+            on = build_pipeline(voice)
+            print(f"  {word}")
+            print(f"    was -> {transcribe(say(off, sentence, voice, speed)[0])}")
+            print(f"    now -> {transcribe(say(on, sentence, voice, speed)[0])}")
+
+    print("\nNeither check hears anything. They prove a patch changed what it claimed to "
+          "change;\nwhether the result sounds right is still --qc and a person.")
+    if failures:
+        print(f"\nFAILED: {', '.join(failures)}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render the narration with Kokoro.")
     parser.add_argument("--voice", default=DEFAULT_VOICE)
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--phonemes", action="store_true",
                         help="print what every patched word becomes, and stop")
+    parser.add_argument("--verify", action="store_true",
+                        help="check every patch against the defect it claims to fix")
     parser.add_argument("--qc", action="store_true",
                         help="render pronunciation variants side by side, and stop")
     parser.add_argument("--write-timings", action="store_true",
@@ -314,10 +456,13 @@ def main() -> int:
         if args.phonemes:
             pipeline = build_pipeline(args.voice)
             print(f"{'word':14} {'phonemes':24} as read back by the G2P")
-            for word in PRONUNCIATIONS:
+            for word, entry in PRONUNCIATIONS.items():
                 _, actual = say(pipeline, word.capitalize(), args.voice, args.speed)
-                print(f"{word:14} {PRONUNCIATIONS[word]:24} {actual}")
+                print(f"{word:14} {entry['phonemes']:24} {actual}")
             return 0
+
+        if args.verify:
+            return verify(args.voice, args.speed)
 
         if args.qc:
             import soundfile as sf
