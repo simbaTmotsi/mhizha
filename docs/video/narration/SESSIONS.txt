@@ -2,7 +2,7 @@
 # Written by scripts/video_render.py --export. Real runs, real waits.
 # Fields are tab separated: beat, seconds_until_output, typed_command.
 # The output follows, indented by one tab, until the next beat line.
-2	6.625	mhizha ask when should I plant maize in Mashonaland
+2	5.755	mhizha ask when should I plant maize in Mashonaland
 	[33m╭─[0m[33m──────────────────────────────────────[0m[33m Mhizha [0m[33m──────────────────────────────────────[0m[33m─╮[0m
 	[33m│[0m The planting window for maize in Mashonaland Central, expressed as a date range tied [33m│[0m
 	[33m│[0m to the onset of effective rains rather than to a fixed calendar date. [P1] Retrieve  [33m│[0m
@@ -34,7 +34,7 @@
 	└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
 	Confidence: [33mmedium[0m [1m([0m[1;36m0.699[0m, [33mtop1[0m=[1;36m0[0m[1;36m.749[0m, [33mmargin[0m=[1;36m0[0m[1;36m.137[0m[1m)[0m
 	
-4	5.514	mhizha ask how much cypermethrin per litre of water for fall armyworm on maize
+4	4.523	mhizha ask how much cypermethrin per litre of water for fall armyworm on maize
 	[33m╭─[0m[33m──────────────────────────────────────[0m[33m Mhizha [0m[33m──────────────────────────────────────[0m[33m─╮[0m
 	[33m│[0m The planting window for maize in Mashonaland Central, expressed as a date range tied [33m│[0m
 	[33m│[0m to the onset of effective rains rather than to a fixed calendar date. [P4] The real  [33m│[0m
@@ -64,7 +64,7 @@
 	└────┴─────────────────────────────────────────────────────────────────────────┴───────┘
 	Confidence: [33mmedium[0m [1m([0m[1;36m0.486[0m, [33mtop1[0m=[1;36m0[0m[1;36m.467[0m, [33mmargin[0m=[1;36m0[0m[1;36m.030[0m[1m)[0m
 	
-5	6.746	mhizha ask how do I prune my avocado trees in winter
+5	4.121	mhizha ask how do I prune my avocado trees in winter
 	[31m╭─[0m[31m────────────────────────────────[0m[31m Mhizha (abstained) [0m[31m────────────────────────────────[0m[31m─╮[0m
 	[31m│[0m I found some related material but not enough to answer this safely.                  [31m│[0m
 	[31m│[0m                                                                                      [31m│[0m
@@ -97,7 +97,7 @@
 	Confidence: [31mlow[0m [1m([0m[1;36m0.241[0m, [33mtop1[0m=[1;36m0[0m[1;36m.109[0m, [33mmargin[0m=[1;36m0[0m[1;36m.020[0m[1m)[0m
 	[2mreason: no passage in the corpus is close to this question[0m
 	
-6	0.006	cat competition/system_prompt.txt
+6	0.005	cat competition/system_prompt.txt
 	You are Mhizha, an offline agronomy assistant for smallholder farmers in Zimbabwe.
 	
 	Answer practical farming questions: crop selection, planting calendars, pest and disease
@@ -121,7 +121,7 @@
 	Where you are unsure, say so. An honest "I do not know, ask your extension officer" is
 	more useful to a farmer than a confident guess.
 	
-7	0.063	python3 scripts/report_figures.py
+7	0.050	python3 scripts/report_figures.py
 	report figures as of 2026-08-23
 	
 	AVAILABLE:

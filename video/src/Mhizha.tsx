@@ -122,7 +122,7 @@ export const Mhizha: React.FC = () => {
         <Dissolve seconds={0.9}>
           <Card
             title="Mhizha"
-            lines={['Simbarashe Timothy Motsi', 'team_id  mhizha', 'github.com/simbaTmotsi']}
+            lines={['Simbarashe Timothy Motsi', 'team_id  mhizha', 'github.com/simbaTmotsi/mhizha']}
             footnote="Narration: Kokoro-82M, a synthetic voice."
           />
         </Dissolve>

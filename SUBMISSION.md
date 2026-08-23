@@ -317,10 +317,30 @@ uploaded first, and the form wants a repository URL, so the flip is already done
    unlisted-and-hoped-for. Open the link in a private browser window before pasting it
    anywhere: a video a judge cannot play is a video that was not submitted.
 2. **Fill the Devpost form at `adtc-2026.devpost.com`.** The submission is the repository
-   URL. **Read the actual form on the day rather than trusting this paragraph**: neither
-   official repository documents the form fields, so what a judge is asked for beyond the
-   repository URL and the video link is not something we have retrieved. Treat any field
-   list written here in advance as a guess, which is why there is not one.
+   URL, **https://github.com/simbaTmotsi/mhizha**. **Read the actual form on the day rather
+   than trusting this paragraph**: neither official repository documents the form fields, so
+   what a judge is asked for beyond the repository URL and the video link is not something we
+   have retrieved. Treat any field list written here in advance as a guess, which is why
+   there is not one.
+
+   **The "About the project" answer is drafted in `docs/DEVPOST.md`.** That file is a paste
+   buffer and nothing else: no preamble, no notes, no instructions to a reader. Select all,
+   copy, paste. Everything you would otherwise have had to strip out is here instead.
+
+   - **Preview the LaTeX.** Two display equations, the profiler's own scoring formulas. If
+     Devpost does not render them, swap in
+     `S_perf = min(TPS / 15.0, 1) x 100` and
+     `S_eff = max(0, (7.0 - peak_rss_gb) / 7.0) x 100`, and nothing is lost.
+   - **Every figure in it was cross-checked** against `report_figures.py --manifest` on
+     23 Aug: 1.82, 3.83, 3.27, 15.0, 67.9 and 1433.78 all resolve to a run record. The
+     counts (13 superseded entries, 16 red-team probes, 10 guards, 328 tests, 95/93/81
+     blind, the 12-point proxy gap) were each read out of the file that holds them.
+     **If you edit a number, re-check it.** The rule that no figure is typed by hand is not
+     suspended because the text is going into a web form.
+   - **Other fields**: *Built with* is `python, llama.cpp, gguf, sqlite-vec,
+     sentence-transformers, rag, docker, android`. *Try it out* is the repository URL.
+   - **Two things worth saying if anyone asks in person**: the corpus is placeholder, and
+     the dosage refusal is the point.
 3. **Submit early enough to fail once.** The deadline is 23:45 PDT on 24 August. Aim to
    submit on 23 August. Everything in this runbook that can go wrong has a recovery path
    except running out of clock.

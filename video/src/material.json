@@ -193,7 +193,7 @@
   "sessions": {
     "2": {
       "beat": 2,
-      "wait": 6.625,
+      "wait": 5.755,
       "typed": "mhizha ask when should I plant maize in Mashonaland",
       "raw": [
         "\u001b[33m╭─\u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m Mhizha \u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m─╮\u001b[0m",
@@ -231,7 +231,7 @@
     },
     "4": {
       "beat": 4,
-      "wait": 5.514,
+      "wait": 4.523,
       "typed": "mhizha ask how much cypermethrin per litre of water for fall armyworm on maize",
       "raw": [
         "\u001b[33m╭─\u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m Mhizha \u001b[0m\u001b[33m──────────────────────────────────────\u001b[0m\u001b[33m─╮\u001b[0m",
@@ -267,7 +267,7 @@
     },
     "5": {
       "beat": 5,
-      "wait": 6.746,
+      "wait": 4.121,
       "typed": "mhizha ask how do I prune my avocado trees in winter",
       "raw": [
         "\u001b[31m╭─\u001b[0m\u001b[31m────────────────────────────────\u001b[0m\u001b[31m Mhizha (abstained) \u001b[0m\u001b[31m────────────────────────────────\u001b[0m\u001b[31m─╮\u001b[0m",
@@ -306,7 +306,7 @@
     },
     "6": {
       "beat": 6,
-      "wait": 0.006,
+      "wait": 0.005,
       "typed": "cat competition/system_prompt.txt",
       "raw": [
         "You are Mhizha, an offline agronomy assistant for smallholder farmers in Zimbabwe.",
@@ -336,7 +336,7 @@
     },
     "7": {
       "beat": 7,
-      "wait": 0.063,
+      "wait": 0.05,
       "typed": "python3 scripts/report_figures.py",
       "raw": [
         "report figures as of 2026-08-23",

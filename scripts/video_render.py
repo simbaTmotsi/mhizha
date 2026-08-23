@@ -48,6 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 NARRATION = REPO / "docs" / "video" / "narration" / "narration.m4a"
 TIMINGS = REPO / "docs" / "video" / "narration" / "TIMINGS.txt"
+SESSIONS = REPO / "docs" / "video" / "narration" / "SESSIONS.txt"
 CAPTIONS = REPO / "docs" / "video" / "captions.vtt"
 # The submitted video is the Remotion build (docs/VIDEO.md, chosen 23 Aug). This renderer
 # writes the alternate under its own name so the obvious filename is never the wrong file
@@ -107,7 +108,7 @@ TITLE = ("Mhizha",
           "It cites what it used, and refuses what it cannot source."],
          "ADTC 2026  .  Laptop LLM track  .  domain: agriculture")
 CLOSING = ("Mhizha",
-           ["Simbarashe Timothy Motsi", "team_id  mhizha", "github.com/simbaTmotsi"],
+           ["Simbarashe Timothy Motsi", "team_id  mhizha", "github.com/simbaTmotsi/mhizha"],
            "Narration: Kokoro-82M, a synthetic voice.")
 
 SGR = re.compile(r"\x1b\[([0-9;]*)m")
@@ -159,6 +160,37 @@ def capture(argv: list[str]) -> tuple[float, str]:
     if not chunks:
         raise RenderError(f"no output from {' '.join(argv)}")
     return first or 0.0, b"".join(chunks).decode("utf-8", "replace")
+
+
+def load_sessions() -> dict[int, tuple[float, str]]:
+    """The captured runs, read rather than re-run.
+
+    Both renderers read this file. They used to differ: this one captured live while the
+    Remotion build read the export, so the two videos could disagree about how long the
+    machine took, which is the one thing they must never do. Capturing happens once, in
+    --export, and everything downstream reads the result.
+    """
+    if not SESSIONS.exists():
+        raise RenderError(f"{SESSIONS.name} is missing. Capture it first:\n"
+                          f"  python3 scripts/video_render.py --export")
+    out: dict[int, tuple[float, str]] = {}
+    beat, wait, body = None, 0.0, []
+    for line in SESSIONS.read_text(encoding="utf-8").split("\n"):
+        if line.startswith("#"):
+            continue
+        if line.startswith("\t"):
+            body.append(line[1:])
+            continue
+        if beat is not None:
+            out[beat] = (wait, "\n".join(body))
+        if not line.strip():
+            beat = None
+            continue
+        number, seconds, _typed = line.split("\t", 2)
+        beat, wait, body = int(number), float(seconds), []
+    if beat is not None:
+        out[beat] = (wait, "\n".join(body))
+    return out
 
 
 def to_lines(text: str) -> list[list[tuple[str, tuple[int, int, int], bool]]]:
@@ -380,6 +412,7 @@ def build_states(windows, fonts):
     """(seconds, image) key-frames for the whole video. Distinct screens are cached."""
     from PIL import Image
 
+    sessions = load_sessions()
     cache: dict = {}
     states = [(0.0, Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND), 0.0)]
 
@@ -410,7 +443,7 @@ def build_states(windows, fonts):
             emit(start, ("pipeline", 6), lambda: pipeline(fonts), fade=FADE)
             start = BEAT6_SPLIT
 
-        wait, raw = capture(argv)
+        wait, raw = sessions[number]
         body = to_lines(raw)
         cursor_row = 0
         for index in range(len(typed) + 1):

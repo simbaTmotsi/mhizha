@@ -1,14 +1,3 @@
-# Devpost: Project Story
-
-Draft for the "About the project" field. Devpost renders Markdown and supports LaTeX.
-
-**Every figure below is traceable.** Numbers come from `scripts/report_figures.py` and the
-run records under `runs/`, and the two that are `FALLBACK` say so here exactly as they say
-so in `REPORT.md`. If a number cannot be traced to a run, our build fails; that rule applies
-to this page too.
-
----
-
 ## Inspiration
 
 A farmer in Mashonaland is deciding what to plant this week. The nearest AGRITEX extension
@@ -130,31 +119,6 @@ number and makes latency quotable for the first time.
 
 ---
 
-**328 tests pass.** The full method, including everything above that went wrong, is in
-`REPORT.md` and `COMPETITION.md` in the repository.
-
----
-
-## Notes before pasting this in
-
-**Preview the LaTeX.** Devpost renders it, but check the two display equations survive. If
-they do not, replace that block with plain text and nothing is lost:
-
-> `S_perf = min(TPS / 15.0, 1) x 100` and
-> `S_eff = max(0, (7.0 - peak_rss_gb) / 7.0) x 100`
-
-**Every figure here was cross-checked against `scripts/report_figures.py --manifest`** on
-23 Aug: 1.82, 3.83, 3.27, 15.0, 67.9 and 1433.78 all resolve to a run record. The counts
-(13 superseded entries, 16 red-team probes, 10 guards, 328 tests, 95/93/81 blind, 12-point
-proxy gap) were each read out of the file that holds them, not recalled. **If you edit a
-number, re-check it.**
-
-**The other form fields**, which this file does not cover:
-
-- *Built with* — python, llama.cpp, gguf, sqlite-vec, sentence-transformers, rag, docker,
-  android
-- *Try it out* — the repository URL, after the flip
-- The video link, uploaded first, opened once in a logged-out window
-
-**Two things to keep saying, if you are asked anything in person:** the corpus is
-placeholder and the dosage refusal is the point.
+**328 tests pass.** The full method, including everything above that went wrong, is at
+[github.com/simbaTmotsi/mhizha](https://github.com/simbaTmotsi/mhizha) — `REPORT.md` for the
+submission, `COMPETITION.md` for the working record.

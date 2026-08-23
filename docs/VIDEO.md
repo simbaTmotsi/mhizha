@@ -66,7 +66,9 @@ cannot say so.
 | 6 | 1:28-1:45 | The profiler, or REPORT section 2.4 | "The competition profiles a bare model file, so none of this code runs while judges are scoring. We ship Qwen three point five, two billion, chosen by reading transcripts blind, with our safety posture baked into the model's own chat template." |
 | 7 | 1:45-1:53 | `python3 scripts/report_figures.py`, BLOCKED lines visible | "A number that cannot be traced to a run fails our build. Where we could not measure something, the report says so." |
 
-**Closing card:** Mhizha. Simbarashe Timothy Motsi. team_id `mhizha`. github.com/simbaTmotsi.
+**Closing card:** Mhizha. Simbarashe Timothy Motsi. team_id `mhizha`. github.com/simbaTmotsi/mhizha.
+**The repository, not the profile.** A judge reading a card off a paused video should
+land on the project rather than on a list of repositories.
 Below that, smaller: **"Narration: Kokoro-82M, a synthetic voice."** A viewer who assumes a
 person read this is owed the correction, it costs one line, and the same credit is in the
 caption file's header and in `CITATIONS.md` section 7.
@@ -221,8 +223,12 @@ files that are supposed to differ only in how they were drawn.
 Same length, same audio, same captions, same beat boundaries.
 
 **Neither invents anything.** The terminal sessions are captured once by
-`python3 scripts/video_render.py --export` into
-`docs/video/narration/SESSIONS.txt`, and both renderers read that file. Two renderers
+`python3 scripts/video_render.py --export` into `docs/video/narration/SESSIONS.txt`, and
+**both renderers read that file**. That was not true when this section was first written:
+the Pillow build was still capturing live while only the Remotion build read the export, so
+the two videos could have disagreed about how long the machine took. Corrected 23 Aug by
+making the Pillow build read it too, which is the fix that matches what the sentence
+claimed. Two renderers
 capturing independently would drift apart on wait times and then disagree about what the
 machine did, which is the failure this arrangement exists to prevent.
 
