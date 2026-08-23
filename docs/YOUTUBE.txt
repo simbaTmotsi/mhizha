@@ -1,0 +1,29 @@
+Mhizha is an offline agronomy assistant for Zimbabwean smallholder farmers. It cites what it used, and refuses what it cannot source.
+
+Built for the Africa Deep Tech Challenge 2026, Laptop LLM track.
+
+A farmer deciding what to plant this week has no signal in the field, and the nearest AGRITEX extension officer is a bus ride away. For that user the dangerous failure is not unhelpfulness, it is confidence: a wrong spray rate destroys a season, or harms the person holding the sprayer. So Mhizha is built to refuse. A dose that is not written, word for word, in a passage a human has signed off is never emitted, and below its confidence threshold the model is not called at all.
+
+Everything on screen is a real run. The pauses before output are the pauses the machine actually took, and nothing is sped up.
+
+Code, report and full method:
+https://github.com/simbaTmotsi/mhizha
+
+Chapters:
+0:00 A farmer with no signal
+0:16 An answer, grounded and cited
+0:35 Every passage names its source
+0:55 Asked for a dose, it refuses
+1:14 Below its threshold, it does not guess
+1:27 What the competition actually profiles
+1:45 A number that cannot be traced fails the build
+
+Two things stated plainly here because the video states them too.
+
+The corpus is a placeholder. The retrieval, safety and validation pipeline is real; the agronomic content is not sourced yet, every answer carries a banner saying so, and what is still needed and which organisations hold it are registered in data/SOURCES.md. We built the pipeline. We did not author agronomy, and we did not write plausible-sounding facts to fill the gaps.
+
+The narration is a synthetic voice, Kokoro-82M. No human read this script aloud.
+
+We submit Qwen3.5 2B in Q4_K_M, template-baked, chosen by a candidate-blind read of the transcripts: three arms labelled A, B and C, the mapping sealed before a single score existed. The blind changed the answer.
+
+Attributions and licences for every component, including the synthetic voice, are in CITATIONS.md in the repository.

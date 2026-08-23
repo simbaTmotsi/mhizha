@@ -316,6 +316,22 @@ uploaded first, and the form wants a repository URL, so the flip is already done
 1. **Upload the video** to a host that does not require a login to view. Set it public, not
    unlisted-and-hoped-for. Open the link in a private browser window before pasting it
    anywhere: a video a judge cannot play is a video that was not submitted.
+
+   **The description is drafted in `docs/YOUTUBE.txt`**, a paste buffer like `DEVPOST.md`:
+   plain text, no Markdown, because YouTube renders none. About 2,000 characters against a
+   5,000 limit. Its first sentence is written to stand alone, since that is what shows in
+   search results and above the fold.
+
+   Three things to do on the upload page, none of which the description can do for itself:
+
+   - **Upload `docs/video/captions.vtt` as a subtitle track.** The mp4 carries a `mov_text`
+     track, but YouTube generally will not use an embedded track, and its auto-captions will
+     mis-hear *Mhizha*, *Mashonaland* and *AGRITEX* exactly the way the speech model did in
+     `--verify`. Upload the file; the timings are measured from the audio.
+   - **Check the chapters took.** YouTube builds them from the timestamp list, but only if
+     the first is `0:00` and every chapter runs at least ten seconds. Both hold here, with
+     the shortest at twelve. If they do not appear, the list is still readable as text.
+   - **Set the language to English** so the caption track attaches to the right one.
 2. **Fill the Devpost form at `adtc-2026.devpost.com`.** The submission is the repository
    URL, **https://github.com/simbaTmotsi/mhizha**. **Read the actual form on the day rather
    than trusting this paragraph**: neither official repository documents the form fields, so
