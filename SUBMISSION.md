@@ -337,8 +337,25 @@ uploaded first, and the form wants a repository URL, so the flip is already done
      blind, the 12-point proxy gap) were each read out of the file that holds them.
      **If you edit a number, re-check it.** The rule that no figure is typed by hand is not
      suspended because the text is going into a web form.
-   - **Other fields**: *Built with* is `python, llama.cpp, gguf, sqlite-vec,
-     sentence-transformers, rag, docker, android`. *Try it out* is the repository URL.
+   - ***Built with***, 24 of the 25 allowed. The project first, because a judge skimming
+     reads the front of the list:
+
+     ```
+     python  llama.cpp  gguf  qwen  rag  sqlite  sqlite-vec  sentence-transformers
+     huggingface  numpy  docker  pytest  lm-evaluation-harness  quantization
+     offline-first  on-device-ai
+     ```
+
+     Then the eight that built the submission video, which are worth having but should not
+     come before the stack: `remotion  react  typescript  node.js  ffmpeg  kokoro
+     pillow  whisper`.
+
+     **`android` is deliberately absent, and so are `mediapipe` and `mlc-llm`.** The
+     product targets a mid-range Android phone and `docs/android-packaging.md` documents
+     the path, but **there is no Android code in this repository** — no Kotlin, no Gradle,
+     no manifest. A "Built with" tag asserts a thing was used. The story says what the
+     target is; a tag would say we shipped to it. Add them when there is an APK.
+   - ***Try it out*** is the repository URL.
    - **Two things worth saying if anyone asks in person**: the corpus is placeholder, and
      the dosage refusal is the point.
 3. **Submit early enough to fail once.** The deadline is 23:45 PDT on 24 August. Aim to
