@@ -887,7 +887,21 @@ renderable, so the choice can be re-heard rather than taken on trust.
 made. `qc-mhizha-1` is now the chosen one, where it was `qc-mhizha-2` before. Read the
 label `--qc` prints, never the number.
 
-**Still open: Mashonaland**, the preference-not-defect one, and the terminal takes.
+### Narration signed off, 23 Aug
+
+`narration.m4a` listened to end to end and approved as it stands. **The audio is finished.**
+
+**Mashonaland is settled by that sign-off, on a weaker basis than Mhizha, and the difference
+is worth not flattening.** Mhizha was an A/B: three candidates rendered side by side, one
+picked against the others. Mashonaland was never A/B'd; it was accepted in place as part of
+the whole take. Both are a person's ear and both ship. But "approved in context" is not
+"chosen over an alternative", and this project does not record the stronger claim when it
+has the weaker one. If the anglicised form is wanted later, `--qc` still renders both and it
+is one line plus a re-render.
+
+**Nothing about the audio is open.** What is left for the video is footage: the terminal
+takes, the edit against `TIMINGS.txt`, and beat 6's blind clause, which is a wording call
+and not an audio one.
 
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,

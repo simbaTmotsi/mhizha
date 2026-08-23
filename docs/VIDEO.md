@@ -171,7 +171,8 @@ Record in this order so a re-take of the hardest beat does not invalidate the ot
 
 ## The narration, and what is not checked about it
 
-**Rendered 23 Aug with Kokoro-82M**, voice `bf_emma`, British English, speed 1.0. The
+**Rendered 23 Aug with Kokoro-82M**, voice `bf_emma`, British English, speed 1.0.
+**Approved 23 Aug after a full listen.** The
 master is `docs/video/narration/narration.m4a`; per-beat WAVs and the QC samples are
 regenerated rather than committed, because ten megabytes of lossless audio in a repository
 is the kind of surprise `SUBMISSION.md` phase 1.5 tells you to find before a push and not
@@ -238,14 +239,18 @@ unfamiliar proper noun by analogy with words it knows, so it is competent to tel
 from seven spelled-out letters and not competent to judge a Shona name. The listening step
 is not a formality on top of the checks. It is the only thing that decided this one.
 
-**Still open: Mashonaland.** `--qc` renders both forms. Changing it is a one-line edit to
-`PRONUNCIATIONS` then a re-render. The rejected Mhizha candidates stay renderable too, so
-the choice can be re-heard rather than taken on trust.
+**The narration is signed off, 23 Aug.** `narration.m4a` was listened to end to end and
+approved as it stands. That is the audio finished; what remains for the video is footage.
+
+**Mashonaland rides on that sign-off, and on a weaker basis than Mhizha did.** Mhizha was an
+A/B: candidates rendered side by side and one picked against the others. Mashonaland was
+never A/B'd, it was accepted in place as part of the whole. Both are a person's ear and both
+are good enough to ship, but they are not the same strength of evidence and the difference is
+recorded rather than flattened. If the anglicised form is wanted after all, `--qc` still
+renders both and the change is one line in `PRONUNCIATIONS` plus a re-render.
 
 **Note the qc file numbering follows the list order**, so it moves when a choice is made:
 `qc-mhizha-1` is now the one in use. Read the label `--qc` prints, not the number.
-
-**Listen to the whole thing once before it is cut**, not only the four names.
 
 ## What not to do
 
