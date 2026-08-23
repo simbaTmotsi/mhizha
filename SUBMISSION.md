@@ -327,6 +327,15 @@ uploaded first, and the form wants a repository URL, so the flip is already done
    buffer and nothing else: no preamble, no notes, no instructions to a reader. Select all,
    copy, paste. Everything you would otherwise have had to strip out is here instead.
 
+   **It embeds five gallery images by raw URL, and they only resolve once the repository is
+   public.** This is the one hard ordering dependency in phase 4: the flip in phase 3 has to
+   land before the form is filled, or the story pastes with five broken images. Open the
+   preview and look at it rather than trusting this paragraph.
+
+   The URLs point at `master`. Decision **D-09** says history is not rewritten, so that
+   reference is stable; if a rewrite ever happens anyway, these break and the tag should be
+   used instead.
+
    - **Preview the LaTeX.** Two display equations, the profiler's own scoring formulas. If
      Devpost does not render them, swap in
      `S_perf = min(TPS / 15.0, 1) x 100` and

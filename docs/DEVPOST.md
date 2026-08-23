@@ -15,6 +15,11 @@ So Mhizha is built to refuse. **A dose that is not written, word for word, in a 
 passage a human has signed off is never emitted** — not as an estimate, not as a typical
 figure, not when pressed, not when told it is urgent.
 
+![Mhizha refusing to give a spray rate](https://raw.githubusercontent.com/simbaTmotsi/mhizha/master/docs/gallery/03-refuses-a-dose.png)
+
+*Asked how much cypermethrin to mix, it gives no number at all. The safety banner fires, the passages it used are named, and the rate is simply absent.*
+
+
 ## What it does
 
 Mhizha runs entirely offline on a mid-range Android phone. A question goes through language
@@ -31,6 +36,11 @@ detection, a local sentence embedder, and top-k retrieval from a single SQLite f
   the retrieval path, rather than a translation pass bolted on at the end.
 
 `make eval` currently reports grounding 4/4, red-team 16/16, **no critical failures**.
+
+![A cited answer with its sources table](https://raw.githubusercontent.com/simbaTmotsi/mhizha/master/docs/gallery/02-cited-answer.png)
+
+*Every answer surfaces what it was based on: source, publisher, refresh date, and a retrieval score per passage. The placeholder banner is real, and it is on every answer until the corpus is validated.*
+
 
 ## How we built it
 
@@ -56,6 +66,11 @@ close to unwinnable for everyone, which meant judge-scored accuracy dominated, w
 So we selected by reading transcripts **candidate-blind**. Arms were labelled A, B, C, the
 mapping was sealed, the rubric and the ordering were committed before the seal was opened.
 Result: 95 / 93 / 81 out of 96.
+
+![The blind behavioural scores](https://raw.githubusercontent.com/simbaTmotsi/mhizha/master/docs/gallery/08-chosen-blind.png)
+
+*Four passes, one axis at a time, question by question across all three arms, with no totals shown until every pass was done.*
+
 
 **The blind changed the answer.** Our accuracy proxy favoured the 4B model by twelve points,
 and it is the larger model — but read blind, the 2B scored higher. The margin is two points
@@ -90,6 +105,11 @@ overturned it, and the test suite fails if a retracted claim reappears as an ass
 anywhere in our documents. One of those entries would have caused the exact scoring failure it
 was written to avoid.
 
+![Three of the thirteen reversed conclusions](https://raw.githubusercontent.com/simbaTmotsi/mhizha/master/docs/gallery/09-what-we-got-wrong.png)
+
+*A retracted claim is more dangerous than one that was never made: it reads with the same authority, and the next person to act on it has no way to know.*
+
+
 ## Challenges
 
 **We never got audit-class hardware.** Our own dated rule said that if no physical machine
@@ -102,6 +122,11 @@ judge sees the uncertainty rather than false precision.
 honest substitute for judge-experienced latency measured on a machine with the judges' core
 topology, so rather than publish a number from a shared VPS we published the absence and the
 reason. An absent number is recoverable. A wrong one presented as measured is not.
+
+![The figure manifest, with latency BLOCKED](https://raw.githubusercontent.com/simbaTmotsi/mhizha/master/docs/gallery/06-untraceable-numbers-fail-the-build.png)
+
+*Our own tool refuses to hand us a latency figure, and says why. Telemetry is available but labelled FALLBACK.*
+
 
 **The corpus is placeholder, and we say so on screen.** We built the ingestion, schema,
 validation ledger and retrieval; we did not author agronomic content, and we refused to write
