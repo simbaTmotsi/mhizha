@@ -58,6 +58,13 @@ FONT_SIZE = 24
 LINE_HEIGHT = 30
 MARGIN_X, MARGIN_Y = 96, 54
 FONT_PATH = "/System/Library/Fonts/Menlo.ttc"
+DISPLAY_SIZE = 46
+# Beats are separate scenes, so they dissolve rather than cut. Short enough that nothing
+# reads as a transition effect; long enough that the eye is not jarred seven times.
+FADE = 0.45
+# Beat 6 narrates two things: that none of this code runs during scoring, and that the
+# safety posture is baked into the template. It shows both, cutting at the sentence.
+BEAT6_SPLIT = 95.0
 
 # A person typing, not the machine. See the module docstring.
 TYPING_CPS = 14.0
@@ -91,10 +98,13 @@ BEATS = {
         "python3 scripts/report_figures.py"),
 }
 
-TITLE = ["Mhizha", "", "An offline agronomy assistant for smallholder farmers in Zimbabwe.",
-         "It runs on the phone. It cites what it used. It refuses what it cannot source."]
-CLOSING = ["Mhizha", "", "Simbarashe Timothy Motsi", "team_id  mhizha",
-           "github.com/simbaTmotsi", "", "Narration: Kokoro-82M, a synthetic voice."]
+TITLE = ("Mhizha",
+         ["An offline agronomy assistant for smallholder farmers in Zimbabwe.",
+          "It cites what it used, and refuses what it cannot source."],
+         "ADTC 2026  .  Laptop LLM track  .  domain: agriculture")
+CLOSING = ("Mhizha",
+           ["Simbarashe Timothy Motsi", "team_id  mhizha", "github.com/simbaTmotsi"],
+           "Narration: Kokoro-82M, a synthetic voice.")
 
 SGR = re.compile(r"\x1b\[([0-9;]*)m")
 
@@ -212,14 +222,15 @@ def wrap(spans):
 def load_fonts():
     from PIL import ImageFont
     return (ImageFont.truetype(FONT_PATH, FONT_SIZE, index=0),
-            ImageFont.truetype(FONT_PATH, FONT_SIZE, index=1))
+            ImageFont.truetype(FONT_PATH, FONT_SIZE, index=1),
+            ImageFont.truetype(FONT_PATH, DISPLAY_SIZE, index=1))
 
 
 def screen(lines, cursor_after=None, dim_except=None, fonts=None):
     """One terminal frame. `lines` is already styled; `cursor_after` is (row, col)."""
     from PIL import Image, ImageDraw
 
-    regular, bold = fonts
+    regular, bold, _display = fonts
     image = Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND)
     draw = ImageDraw.Draw(image)
     advance = draw.textlength("M", font=regular)
@@ -243,21 +254,101 @@ def screen(lines, cursor_after=None, dim_except=None, fonts=None):
     return image
 
 
-def card(lines, fonts):
+def card(title: str, lines: list[str], footnote: str | None, fonts):
+    """A title card with a size hierarchy and a hairline rule.
+
+    The first version set everything at the body size and centred it, which read as a
+    terminal that had lost its terminal rather than as a card.
+    """
     from PIL import Image, ImageDraw
 
-    regular, bold = fonts
+    regular, _bold, display = fonts
     image = Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND)
     draw = ImageDraw.Draw(image)
-    heights = len(lines) * (LINE_HEIGHT + 8)
-    y = (HEIGHT - heights) // 2
-    for index, line in enumerate(lines):
-        font = bold if index == 0 else regular
-        colour = FOREGROUND if index == 0 else (DIM if index >= len(lines) - 1 else FOREGROUND)
-        width = draw.textlength(line, font=font)
-        draw.text(((WIDTH - width) / 2, y), line, font=font, fill=colour)
-        y += LINE_HEIGHT + 8
+
+    block = DISPLAY_SIZE + 34 + len(lines) * (LINE_HEIGHT + 6)
+    if footnote:
+        block += LINE_HEIGHT + 40
+    y = (HEIGHT - block) // 2
+
+    width = draw.textlength(title, font=display)
+    draw.text(((WIDTH - width) / 2, y), title, font=display, fill=FOREGROUND)
+    y += DISPLAY_SIZE + 16
+
+    rule = 132
+    draw.line([(WIDTH - rule) / 2, y, (WIDTH + rule) / 2, y], fill=DIM, width=1)
+    y += 22
+
+    for line in lines:
+        if line:
+            width = draw.textlength(line, font=regular)
+            draw.text(((WIDTH - width) / 2, y), line, font=regular, fill=FOREGROUND)
+        y += LINE_HEIGHT + 6
+
+    if footnote:
+        y += 34
+        width = draw.textlength(footnote, font=regular)
+        draw.text(((WIDTH - width) / 2, y), footnote, font=regular, fill=DIM)
     return image
+
+
+def pipeline(fonts):
+    """The stack, and the one part of it the competition actually profiles.
+
+    Beat 6 says none of this code runs while judges are scoring. That is the single least
+    obvious thing about the submission and a diagram states it in a way a sentence cannot.
+    Drawn with the same box characters and typeface as the terminal beats, so it reads as
+    part of the same document rather than as an illustration imported from somewhere else.
+
+    The boxes are measured rather than typed, because a diagram whose corners do not line
+    up is the first thing an eye goes to and the last thing it forgives.
+    """
+    stack = [
+        ("i18n", "detect en / sn / nd"),
+        ("embedder", "all-MiniLM-L6-v2, on device"),
+        ("retrieve", "top-k from one sqlite file"),
+        ("confidence", "below threshold, do not generate"),
+        ("prompt", "retrieved passages only"),
+        ("safety", "citations, dose gate, abstention"),
+    ]
+    rows = [f"  {name:<11}{detail}" for name, detail in stack]
+    inner = max(len(row) for row in rows) + 2
+    model = ["the model file", "Qwen3.5 2B", "Q4_K_M  GGUF"]
+    small = max(len(line) for line in model) + 6
+
+    # Optically centre the diagram in the frame. The terminal beats are left-aligned
+    # because a terminal is, but this beat is a single figure and reads as adrift against
+    # eight hundred pixels of empty right margin.
+    widest = max(inner + 2, len("everything above it is ours, and none of it runs while "
+                                "judges score."))
+    left = max(0, int(((WIDTH - widest * 14.4) / 2 - MARGIN_X) / 14.4))
+    pad = " " * left
+    centre = left + inner // 2 + 1
+    stem = " " * centre + "│"
+    small_left = " " * (centre - small // 2 - 1)
+
+    lines = [[("", FOREGROUND, False)] for _ in range(6)]
+    lines += [[(" " * (centre - 7) + "farmer question", FOREGROUND, False)],
+              [(stem, DIM, False)],
+              [(pad + "┌" + "─" * inner + "┐", DIM, False)]]
+    for row in rows:
+        lines.append([(pad + "│", DIM, False),
+                      (row.ljust(inner), FOREGROUND, False),
+                      ("│", DIM, False)])
+    lines += [[(pad + "└" + "─" * inner + "┘", DIM, False)],
+              [(stem, DIM, False)],
+              [(small_left + "┌" + "─" * small + "┐", YELLOW, False)]]
+    for index, line in enumerate(model):
+        lines.append([(small_left + "│", YELLOW, False),
+                      ("  " + line.ljust(small - 2), YELLOW, index == 0),
+                      ("│", YELLOW, False)])
+    lines += [[(small_left + "└" + "─" * small + "┘", YELLOW, False)],
+              [("", FOREGROUND, False)],
+              [(pad + "the competition profiles the model file, and only the model file.",
+                FOREGROUND, False)],
+              [(pad + "everything above it is ours, and none of it runs while judges score.",
+                DIM, False)]]
+    return screen(lines, None, None, fonts)
 
 
 # ------------------------------------------------------------------ timeline
@@ -283,21 +374,23 @@ def prompt_line(typed: str):
 
 def build_states(windows, fonts):
     """(seconds, image) key-frames for the whole video. Distinct screens are cached."""
-    cache: dict = {}
-    states = []
+    from PIL import Image
 
-    def emit(at, key, make):
+    cache: dict = {}
+    states = [(0.0, Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND), 0.0)]
+
+    def emit(at, key, make, fade=0.0):
         if key not in cache:
             cache[key] = make()
-        states.append((at, cache[key]))
+        states.append((at, cache[key], fade))
 
     last_output = None
     for number in sorted(windows):
         start, end = windows[number]
         if number == 1:
-            emit(start, ("card", "title"), lambda: card(TITLE, fonts))
-            emit(end - 2.6, ("screen", ("",), None, None),
-                 lambda: screen([prompt_line("")], (0, 2), None, fonts))
+            emit(start, ("card", "title"), lambda: card(*TITLE, fonts), fade=1.1)
+            emit(end - 2.6, ("screen", "empty-prompt"),
+                 lambda: screen([prompt_line("")], (0, 2), None, fonts), fade=FADE)
             continue
 
         kind, argv, typed = BEATS[number]
@@ -306,18 +399,23 @@ def build_states(windows, fonts):
                 raise RenderError("beat 3 holds the previous output but there is none")
             lines, table = last_output
             emit(start, ("hold", number), lambda l=lines, t=table:
-                 screen(l, None, t, fonts))
+                 screen(l, None, t, fonts), fade=FADE)
             continue
+
+        if number == 6:
+            emit(start, ("pipeline", 6), lambda: pipeline(fonts), fade=FADE)
+            start = BEAT6_SPLIT
 
         wait, raw = capture(argv)
         body = to_lines(raw)
         cursor_row = 0
         for index in range(len(typed) + 1):
             at = start + index / TYPING_CPS
+            fade = FADE if index == 0 else 0.0
             if at >= end:
                 break
             emit(at, ("type", number, index), lambda n=index:
-                 screen([prompt_line(typed[:n])], (cursor_row, 2 + n), None, fonts))
+                 screen([prompt_line(typed[:n])], (cursor_row, 2 + n), None, fonts), fade)
         typed_at = start + len(typed) / TYPING_CPS
         emit(typed_at, ("wait", number), lambda:
              screen([prompt_line(typed), []], (1, 0), None, fonts))
@@ -329,8 +427,8 @@ def build_states(windows, fonts):
             last_output = (full, (head, len(full) - 1) if head is not None else None)
 
     end_of_narration = max(end for _, end in windows.values()) + GAP_BETWEEN_BEATS
-    emit(end_of_narration, ("card", "closing"), lambda: card(CLOSING, fonts))
-    states.append((end_of_narration + CLOSING_SECONDS, None))
+    emit(end_of_narration, ("card", "closing"), lambda: card(*CLOSING, fonts), fade=0.9)
+    states.append((end_of_narration + CLOSING_SECONDS, None, 0.0))
     return states
 
 
@@ -352,14 +450,34 @@ def encode(states, probe_only: bool) -> int:
          "-c:v", "libx264", "-preset", "medium", "-crf", "20",
          "-pix_fmt", "yuv420p", str(silent)], stdin=subprocess.PIPE)
     index, frames = 0, int(round(total * FPS))
+    previous_index, dissolve = -1, None
     for frame in range(frames):
         at = frame / FPS
         while index + 1 < len(states) and states[index + 1][0] <= at:
             index += 1
-        image = states[index][1]
+        started, image, fade = states[index]
         if image is None:
             break
-        process.stdin.write(np.asarray(image, dtype=np.uint8).tobytes())
+        # A dissolve belongs to the TRANSITION, not to the state that starts it. Attaching
+        # it to the state made it last one typing interval, seventy milliseconds, because
+        # the next character superseded the state carrying the fade. So the outgoing frame
+        # is held here and blended under whatever the timeline does next, which is what
+        # lets typing continue underneath a dissolve instead of interrupting it.
+        if index != previous_index:
+            if fade and index:
+                outgoing = states[index - 1][1]
+                if outgoing is not None:
+                    dissolve = (started, np.asarray(outgoing, dtype=np.float32), fade)
+            previous_index = index
+        current = np.asarray(image, dtype=np.float32)
+        if dissolve is not None:
+            begin, outgoing, length = dissolve
+            if at - begin < length:
+                weight = (at - begin) / length
+                current = outgoing * (1.0 - weight) + current * weight
+            else:
+                dissolve = None
+        process.stdin.write(current.astype(np.uint8).tobytes())
     process.stdin.close()
     if process.wait() != 0:
         raise RenderError("ffmpeg failed to encode the video track")

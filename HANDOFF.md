@@ -1024,6 +1024,42 @@ Phase 3 and 4 both need his account and his machine:
 
 None of those is blocked on anything. They are a person with credentials and about an hour.
 
+---
+
+## Video polish, 23 Aug ~12:30Z
+
+Asked whether a Claude skill could generate a video from a webpage with 3D assets. **There
+is none**, and I argued against building one: the video's job here is to make a refusal
+land, and gloss over a placeholder corpus and a `FALLBACK` telemetry figure invites a judge
+to read the gloss as compensation. Did four things in the existing register instead.
+
+- **An architecture diagram in beat 6.** The narration says two things, that none of this
+  code runs while judges score and that the safety posture is baked into the template. It
+  now shows the pipeline for the first and the actual system prompt for the second, cutting
+  at the full stop between them. The model file is marked as the only part the competition
+  profiles, which is the least obvious thing about this submission and the hardest to say
+  in a sentence. **Box geometry is computed, not typed**, after the first version came out
+  with corners that did not meet.
+- **Beats dissolve rather than cut.** First attempt lasted seventy milliseconds instead of
+  450, because the fade was attached to the frame that started it and the next typed
+  character superseded that frame. **A dissolve belongs to the transition.** Rewritten so
+  the outgoing frame is held and blended under whatever the timeline does next, which lets
+  typing continue underneath a dissolve instead of interrupting it.
+- **Cards have a hierarchy now**: display-size title, a hairline rule, dim footnote. The
+  first version set everything at body size and centred it, which read as a terminal that
+  had lost its terminal.
+- **The diagram is optically centred** rather than left-aligned like the terminal beats. It
+  is one figure, and it read as adrift against eight hundred pixels of empty right margin.
+
+Both defects above were found by rendering frames and looking at them, not by reading the
+code. That is the third and fourth time on this file.
+
+**Beat 1 is still a title card**, and it is now the only thing about the video worth
+changing. A real photograph of a field, his or licensed, would lift the opening and cost
+nothing in honesty. A generated one would cost everything, and is refused.
+
+1:57, 3.9 MB, 328 tests pass.
+
 One line added to `.gitignore`, outside the two items and so recorded here: **`.DS_Store`**.
 One appeared under `docs/video/` the moment that folder was opened to listen to the clips,
 which is now a normal part of this workflow. They carry folder view state and sometimes the

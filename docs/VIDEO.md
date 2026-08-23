@@ -168,14 +168,34 @@ measurement. Both are stated in the script's own docstring as well as here:
    Zimbabwean farmers is the thing this project refuses to do everywhere else. A title card
    stands in until the terminal appears.
 
+   **This is the one place a real photograph would improve the video**, and it is the only
+   thing about it still worth changing. A real field, yours or licensed, dropped behind
+   beat 1 would lift the opening considerably and cost nothing in honesty. A generated one
+   would cost everything.
+
 Drawing the terminal rather than filming it is also what keeps a developer's desktop, home
 directory and notifications out of frame permanently.
 
 **What is on screen, beat by beat:** 1 title card, 2 the maize question and its cited
 answer, 3 the same answer with the sources table lifted and the rest dimmed, 4 the
 agrochemical question typed in full and refused with the safety banner and no dose, 5 the
-abstention, 6 `cat competition/system_prompt.txt`, which is the safety posture beat 6
-narrates, 7 `report_figures.py` with the BLOCKED line readable in full.
+abstention, 6 the architecture diagram and then `cat competition/system_prompt.txt`,
+7 `report_figures.py` with the BLOCKED line readable in full.
+
+**Beat 6 cuts at its own sentence boundary.** The narration says two things: that none of
+this code runs while judges are scoring, and that the safety posture is baked into the
+template. It shows the pipeline for the first, with the model file marked as the only part
+the competition profiles, and the actual system prompt for the second, changing over at
+the full stop. The diagram is drawn with the same box characters and typeface as the
+terminal beats, and its geometry is computed rather than typed, because a diagram whose
+corners do not line up is the first thing an eye goes to.
+
+**Beats dissolve rather than cut**, 0.45 s, and the two cards a little slower. The dissolve
+belongs to the transition and not to the frame that starts it: attached to the frame it
+lasted one typing interval, seventy milliseconds, because the next character superseded the
+frame carrying it. Typing now continues underneath a dissolve instead of interrupting it.
+Typing frames themselves never fade; a character appearing softly reads as a rendering
+fault rather than as an edit.
 
 **The audio is bit-reproducible; the video is not.** The narration is seeded. The terminal
 waits are real machine timings and vary by a few tenths between runs, which is the point of
